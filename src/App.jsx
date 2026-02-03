@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { StoreProvider } from './context/StoreContext';
 import { LocaleProvider } from './context/LocaleContext';
@@ -10,6 +10,17 @@ import AdminGuard from './components/AdminGuard';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
+  // 鎖定直向：PWA 時盡量不隨手機旋轉
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+      || document.referrer.includes('android-app://');
+    if (!isStandalone) return;
+    if (typeof screen !== 'undefined' && screen.orientation?.lock) {
+      screen.orientation.lock('portrait').catch(() => {});
+    }
+  }, []);
+
   return (
     <LocaleProvider>
       <ToastProvider>
