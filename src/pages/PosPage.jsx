@@ -378,9 +378,13 @@ export default function PosPage() {
         <div className="fixed inset-0 z-50 flex flex-col sm:flex-row" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
           <div className="relative ml-auto w-full sm:max-w-md max-h-[90vh] sm:max-h-full bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-stone-200 shrink-0">
-              <h2 className="text-lg font-semibold text-stone-800">{t('cart')}</h2>
-              <button type="button" onClick={() => setShowCartDrawer(false)} className="p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label={t('close')}>
+            <div className="flex items-center gap-2 p-4 border-b border-stone-200 shrink-0">
+              <button type="button" onClick={() => setShowCartDrawer(false)} className="flex items-center gap-1.5 py-2 pr-2 pl-2 rounded-xl hover:bg-stone-100 text-stone-600 font-medium text-sm min-h-[44px] transition flex-shrink-0" aria-label={t('backToPrev')}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                <span>{t('backToPrev')}</span>
+              </button>
+              <h2 className="flex-1 text-center text-lg font-semibold text-stone-800">{t('cart')}</h2>
+              <button type="button" onClick={() => setShowCartDrawer(false)} className="p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0" aria-label={t('close')}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>

@@ -4,8 +4,8 @@
   "description": "文創市集 POS 櫃位結帳與後台管理",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#4a3c2f",
-  "theme_color": "#4a3c2f",
+  "background_color": "#453a30",
+  "theme_color": "#453a30",
   "orientation": "portrait",
   "icons": [
     {
