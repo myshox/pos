@@ -35,8 +35,6 @@ export default function PosPage() {
   const [discountType, setDiscountType] = useState('none');
   const [discountValue, setDiscountValue] = useState('');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
-  const [confirmProduct, setConfirmProduct] = useState(null);
-  const [confirmQty, setConfirmQty] = useState(1);
   const [fontSize, setFontSize] = useState(() => {
     try {
       const s = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
@@ -130,18 +128,11 @@ export default function PosPage() {
   const discount = discountType !== 'none' && discountValue ? { type: discountType, value: Number(discountValue) || 0 } : null;
   const cartTotalQty = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
 
-  const openProductConfirm = useCallback((product) => {
-    setConfirmProduct(product);
-    setConfirmQty(1);
-  }, []);
-
-  const handleConfirmAddToCart = useCallback(() => {
-    if (!confirmProduct || confirmQty < 1) return;
-    addToCartWithQty(confirmProduct, confirmQty);
-    setConfirmProduct(null);
+  const addProductDirect = useCallback((product) => {
+    addToCartWithQty(product, 1);
     setShowCartDrawer(true);
-    showToast(`${confirmProduct.name} × ${confirmQty} ${t('addToCart')}`);
-  }, [confirmProduct, confirmQty, addToCartWithQty, showToast, t]);
+    showToast(`${product.name} × 1 ${t('addToCart')}`);
+  }, [addToCartWithQty, showToast, t]);
 
   const applyQuickDiscount = useCallback((type, value) => {
     if (type === 'none') {
@@ -204,15 +195,6 @@ export default function PosPage() {
   useEffect(() => {
     if (showCheckoutConfirm && confirmBackRef.current) confirmBackRef.current.focus();
   }, [showCheckoutConfirm]);
-
-  useEffect(() => {
-    if (!confirmProduct) return;
-    const onKey = (e) => {
-      if (e.key === 'Escape') setConfirmProduct(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [confirmProduct]);
 
   return (
     <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 pos-font-${fontSize}`}>
@@ -299,7 +281,7 @@ export default function PosPage() {
                     .map((product) => (
                       <button
                         key={product.id}
-                        onClick={() => openProductConfirm(product)}
+                        onClick={() => addProductDirect(product)}
                         type="button"
                         className="card-market w-full rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.99] transition border flex flex-row items-center gap-3 p-2 sm:p-3 min-h-[56px]"
                       >
@@ -338,7 +320,7 @@ export default function PosPage() {
                     .map((product) => (
                       <button
                         key={product.id}
-                        onClick={() => openProductConfirm(product)}
+                        onClick={() => addProductDirect(product)}
                         type="button"
                         className="card-market rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[100px] sm:min-h-[110px]"
                       >
@@ -524,48 +506,6 @@ export default function PosPage() {
                 className="btn-primary w-full py-4 rounded-xl text-lg font-semibold min-h-[56px] disabled:opacity-50 disabled:cursor-not-allowed transition transform active:scale-[0.98]"
               >
                 {isSubmitting ? '...' : t('checkout')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 確認商品彈窗 - 選數量後加入購物車 */}
-      {confirmProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setConfirmProduct(null)}>
-          <div className="modal-panel bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-product-title">
-            <div className="p-4 border-b border-stone-200">
-              <h3 id="confirm-product-title" className="text-lg font-semibold text-stone-800">{t('confirmProduct')}</h3>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="flex gap-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0">
-                  {confirmProduct.image ? (
-                    <img src={confirmProduct.image} alt={confirmProduct.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-400 text-2xl font-serif">{confirmProduct.name.charAt(0)}</div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-stone-800">{confirmProduct.name}</div>
-                  <div className="text-amber-700 font-bold mt-1">NT$ {confirmProduct.price}</div>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-stone-600 mb-2">{t('quantity')}</label>
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setConfirmQty((q) => Math.max(1, q - 1))} className="w-12 h-12 rounded-full bg-stone-200 hover:bg-stone-300 font-bold text-stone-700 flex items-center justify-center min-w-[48px] min-h-[48px]">−</button>
-                  <span className="w-14 text-center text-xl font-semibold">{confirmQty}</span>
-                  <button type="button" onClick={() => setConfirmQty((q) => q + 1)} className="w-12 h-12 rounded-full bg-stone-200 hover:bg-stone-300 font-bold text-stone-700 flex items-center justify-center min-w-[48px] min-h-[48px]">+</button>
-                </div>
-              </div>
-            </div>
-<div className="p-4 flex gap-3 border-t border-stone-200 bg-stone-50/50">
-            <button type="button" onClick={() => setConfirmProduct(null)} className="flex-1 py-4 rounded-xl font-medium bg-stone-200 text-stone-700 hover:bg-stone-300 min-h-[52px] text-base">
-                {t('cancel')}
-              </button>
-              <button type="button" onClick={handleConfirmAddToCart} className="flex-1 py-4 rounded-xl font-semibold btn-primary text-white min-h-[52px] text-base">
-                {t('addToCart')}
               </button>
             </div>
           </div>

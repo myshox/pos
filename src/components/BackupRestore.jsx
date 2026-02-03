@@ -1,15 +1,26 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { exportAllData, importAllData } from '../lib/storage';
+import { checkConnection } from '../lib/syncSupabase';
 
 export default function BackupRestore() {
-  const { refreshProducts, refreshOrders, refreshStore } = useStore();
+  const { refreshProducts, refreshOrders, refreshStore, syncNow, isSyncEnabled } = useStore();
   const { t } = useLocale();
   const { showToast } = useToast();
   const fileRef = useRef(null);
   const [importing, setImporting] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);
+
+  useEffect(() => {
+    if (!isSyncEnabled) return;
+    let cancelled = false;
+    checkConnection().then((res) => {
+      if (!cancelled) setSyncStatus(res.ok ? 'ok' : { error: res.error });
+    });
+    return () => { cancelled = true; };
+  }, [isSyncEnabled]);
 
   const handleExport = () => {
     const data = exportAllData();
@@ -44,6 +55,7 @@ export default function BackupRestore() {
         refreshProducts();
         refreshOrders();
         refreshStore();
+        syncNow();
         showToast(t('backupImportSuccess'));
       } catch (err) {
         showToast(t('backupInvalidFile'), 'error');
@@ -58,6 +70,15 @@ export default function BackupRestore() {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-stone-800">{t('backupRestoreTitle')}</h2>
       <p className="text-stone-600 text-sm">{t('backupRestoreHint')}</p>
+      {isSyncEnabled && (
+        <div className="space-y-1">
+          <p className="text-amber-700 text-sm font-medium">{t('syncEnabledHint')}</p>
+          {syncStatus === 'ok' && <p className="text-green-700 text-sm">{t('syncStatusOk')}</p>}
+          {syncStatus && syncStatus !== 'ok' && typeof syncStatus === 'object' && (
+            <p className="text-red-600 text-sm">{t('syncStatusError')}: {syncStatus.error}</p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="card-market rounded-2xl p-5">
