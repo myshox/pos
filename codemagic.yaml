@@ -1,0 +1,87 @@
+# Codemagic 建置本專案 iOS .ipa
+# 教學請見：docs/Codemagic上架iOS教學.md
+
+workflows:
+  pos-ios:
+    name: POS iOS (Capacitor)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    # 若要用 TestFlight / App Store 上架，請在 Codemagic 後台新增 App Store Connect API Key，
+    # 並把下方 integrations 的註解拿掉，把 codemagic 改成你的金鑰名稱。
+    # integrations:
+    #   app_store_connect: codemagic
+
+    environment:
+      ios_signing:
+        # 只建 .ipa 自己裝：用 ad_hoc；要上架 TestFlight/App Store：改為 app_store
+        distribution_type: ad_hoc
+        bundle_identifier: com.studiomogu.pos
+
+      vars:
+        XCODE_WORKSPACE: "App.xcworkspace"
+        XCODE_SCHEME: "App"
+        # 上架時請改為你在 App Store Connect 的 App Apple ID（數字）
+        # APP_STORE_APP_ID: "1234567890"
+        node: v20
+        xcode: latest
+        cocoapods: default
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Install npm dependencies
+        script: npm ci
+
+      - name: Cocoapods installation
+        script: cd ios/App && pod install
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Sync Capacitor (copy web to native)
+        script: npx cap sync
+
+      - name: Set up code signing on Xcode project
+        script: xcode-project use-profiles
+
+      # 上架 TestFlight/App Store 時再啟用：從 App Store 取最新 build 號並 +1
+      # - name: Increment build number
+      #   script: |
+      #     cd $CM_BUILD_DIR/ios/App
+      #     LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID")
+      #     agvtool new-version -all $(($LATEST + 1))
+
+      - name: Build IPA
+        script: |
+          cd $CM_BUILD_DIR/ios/App
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - ios/App/build/ios/ipa/App.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          # 改成你的信箱，建置完成會收到通知
+          - your-email@example.com
+        notify:
+          success: true
+          failure: true
+
+      # 上架 TestFlight / App Store 時再啟用並設定
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      #   beta_groups:
+      #     - 你的測試群組名稱
+      #   submit_to_app_store: false

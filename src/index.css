@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "M PLUS Rounded 1c", "Noto Sans TC", serif;
+  --font-cute: "M PLUS Rounded 1c", "Noto Sans TC", sans-serif;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  height: 100%;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: linear-gradient(160deg, #faf8f5 0%, #f0ebe3 50%, #e8e2d9 100%);
+  font-family: var(--font-cute);
+  overflow-x: hidden;
+}
+#root {
+  height: 100%;
+  min-height: 100%;
+}
+
+/* 觸控友善：重要按鈕可加 min-h-[44px] */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 手機/平板橫向捲動表格 */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 文創市集主色 */
+.header-bar {
+  background: linear-gradient(135deg, #5c4a3a 0%, #4a3c2f 100%);
+  box-shadow: 0 2px 12px rgba(92, 74, 58, 0.25);
+}
+
+.card-market {
+  background: #fdfcfa;
+  border: 1px solid #e8e2d9;
+  box-shadow: 0 4px 20px rgba(92, 74, 58, 0.08);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #b8860b 0%, #8b6914 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(184, 134, 11, 0.35);
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #c99a1a 0%, #9a7518 100%);
+  box-shadow: 0 4px 12px rgba(184, 134, 11, 0.4);
+}
+
+.category-badge {
+  background: #f5f0e8;
+  color: #5c4a3a;
+  border: 1px solid #e8e2d9;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.toast-enter {
+  animation: toast-in 0.25s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-panel {
+  animation: modal-in 0.2s ease-out;
+}
