@@ -38,7 +38,7 @@ function isThisWeek(iso) {
 const FILTER_IDS = ['all', 'today', 'week', 'range'];
 
 export default function OrderList() {
-  const { orders, refreshOrders } = useStore();
+  const { orders, refreshOrders, deleteOrder } = useStore();
   const { t, lang } = useLocale();
   const [expandedId, setExpandedId] = useState(null);
   const [dateFilter, setDateFilter] = useState('all');
@@ -200,8 +200,20 @@ export default function OrderList() {
                       {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
                     </div>
                   )}
-                  <div className="mt-3 pt-3 border-t border-stone-100 flex justify-end">
+                  <div className="mt-3 pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
                     <span className="font-bold text-stone-800">{t('total')} NT$ {order.total}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(t('confirmDeleteOrder'))) {
+                          deleteOrder(order.id);
+                          setExpandedId(null);
+                        }
+                      }}
+                      className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                    >
+                      {t('cancelOrder')}
+                    </button>
                   </div>
                 </div>
               )}

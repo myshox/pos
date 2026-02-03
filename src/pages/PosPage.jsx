@@ -228,7 +228,7 @@ export default function PosPage() {
             {categories.length > 0 && categories.map((cat) => (
               <div key={cat}>
                 <h2 className="text-sm font-medium text-stone-500 mb-3 uppercase tracking-wider">{cat}</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {activeProducts
                     .filter((p) => (cat === '其他' ? !(p.category && p.category.trim()) : p.category === cat))
                     .map((product) => (
@@ -236,9 +236,9 @@ export default function PosPage() {
                         key={product.id}
                         onClick={() => openProductConfirm(product)}
                         type="button"
-                        className="card-market rounded-xl sm:rounded-2xl overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[140px] sm:min-h-[180px]"
+                        className="card-market rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[100px] sm:min-h-[110px]"
                       >
-                        <div className="w-full aspect-square bg-stone-100 flex-shrink-0 min-h-[80px] sm:min-h-[100px]">
+                        <div className="w-full aspect-square bg-stone-100 flex-shrink-0 min-h-[56px] sm:min-h-[60px]">
                           {product.image ? (
                             <img
                               src={product.image}
@@ -246,20 +246,17 @@ export default function PosPage() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-stone-300 text-2xl sm:text-3xl font-serif">
+                            <div className="w-full h-full flex items-center justify-center text-stone-300 text-lg sm:text-xl font-serif">
                               {product.name.charAt(0)}
                             </div>
                           )}
                         </div>
-                        <div className="p-2.5 sm:p-3 flex flex-col flex-1 min-w-0">
-                          <span className="font-semibold text-stone-800 truncate text-sm sm:text-base">{product.name}</span>
+                        <div className="p-1.5 sm:p-2 flex flex-col flex-1 min-w-0">
+                          <span className="font-semibold text-stone-800 truncate text-xs sm:text-sm">{product.name}</span>
                           {product.sku && (
-                            <span className="text-xs text-stone-500 font-mono mt-0.5">{product.sku}</span>
+                            <span className="text-[10px] sm:text-xs text-stone-500 font-mono mt-0.5">{product.sku}</span>
                           )}
-                          {product.description && (
-                            <span className="text-xs text-stone-500 mt-0.5 line-clamp-2 hidden sm:block">{product.description}</span>
-                          )}
-                          <span className="text-amber-700 font-bold mt-auto pt-1.5 sm:pt-2 text-sm sm:text-base">NT$ {product.price}</span>
+                          <span className="text-amber-700 font-bold mt-auto pt-1 text-xs sm:text-sm">NT$ {product.price}</span>
                         </div>
                       </button>
                     ))}
@@ -299,6 +296,15 @@ export default function PosPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
+            {/* 結帳總金額置頂讓客人確認 */}
+            {cart.length > 0 && (
+              <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 shrink-0">
+                <div className="text-center">
+                  <div className="text-xs text-stone-500 mb-0.5">{t('total')}</div>
+                  <div className="text-3xl sm:text-4xl font-bold text-amber-800">NT$ {total}</div>
+                </div>
+              </div>
+            )}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
               {cart.length === 0 ? (
                 <p className="text-stone-400 text-center py-8 text-sm">{t('cartEmpty')}</p>
@@ -397,8 +403,8 @@ export default function PosPage() {
                 )}
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-stone-600">{t('total')}</span>
-                <span className="text-xl font-bold text-amber-800">NT$ {total}</span>
+                <span className="text-stone-600 font-medium">{t('total')}</span>
+                <span className="text-2xl sm:text-3xl font-bold text-amber-800">NT$ {total}</span>
               </div>
               <button
                 type="button"

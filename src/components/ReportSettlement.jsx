@@ -440,7 +440,7 @@ export default function ReportSettlement() {
                 {t('save')}
               </button>
               <button type="button" onClick={closeEdit} className="px-4 py-2.5 bg-stone-200 hover:bg-stone-300 rounded-xl font-medium min-h-[44px]">
-                {t('cancel')}
+                {t('cancelEdit')}
               </button>
             </div>
           </div>

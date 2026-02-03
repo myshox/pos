@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { useStore } from '../context/StoreContext';
-import ProductManager from '../components/ProductManager';
-import CategoryManager from '../components/CategoryManager';
-import OrderList from '../components/OrderList';
-import ReportSettlement from '../components/ReportSettlement';
-import StoreSettings from '../components/StoreSettings';
-import BackupRestore from '../components/BackupRestore';
+
+const ProductManager = lazy(() => import('../components/ProductManager'));
+const CategoryManager = lazy(() => import('../components/CategoryManager'));
+const OrderList = lazy(() => import('../components/OrderList'));
+const ReportSettlement = lazy(() => import('../components/ReportSettlement'));
+const StoreSettings = lazy(() => import('../components/StoreSettings'));
+const BackupRestore = lazy(() => import('../components/BackupRestore'));
 
 const TAB_IDS = ['products', 'categories', 'orders', 'report', 'settings', 'backup'];
 const TAB_KEYS = {
@@ -54,12 +55,14 @@ export default function AdminPage() {
         </div>
       </div>
       <div className="p-4 sm:p-6 min-h-[320px] sm:min-h-[420px] overflow-x-hidden">
-        {tab === 'products' && <ProductManager />}
-        {tab === 'categories' && <CategoryManager />}
-        {tab === 'orders' && <OrderList />}
-        {tab === 'report' && <ReportSettlement />}
-        {tab === 'settings' && <StoreSettings />}
-        {tab === 'backup' && <BackupRestore />}
+        <Suspense fallback={<div className="flex items-center justify-center py-16 text-stone-500">載入中...</div>}>
+          {tab === 'products' && <ProductManager />}
+          {tab === 'categories' && <CategoryManager />}
+          {tab === 'orders' && <OrderList />}
+          {tab === 'report' && <ReportSettlement />}
+          {tab === 'settings' && <StoreSettings />}
+          {tab === 'backup' && <BackupRestore />}
+        </Suspense>
       </div>
     </div>
   );
