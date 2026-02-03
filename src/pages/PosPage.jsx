@@ -271,7 +271,7 @@ export default function PosPage() {
       <button
         type="button"
         onClick={() => setShowCartDrawer(true)}
-        className="fixed bottom-6 right-4 sm:bottom-8 sm:right-6 z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition"
+        className="fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn"
         aria-label={t('cartCount').replace('{n}', String(cartTotalQty))}
         title={t('cartCount').replace('{n}', String(cartTotalQty))}
       >
@@ -292,7 +292,7 @@ export default function PosPage() {
           <div className="relative ml-auto w-full sm:max-w-md max-h-[90vh] sm:max-h-full bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-stone-200 shrink-0">
               <h2 className="text-lg font-semibold text-stone-800">{t('cart')}</h2>
-              <button type="button" onClick={() => setShowCartDrawer(false)} className="p-2 rounded-full hover:bg-stone-100 text-stone-600" aria-label={t('close')}>
+              <button type="button" onClick={() => setShowCartDrawer(false)} className="p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label={t('close')}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -310,30 +310,35 @@ export default function PosPage() {
                 <p className="text-stone-400 text-center py-8 text-sm">{t('cartEmpty')}</p>
               ) : (
                 cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center gap-2 bg-stone-50/80 p-3 rounded-xl">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-stone-200 flex-shrink-0">
-                      {item.image ? (
-                        <img src={item.image} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">{item.name.charAt(0)}</div>
-                      )}
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-stone-50/80 p-3 sm:p-3 rounded-xl">
+                    <div className="flex gap-3 min-w-0 flex-1">
+                      <div className="w-14 h-14 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-stone-200 flex-shrink-0">
+                        {item.image ? (
+                          <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">{item.name.charAt(0)}</div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-stone-800 truncate">{item.name}</div>
+                        <div className="text-xs text-stone-500">NT$ {item.price} × {item.qty}</div>
+                        <span className="font-semibold text-stone-800 text-sm sm:hidden">NT$ {item.price * item.qty}</span>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-stone-800 truncate">{item.name}</div>
-                      <div className="text-xs text-stone-500">NT$ {item.price} × {item.qty}</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => updateQty(item.id, -1)} className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center" aria-label="-">−</button>
-                      <span className="w-8 text-center font-medium text-sm">{item.qty}</span>
-                      <button type="button" onClick={() => updateQty(item.id, 1)} className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center" aria-label="+">+</button>
-                      <span className="font-semibold text-stone-800 w-14 text-right text-sm">NT$ {item.price * item.qty}</span>
-                      <button type="button" onClick={() => removeFromCart(item.id)} className="text-amber-800/80 hover:text-red-600 text-sm px-1 min-w-[32px] min-h-[32px] flex items-center justify-center">{t('remove')}</button>
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
+                      <div className="flex items-center gap-1">
+                        <button type="button" onClick={() => updateQty(item.id, -1)} className="w-11 h-11 sm:w-9 sm:h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center touch-target flex-shrink-0" aria-label="-">−</button>
+                        <span className="w-10 sm:w-8 text-center font-medium text-sm">{item.qty}</span>
+                        <button type="button" onClick={() => updateQty(item.id, 1)} className="w-11 h-11 sm:w-9 sm:h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center touch-target flex-shrink-0" aria-label="+">+</button>
+                      </div>
+                      <span className="font-semibold text-stone-800 w-14 text-right text-sm hidden sm:block">NT$ {item.price * item.qty}</span>
+                      <button type="button" onClick={() => removeFromCart(item.id)} className="text-amber-800/80 hover:text-red-600 text-sm px-3 py-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg">{t('remove')}</button>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <div className="p-4 border-t border-stone-200 space-y-3 shrink-0 bg-stone-50/50">
+            <div className="p-4 pt-3 border-t border-stone-200 space-y-3 shrink-0 bg-stone-50/50 cart-drawer-footer">
               <div>
                 <label className="block text-xs text-stone-600 mb-1">{t('paymentMethod')}</label>
                 <div className="flex gap-2 flex-wrap">
@@ -342,7 +347,7 @@ export default function PosPage() {
                       key={opt.id}
                       type="button"
                       onClick={() => setPaymentMethod(opt.id)}
-                      className={`flex-1 min-w-[70px] py-2.5 rounded-xl text-xs font-medium transition min-h-[44px] ${paymentMethod === opt.id ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                      className={`flex-1 min-w-[80px] py-3 rounded-xl text-sm font-medium transition min-h-[48px] ${paymentMethod === opt.id ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                     >
                       {t(opt.labelKey)}
                     </button>
@@ -351,25 +356,25 @@ export default function PosPage() {
               </div>
               <div>
                 <label className="block text-xs text-stone-600 mb-1">{t('orderNote')}</label>
-                <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="w-full border border-stone-300 rounded-xl px-3 py-2 text-sm min-h-[44px]" />
+                <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="w-full border border-stone-300 rounded-xl px-4 py-3 text-base min-h-[48px]" />
               </div>
               <div className="space-y-2">
                 <div>
                   <label className="block text-xs text-stone-600 mb-1.5">{t('discountQuick')}</label>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => applyQuickDiscount('percent', 10)} className="px-3 py-2 rounded-lg text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[40px]">
+                    <button type="button" onClick={() => applyQuickDiscount('percent', 10)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
                       {t('discount9off')}
                     </button>
-                    <button type="button" onClick={() => applyQuickDiscount('percent', 5)} className="px-3 py-2 rounded-lg text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[40px]">
+                    <button type="button" onClick={() => applyQuickDiscount('percent', 5)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
                       {t('discount95off')}
                     </button>
-                    <button type="button" onClick={() => applyQuickDiscount('amount', 50)} className="px-3 py-2 rounded-lg text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[40px]">
+                    <button type="button" onClick={() => applyQuickDiscount('amount', 50)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
                       {t('discount50')}
                     </button>
-                    <button type="button" onClick={() => applyQuickDiscount('amount', 100)} className="px-3 py-2 rounded-lg text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[40px]">
+                    <button type="button" onClick={() => applyQuickDiscount('amount', 100)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
                       {t('discount100')}
                     </button>
-                    <button type="button" onClick={() => applyQuickDiscount('none')} className="px-3 py-2 rounded-lg text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 min-h-[40px]">
+                    <button type="button" onClick={() => applyQuickDiscount('none')} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 min-h-[48px]">
                       {t('discountClear')}
                     </button>
                   </div>
@@ -377,7 +382,7 @@ export default function PosPage() {
                 <div className="flex justify-between text-sm text-stone-600 items-center flex-wrap gap-2">
                   <span>{t('discount')}</span>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-stone-300 rounded-lg px-2 py-1 text-sm min-h-[36px]">
+                    <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]">
                       <option value="none">{t('discountNone')}</option>
                       <option value="amount">{t('discountAmount')}</option>
                       <option value="percent">{t('discountPercent')}</option>
@@ -390,7 +395,7 @@ export default function PosPage() {
                         value={discountValue}
                         onChange={(e) => setDiscountValue(e.target.value)}
                         placeholder={discountType === 'percent' ? '10' : '50'}
-                        className="w-20 border border-stone-300 rounded-lg px-2 py-1 text-sm min-h-[36px]"
+                        className="w-24 border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]"
                       />
                     )}
                   </div>
@@ -410,7 +415,7 @@ export default function PosPage() {
                 type="button"
                 onClick={openCheckoutConfirm}
                 disabled={cart.length === 0 || total === 0 || isSubmitting}
-                className="btn-primary w-full py-3 rounded-xl text-base font-semibold min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed transition transform active:scale-[0.98]"
+                className="btn-primary w-full py-4 rounded-xl text-lg font-semibold min-h-[56px] disabled:opacity-50 disabled:cursor-not-allowed transition transform active:scale-[0.98]"
               >
                 {isSubmitting ? '...' : t('checkout')}
               </button>
@@ -443,17 +448,17 @@ export default function PosPage() {
               <div>
                 <label className="block text-sm text-stone-600 mb-2">{t('quantity')}</label>
                 <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setConfirmQty((q) => Math.max(1, q - 1))} className="w-10 h-10 rounded-full bg-stone-200 hover:bg-stone-300 font-bold text-stone-700 flex items-center justify-center">−</button>
-                  <span className="w-12 text-center text-lg font-semibold">{confirmQty}</span>
-                  <button type="button" onClick={() => setConfirmQty((q) => q + 1)} className="w-10 h-10 rounded-full bg-stone-200 hover:bg-stone-300 font-bold text-stone-700 flex items-center justify-center">+</button>
+                  <button type="button" onClick={() => setConfirmQty((q) => Math.max(1, q - 1))} className="w-12 h-12 rounded-full bg-stone-200 hover:bg-stone-300 font-bold text-stone-700 flex items-center justify-center min-w-[48px] min-h-[48px]">−</button>
+                  <span className="w-14 text-center text-xl font-semibold">{confirmQty}</span>
+                  <button type="button" onClick={() => setConfirmQty((q) => q + 1)} className="w-12 h-12 rounded-full bg-stone-200 hover:bg-stone-300 font-bold text-stone-700 flex items-center justify-center min-w-[48px] min-h-[48px]">+</button>
                 </div>
               </div>
             </div>
-            <div className="p-4 flex gap-3 border-t border-stone-200 bg-stone-50/50">
-              <button type="button" onClick={() => setConfirmProduct(null)} className="flex-1 py-3 rounded-xl font-medium bg-stone-200 text-stone-700 hover:bg-stone-300 min-h-[48px]">
+<div className="p-4 flex gap-3 border-t border-stone-200 bg-stone-50/50">
+            <button type="button" onClick={() => setConfirmProduct(null)} className="flex-1 py-4 rounded-xl font-medium bg-stone-200 text-stone-700 hover:bg-stone-300 min-h-[52px] text-base">
                 {t('cancel')}
               </button>
-              <button type="button" onClick={handleConfirmAddToCart} className="flex-1 py-3 rounded-xl font-semibold btn-primary text-white min-h-[48px]">
+              <button type="button" onClick={handleConfirmAddToCart} className="flex-1 py-4 rounded-xl font-semibold btn-primary text-white min-h-[52px] text-base">
                 {t('addToCart')}
               </button>
             </div>

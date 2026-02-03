@@ -22,15 +22,28 @@ body {
   min-height: 100%;
 }
 
-/* 觸控友善：重要按鈕可加 min-h-[44px] */
+/* 觸控友善：重要按鈕可加 min-h-[44px]；減少點擊延遲與閃爍 */
 .touch-target {
   min-height: 44px;
   min-width: 44px;
+}
+button, a, [role="button"], input, select, textarea {
+  -webkit-tap-highlight-color: rgba(184, 134, 11, 0.12);
+  touch-action: manipulation;
 }
 
 /* 手機/平板橫向捲動表格 */
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
+}
+
+/* 購物車/結帳區底部留安全區（iPhone 等有 Home 指示條） */
+.cart-drawer-footer {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.floating-cart-btn {
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  right: max(1rem, env(safe-area-inset-right));
 }
 
 /* 文創市集主色 */
