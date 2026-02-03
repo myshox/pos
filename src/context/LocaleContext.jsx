@@ -6,6 +6,9 @@ const LANGS = ['tw', 'kr', 'en'];
 
 const LocaleContext = createContext(null);
 
+const fallbackT = (key) => translations.tw?.[key] ?? key;
+const fallbackLocale = { lang: 'tw', setLang: () => {}, t: fallbackT, langLabels, LANGS };
+
 export function LocaleProvider({ children }) {
   const [lang, setLangState] = useState(() => {
     try {
@@ -38,6 +41,6 @@ export function LocaleProvider({ children }) {
 
 export function useLocale() {
   const ctx = useContext(LocaleContext);
-  if (!ctx) throw new Error('useLocale must be used within LocaleProvider');
+  if (!ctx) return fallbackLocale;
   return ctx;
 }
