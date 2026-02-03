@@ -10,7 +10,7 @@ export default function ProductManager() {
   const { showToast } = useToast();
   const [editing, setEditing] = useState(null);
   const defaultCategory = categories.length > 0 ? categories[0] : '';
-  const [form, setForm] = useState({ name: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
+  const [form, setForm] = useState({ name: '', sku: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
   const [isAdding, setIsAdding] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [imageError, setImageError] = useState('');
@@ -25,7 +25,7 @@ export default function ProductManager() {
   }, [products, categoryFilter]);
 
   const openAdd = () => {
-    setForm({ name: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
+    setForm({ name: '', sku: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
     setEditing(null);
     setIsAdding(true);
     setImageError('');
@@ -34,6 +34,7 @@ export default function ProductManager() {
   const openEdit = (product) => {
     setForm({
       name: product.name,
+      sku: product.sku ?? '',
       price: String(product.price),
       category: product.category || defaultCategory,
       description: product.description || '',
@@ -49,7 +50,7 @@ export default function ProductManager() {
   const closeForm = () => {
     setEditing(null);
     setIsAdding(false);
-    setForm({ name: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
+    setForm({ name: '', sku: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
     setImageError('');
   };
 
@@ -71,6 +72,7 @@ export default function ProductManager() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const name = form.name.trim();
+    const sku = form.sku?.trim() ?? '';
     const price = Number(form.price);
     const category = form.category?.trim() || defaultCategory || '';
     const description = form.description.trim();
@@ -80,10 +82,10 @@ export default function ProductManager() {
     if (!name) { showToast(t('validationProductName'), 'error'); return; }
     if (Number.isNaN(price) || price < 0) { showToast(t('validationPrice'), 'error'); return; }
     if (isAdding) {
-      addProduct({ name, price, category, description, image, isActive: true, useStock, stock });
+      addProduct({ name, sku, price, category, description, image, isActive: true, useStock, stock });
       closeForm();
     } else if (editing) {
-      updateProduct(editing, { name, price, category, description, image: image ?? '', useStock, stock });
+      updateProduct(editing, { name, sku, price, category, description, image: image ?? '', useStock, stock });
       closeForm();
     }
   };
@@ -126,6 +128,16 @@ export default function ProductManager() {
                 className="w-full border border-stone-300 rounded-xl px-3 py-2"
                 placeholder={t('productNamePlaceholder')}
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-600 mb-1">{t('sku')}</label>
+              <input
+                type="text"
+                value={form.sku}
+                onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
+                className="w-full border border-stone-300 rounded-xl px-3 py-2"
+                placeholder={t('skuPlaceholder')}
               />
             </div>
             <div>
@@ -234,6 +246,7 @@ export default function ProductManager() {
             <tr className="border-b border-stone-200">
               <th className="pb-3 text-stone-600 font-medium w-16">{t('image')}</th>
               <th className="pb-3 text-stone-600 font-medium">{t('id')}</th>
+              <th className="pb-3 text-stone-600 font-medium">{t('sku')}</th>
               <th className="pb-3 text-stone-600 font-medium">{t('productName')}</th>
               <th className="pb-3 text-stone-600 font-medium">{t('category')}</th>
               <th className="pb-3 text-stone-600 font-medium">{t('description')}</th>
@@ -254,6 +267,7 @@ export default function ProductManager() {
                   )}
                 </td>
                 <td className="py-3 text-stone-500">{p.id}</td>
+                <td className="py-3 text-stone-600 text-sm font-mono">{p.sku || '—'}</td>
                 <td className="py-3 font-medium text-stone-800">{p.name}</td>
                 <td className="py-3">
                   <span className="category-badge px-2 py-0.5 rounded-lg text-sm">{p.category}</span>

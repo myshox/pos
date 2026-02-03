@@ -187,7 +187,7 @@ export default function OrderList() {
                   <ul className="space-y-2">
                     {order.items.map((item, i) => (
                       <li key={i} className="flex justify-between text-stone-700">
-                        <span>{item.name} × {item.qty}</span>
+                        <span>{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
                         <span>NT$ {item.price * item.qty}</span>
                       </li>
                     ))}

@@ -76,3 +76,14 @@ body {
 .modal-panel {
   animation: modal-in 0.2s ease-out;
 }
+
+/* POS 字型大小：用 zoom 讓整頁（字、按鈕、間距）一起縮放 */
+.pos-font-small {
+  zoom: 0.88;
+}
+.pos-font-medium {
+  zoom: 1;
+}
+.pos-font-large {
+  zoom: 1.12;
+}

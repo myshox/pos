@@ -83,7 +83,7 @@ export default function ReceiptModal({ order, onClose }) {
           </div>
           {order.items.map((item, i) => (
             <div key={i} className="flex justify-between">
-              <span>{item.name} × {item.qty}</span>
+              <span>{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
               <span>NT$ {item.price * item.qty}</span>
             </div>
           ))}
