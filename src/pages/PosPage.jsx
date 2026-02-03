@@ -7,6 +7,8 @@ import { getDailyReport } from '../lib/reportUtils';
 
 const PAYMENT_STORAGE_KEY = 'pos_last_payment';
 const FONT_SIZE_STORAGE_KEY = 'pos_font_size';
+const PRODUCT_VIEW_STORAGE_KEY = 'pos_product_view';
+const SHOW_PRODUCT_IMAGE_STORAGE_KEY = 'pos_show_product_image';
 
 const PAYMENT_OPTIONS = [
   { id: 'line', labelKey: 'payLine' },
@@ -42,6 +44,21 @@ export default function PosPage() {
     } catch (_) {}
     return 'medium';
   });
+  const [productViewMode, setProductViewMode] = useState(() => {
+    try {
+      const s = localStorage.getItem(PRODUCT_VIEW_STORAGE_KEY);
+      if (['grid', 'list'].includes(s)) return s;
+    } catch (_) {}
+    return 'grid';
+  });
+  const [showProductImage, setShowProductImage] = useState(() => {
+    try {
+      const s = localStorage.getItem(SHOW_PRODUCT_IMAGE_STORAGE_KEY);
+      if (s === '0' || s === 'false') return false;
+      if (s === '1' || s === 'true') return true;
+    } catch (_) {}
+    return true;
+  });
   const confirmBackRef = useRef(null);
 
   useEffect(() => {
@@ -51,6 +68,14 @@ export default function PosPage() {
   useEffect(() => {
     try { localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize); } catch (_) {}
   }, [fontSize]);
+
+  useEffect(() => {
+    try { localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, productViewMode); } catch (_) {}
+  }, [productViewMode]);
+
+  useEffect(() => {
+    try { localStorage.setItem(SHOW_PRODUCT_IMAGE_STORAGE_KEY, showProductImage ? '1' : '0'); } catch (_) {}
+  }, [showProductImage]);
 
   useEffect(() => {
     refreshProducts();
@@ -218,11 +243,90 @@ export default function PosPage() {
 
       {/* 商品區 - 獨立一頁，全區塊捲動 */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-3">
-        <h1 className="text-xl sm:text-2xl font-semibold mb-4 text-stone-800" style={{ fontFamily: 'var(--font-cute)' }}>
-          {t('productArea')}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h1 className="text-xl sm:text-2xl font-semibold text-stone-800" style={{ fontFamily: 'var(--font-cute)' }}>
+            {t('productArea')}
+          </h1>
+          {activeProducts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-stone-500 text-xs">{t('productViewLabel')}</span>
+              <div className="flex rounded-lg overflow-hidden border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setProductViewMode('grid')}
+                  className={productViewMode === 'grid' ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-stone-50 text-stone-600 hover:bg-stone-100'}
+                >
+                  {t('productViewGrid')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProductViewMode('list')}
+                  className={productViewMode === 'list' ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-stone-50 text-stone-600 hover:bg-stone-100'}
+                >
+                  {t('productViewList')}
+                </button>
+              </div>
+              <span className="text-stone-500 text-xs ml-1">{t('showProductImage')}</span>
+              <div className="flex rounded-lg overflow-hidden border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setShowProductImage(true)}
+                  className={showProductImage ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-stone-50 text-stone-600 hover:bg-stone-100'}
+                >
+                  {t('showProductImage')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProductImage(false)}
+                  className={!showProductImage ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-stone-50 text-stone-600 hover:bg-stone-100'}
+                >
+                  {t('hideProductImage')}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         {activeProducts.length === 0 ? (
           <p className="text-stone-500 text-sm">{t('noProductsHint')}</p>
+        ) : productViewMode === 'list' ? (
+          <div className="space-y-4">
+            {categories.length > 0 && categories.map((cat) => (
+              <div key={cat}>
+                <h2 className="text-sm font-medium text-stone-500 mb-2 uppercase tracking-wider">{cat}</h2>
+                <div className="space-y-1">
+                  {activeProducts
+                    .filter((p) => (cat === '其他' ? !(p.category && p.category.trim()) : p.category === cat))
+                    .map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => openProductConfirm(product)}
+                        type="button"
+                        className="card-market w-full rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.99] transition border flex flex-row items-center gap-3 p-2 sm:p-3 min-h-[56px]"
+                      >
+                        {showProductImage && (
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-stone-100 flex-shrink-0 overflow-hidden">
+                            {product.image ? (
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-stone-300 text-lg font-serif">
+                                {product.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 text-left">
+                          <span className="font-semibold text-stone-800 truncate block text-sm sm:text-base">{product.name}</span>
+                          {product.sku && (
+                            <span className="text-xs text-stone-500 font-mono">{product.sku}</span>
+                          )}
+                        </div>
+                        <span className="text-amber-700 font-bold text-sm sm:text-base flex-shrink-0">NT$ {product.price}</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="space-y-6">
             {categories.length > 0 && categories.map((cat) => (
@@ -238,19 +342,21 @@ export default function PosPage() {
                         type="button"
                         className="card-market rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[100px] sm:min-h-[110px]"
                       >
-                        <div className="w-full aspect-square bg-stone-100 flex-shrink-0 min-h-[56px] sm:min-h-[60px]">
-                          {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-stone-300 text-lg sm:text-xl font-serif">
-                              {product.name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
+                        {showProductImage && (
+                          <div className="w-full aspect-square bg-stone-100 flex-shrink-0 min-h-[56px] sm:min-h-[60px]">
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-stone-300 text-lg sm:text-xl font-serif">
+                                {product.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className="p-1.5 sm:p-2 flex flex-col flex-1 min-w-0">
                           <span className="font-semibold text-stone-800 truncate text-xs sm:text-sm">{product.name}</span>
                           {product.sku && (

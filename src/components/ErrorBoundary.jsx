@@ -1,11 +1,12 @@
 import React from 'react';
-import { useLocale } from '../context/LocaleContext';
+
+// 不使用 useLocale，避免在 context 未就緒時（例如 useLocale 拋錯）錯誤畫面再次拋錯
+const ERROR_TITLE = '頁面發生錯誤';
 
 function ErrorFallback({ error }) {
-  const { t } = useLocale();
   return (
     <div style={{ padding: 24, fontFamily: 'var(--font-cute)' }}>
-      <h1 style={{ color: '#b91c1c' }}>{t('errorTitle')}</h1>
+      <h1 style={{ color: '#b91c1c' }}>{ERROR_TITLE}</h1>
       <pre style={{ background: '#fef2f2', padding: 16, overflow: 'auto' }}>
         {error?.message || String(error)}
       </pre>
