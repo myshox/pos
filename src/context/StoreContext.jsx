@@ -15,7 +15,7 @@ function getCurrentDataForSync() {
   };
 }
 
-const StoreContext = createContext(null);
+export const StoreContext = createContext(null);
 const PIN_SESSION_KEY = 'pos_admin_unlock_until';
 
 export function StoreProvider({ children }) {
@@ -23,9 +23,18 @@ export function StoreProvider({ children }) {
   const [orders, setOrders] = useState([]);
   const [categories, setCategoriesState] = useState([]);
   const [store, setStoreState] = useState(() => getStore());
+  const [isSyncing, setIsSyncing] = useState(false);
   const [unlockUntil, setUnlockUntil] = useState(() => {
     try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch (_) { return 0; }
   });
+
+  const triggerSync = useCallback(() => {
+    if (!isSyncEnabled()) return;
+    scheduleUpload(getCurrentDataForSync, {
+      onUploadStart: () => setIsSyncing(true),
+      onUploadEnd: () => setIsSyncing(false),
+    });
+  }, []);
 
   // 初始載入：先本機，若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
   useEffect(() => {
@@ -79,8 +88,8 @@ export function StoreProvider({ children }) {
   const persistCategories = useCallback((next) => {
     setCategoriesState(next);
     saveCategories(next);
-    scheduleUpload(getCurrentDataForSync);
-  }, []);
+    triggerSync();
+  }, [triggerSync]);
 
   const addCategory = useCallback((name) => {
     const trimmed = String(name).trim();
@@ -112,8 +121,8 @@ export function StoreProvider({ children }) {
   const persistProducts = useCallback((nextProducts) => {
     setProducts(nextProducts);
     saveProducts(nextProducts);
-    scheduleUpload(getCurrentDataForSync);
-  }, []);
+    triggerSync();
+  }, [triggerSync]);
 
   const addProduct = useCallback((product) => {
     const current = getProducts();
@@ -160,15 +169,15 @@ export function StoreProvider({ children }) {
       if (p && p.useStock && typeof p.stock === 'number' && item.qty > 0) decrementProductStock(p.id, item.qty);
     });
     setProducts(getProducts());
-    scheduleUpload(getCurrentDataForSync);
+    triggerSync();
     return newOrder;
-  }, []);
+  }, [triggerSync]);
 
   const updateStore = useCallback((next) => {
     saveStore({ ...getStore(), ...next });
     setStoreState(getStore());
-    scheduleUpload(getCurrentDataForSync);
-  }, []);
+    triggerSync();
+  }, [triggerSync]);
 
   const refreshStore = useCallback(() => {
     setStoreState(getStore());
@@ -196,21 +205,21 @@ export function StoreProvider({ children }) {
   }, []);
 
   const syncNow = useCallback(() => {
-    scheduleUpload(getCurrentDataForSync);
-  }, []);
+    triggerSync();
+  }, [triggerSync]);
 
   const updateOrder = useCallback((orderId, updates) => {
     const updated = updateOrderStorage(orderId, updates);
     if (updated) setOrders(getOrders());
-    scheduleUpload(getCurrentDataForSync);
+    triggerSync();
     return updated;
-  }, []);
+  }, [triggerSync]);
 
   const deleteOrder = useCallback((orderId) => {
     deleteOrderStorage(orderId);
     setOrders(getOrders());
-    scheduleUpload(getCurrentDataForSync);
-  }, []);
+    triggerSync();
+  }, [triggerSync]);
 
   const value = {
     products,
@@ -242,6 +251,7 @@ export function StoreProvider({ children }) {
     persistProducts,
     syncNow,
     isSyncEnabled: isSyncEnabled(),
+    isSyncing,
   };
 
   return (

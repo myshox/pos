@@ -66,14 +66,17 @@ export async function fetchStoreData() {
 /**
  * 上傳目前資料到雲端（會 debounce）
  * getCurrentData: () => ({ products, orders, categories, store })
+ * options: { onUploadStart?: () => void, onUploadEnd?: () => void }
  */
-export function scheduleUpload(getCurrentData) {
+export function scheduleUpload(getCurrentData, options = {}) {
   const c = getClient();
   if (!c || typeof getCurrentData !== 'function') return;
   if (uploadTimer) clearTimeout(uploadTimer);
   uploadTimer = setTimeout(async () => {
     uploadTimer = null;
+    const { onUploadStart, onUploadEnd } = options;
     try {
+      onUploadStart?.();
       const d = getCurrentData();
       await c.from(TABLE).upsert(
         {
@@ -87,6 +90,7 @@ export function scheduleUpload(getCurrentData) {
         { onConflict: 'id' }
       );
     } catch (_) {}
+    onUploadEnd?.();
   }, UPLOAD_DEBOUNCE_MS);
 }
 

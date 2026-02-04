@@ -240,7 +240,15 @@ export default function ProductManager() {
         </form>
       )}
 
+      {/* 篩選後無商品 */}
+      {products.length > 0 && filteredProducts.length === 0 && (
+        <div className="py-10 text-center">
+          <p className="text-stone-500">{t('noProductsInCategory')}</p>
+        </div>
+      )}
+
       {/* 手機／平板：卡片列表 */}
+      {filteredProducts.length > 0 && (
       <div className="lg:hidden space-y-3">
         {filteredProducts.map((p) => (
           <article
@@ -301,8 +309,10 @@ export default function ProductManager() {
           </article>
         ))}
       </div>
+      )}
 
       {/* 桌機：表格 */}
+      {filteredProducts.length > 0 && (
       <div className="hidden lg:block overflow-x-auto -mx-1">
         <table className="w-full text-left min-w-[880px]">
           <thead>
@@ -383,6 +393,7 @@ export default function ProductManager() {
           </tbody>
         </table>
       </div>
+      )}
       {products.length === 0 && (
         <div className="py-12 text-center">
           <p className="text-stone-500">{t('noProducts')}</p>

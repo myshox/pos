@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
+import { StoreContext } from '../context/StoreContext';
 
 export default function Layout({ children }) {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const { t, lang, setLang, LANGS, langLabels } = useLocale();
+  const store = useContext(StoreContext);
+  const isSyncEnabled = store?.isSyncEnabled ?? false;
+  const isSyncing = store?.isSyncing ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -16,6 +20,14 @@ export default function Layout({ children }) {
             <img src="/logo.png" alt="" className="h-8 sm:h-10 w-auto object-contain hidden sm:block" onError={(e) => { e.target.style.display = 'none'; }} />
             <span className="text-base sm:text-xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-cute)' }}>{t('appName')}</span>
           </Link>
+
+          {/* 同步中指示（有啟用 Supabase 時） */}
+          {isSyncEnabled && isSyncing && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-100 text-xs font-medium animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-amber-300 border border-amber-200" />
+              {t('syncSyncing')}
+            </span>
+          )}
 
           {/* 桌面：語言 + 導覽 */}
           <div className="hidden md:flex items-center gap-3">
