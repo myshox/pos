@@ -92,13 +92,13 @@ export default function ProductManager() {
 
   return (
     <div>
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-3 mb-4 md:mb-6">
         <h2 className="text-xl font-semibold text-stone-800">{t('tabProducts')}</h2>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="border border-stone-300 rounded-xl px-3 py-2 text-sm bg-white"
+            className="border border-stone-300 rounded-xl px-3 py-2.5 text-sm bg-white min-h-[44px] w-full sm:w-auto"
           >
             <option value="">{t('allCategories')}</option>
             {categoryOptions.map((c) => (
@@ -108,7 +108,7 @@ export default function ProductManager() {
           <button
             type="button"
             onClick={openAdd}
-            className="btn-primary px-4 py-2 rounded-xl font-medium"
+            className="btn-primary px-4 py-2.5 rounded-xl font-medium min-h-[44px] w-full sm:w-auto"
           >
             {t('addProduct')}
           </button>
@@ -240,78 +240,143 @@ export default function ProductManager() {
         </form>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
+      {/* 手機／平板：卡片列表 */}
+      <div className="lg:hidden space-y-3">
+        {filteredProducts.map((p) => (
+          <article
+            key={p.id}
+            className="card-market rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+          >
+            <div className="flex gap-3 min-w-0 flex-1">
+              {p.image ? (
+                <img src={p.image} alt="" className="w-16 h-16 sm:w-14 sm:h-14 object-cover rounded-lg flex-shrink-0" />
+              ) : (
+                <div className="w-16 h-16 sm:w-14 sm:h-14 rounded-lg bg-stone-200 flex items-center justify-center text-stone-400 text-sm flex-shrink-0">{t('noImage')}</div>
+              )}
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-stone-800 truncate">{p.name}</h3>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <span className="category-badge px-2 py-0.5 rounded-lg text-xs">{p.category || '—'}</span>
+                  <span className="text-amber-700 font-semibold text-sm">NT$ {p.price}</span>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                      p.isActive ? 'bg-amber-100 text-amber-800' : 'bg-stone-200 text-stone-600'
+                    }`}
+                  >
+                    {p.isActive ? t('onSale') : t('offSale')}
+                  </span>
+                  {p.useStock && (
+                    <span className={`text-xs ${p.stock < 5 ? 'text-red-600 font-medium' : 'text-stone-500'}`}>
+                      {t('productColStock')} {p.stock}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:flex-shrink-0 border-t border-stone-100 pt-3 sm:pt-0 sm:border-t-0">
+              <button
+                type="button"
+                onClick={() => toggleProductActive(p.id)}
+                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-stone-200 hover:bg-stone-300"
+              >
+                {p.isActive ? t('setOffSale') : t('setOnSale')}
+              </button>
+              <button
+                type="button"
+                onClick={() => openEdit(p)}
+                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-amber-100 hover:bg-amber-200 text-amber-800"
+              >
+                {t('edit')}
+              </button>
+              <button
+                type="button"
+                onClick={() => window.confirm(t('confirmDeleteProduct')) && deleteProduct(p.id)}
+                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-red-100 hover:bg-red-200 text-red-700"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {/* 桌機：表格 */}
+      <div className="hidden lg:block overflow-x-auto -mx-1">
+        <table className="w-full text-left min-w-[880px]">
           <thead>
-            <tr className="border-b border-stone-200">
-              <th className="pb-3 text-stone-600 font-medium w-16">{t('image')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('id')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('sku')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('productName')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('category')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('description')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('price')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('status')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('productStock')}</th>
-              <th className="pb-3 text-stone-600 font-medium">{t('actions')}</th>
+            <tr className="border-b-2 border-stone-200 bg-stone-50/80">
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-14" title={t('image')}>{t('image')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-12" title={t('id')}>{t('id')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-16" title={t('sku')}>{t('sku')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap min-w-[72px]" title={t('productName')}>{t('productName')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap min-w-[56px]" title={t('category')}>{t('category')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap min-w-[52px]" title={t('description')}>{t('productColDesc')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-20" title={t('price')}>{t('price')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-16" title={t('status')}>{t('status')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-14" title={t('productStock')}>{t('productColStock')}</th>
+              <th className="py-3 px-2 text-stone-600 font-medium text-sm whitespace-nowrap w-[180px]" title={t('actions')}>{t('actions')}</th>
             </tr>
           </thead>
           <tbody>
             {filteredProducts.map((p) => (
-              <tr key={p.id} className="border-b border-stone-100">
-                <td className="py-3">
+              <tr key={p.id} className="border-b border-stone-100 hover:bg-stone-50/50">
+                <td className="py-2.5 px-2 align-middle">
                   {p.image ? (
-                    <img src={p.image} alt="" className="w-12 h-12 object-cover rounded-lg" />
+                    <img src={p.image} alt="" className="w-11 h-11 object-cover rounded-lg flex-shrink-0" />
                   ) : (
-                    <div className="w-12 h-12 rounded-lg bg-stone-200 flex items-center justify-center text-stone-400 text-xs">{t('noImage')}</div>
+                    <div className="w-11 h-11 rounded-lg bg-stone-200 flex items-center justify-center text-stone-400 text-xs">{t('noImage')}</div>
                   )}
                 </td>
-                <td className="py-3 text-stone-500">{p.id}</td>
-                <td className="py-3 text-stone-600 text-sm font-mono">{p.sku || '—'}</td>
-                <td className="py-3 font-medium text-stone-800">{p.name}</td>
-                <td className="py-3">
-                  <span className="category-badge px-2 py-0.5 rounded-lg text-sm">{p.category}</span>
+                <td className="py-2.5 px-2 text-stone-500 text-xs truncate align-middle" title={String(p.id)}>{String(p.id).slice(0, 6)}</td>
+                <td className="py-2.5 px-2 text-stone-600 text-sm font-mono truncate align-middle">{p.sku || '—'}</td>
+                <td className="py-2.5 px-2 font-medium text-stone-800 text-sm truncate align-middle" title={p.name}>{p.name}</td>
+                <td className="py-2.5 px-2 align-middle">
+                  <span className="category-badge px-2 py-0.5 rounded-lg text-xs whitespace-nowrap inline-block max-w-full truncate" title={p.category}>{p.category || '—'}</span>
                 </td>
-                <td className="py-3 text-stone-600 text-sm max-w-[180px] truncate">{p.description || '—'}</td>
-                <td className="py-3 text-stone-700">NT$ {p.price}</td>
-                <td className="py-3">
+                <td className="py-2.5 px-2 text-stone-600 text-xs truncate align-middle" title={p.description || ''}>{p.description || '—'}</td>
+                <td className="py-2.5 px-2 text-stone-700 text-sm whitespace-nowrap align-middle">NT$ {p.price}</td>
+                <td className="py-2.5 px-2 align-middle">
                   <span
-                    className={`inline-block px-2 py-1 rounded-full text-sm ${
+                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
                       p.isActive ? 'bg-amber-100 text-amber-800' : 'bg-stone-200 text-stone-600'
                     }`}
                   >
                     {p.isActive ? t('onSale') : t('offSale')}
                   </span>
                 </td>
-                <td className="py-3">
+                <td className="py-2.5 px-2 text-sm align-middle">
                   {p.useStock ? (
-                    <span className={p.stock < 5 ? 'text-red-600 font-medium' : 'text-stone-700'}>{p.stock}</span>
+                    <span className={`whitespace-nowrap ${p.stock < 5 ? 'text-red-600 font-medium' : 'text-stone-700'}`}>{p.stock}</span>
                   ) : (
                     <span className="text-stone-400">—</span>
                   )}
                 </td>
-                <td className="py-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleProductActive(p.id)}
-                    className="text-sm px-3 py-1 rounded-lg bg-stone-200 hover:bg-stone-300"
-                  >
-                    {p.isActive ? t('setOffSale') : t('setOnSale')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(p)}
-                    className="text-sm px-3 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800"
-                  >
-                    {t('edit')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => window.confirm(t('confirmDeleteProduct')) && deleteProduct(p.id)}
-                    className="text-sm px-3 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700"
-                  >
-                    {t('delete')}
-                  </button>
+                <td className="py-2.5 px-2 align-middle">
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => toggleProductActive(p.id)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-stone-200 hover:bg-stone-300 whitespace-nowrap"
+                    >
+                      {p.isActive ? t('setOffSale') : t('setOnSale')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 whitespace-nowrap"
+                    >
+                      {t('edit')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.confirm(t('confirmDeleteProduct')) && deleteProduct(p.id)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 whitespace-nowrap"
+                    >
+                      {t('delete')}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

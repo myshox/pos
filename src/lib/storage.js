@@ -93,7 +93,7 @@ export function deleteOrder(orderId) {
 }
 
 // 店鋪設定
-const DEFAULT_STORE = { name: '', phone: '', address: '', taxId: '' };
+const DEFAULT_STORE = { name: '', phone: '', address: '', taxId: '', pinDisabled: false };
 
 export function getStore() {
   try {

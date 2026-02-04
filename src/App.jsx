@@ -21,9 +21,9 @@ function App() {
   }, []);
 
   return (
-    <ToastProvider>
-      <ErrorBoundary>
-        <StoreProvider>
+    <StoreProvider>
+      <ToastProvider>
+        <ErrorBoundary>
           <BrowserRouter>
             <Layout>
               <Routes>
@@ -32,9 +32,9 @@ function App() {
               </Routes>
             </Layout>
           </BrowserRouter>
-        </StoreProvider>
-      </ErrorBoundary>
-    </ToastProvider>
+        </ErrorBoundary>
+      </ToastProvider>
+    </StoreProvider>
   );
 }
 

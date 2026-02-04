@@ -93,13 +93,27 @@ button, a, [role="button"], input, select, textarea {
   animation: modal-in 0.2s ease-out;
 }
 
-/* POS 字型大小：用 zoom 讓整頁（字、按鈕、間距）一起縮放 */
-.pos-font-small {
-  zoom: 0.88;
+/* POS 字型大小：transform 相容 iOS（Safari/WebView 不支援 zoom） */
+.pos-font-scaler.pos-font-small {
+  -webkit-transform: scale(0.88);
+  transform: scale(0.88);
+  transform-origin: top left;
+  width: 113.636%;
+  height: 113.636%;
+  min-height: 113.636%;
 }
-.pos-font-medium {
-  zoom: 1;
+.pos-font-scaler.pos-font-medium {
+  -webkit-transform: scale(1);
+  transform: scale(1);
+  transform-origin: top left;
+  width: 100%;
+  height: 100%;
 }
-.pos-font-large {
-  zoom: 1.12;
+.pos-font-scaler.pos-font-large {
+  -webkit-transform: scale(1.12);
+  transform: scale(1.12);
+  transform-origin: top left;
+  width: 89.29%;
+  height: 89.29%;
+  min-height: 89.29%;
 }

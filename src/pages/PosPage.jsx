@@ -11,9 +11,9 @@ const PRODUCT_VIEW_STORAGE_KEY = 'pos_product_view';
 const SHOW_PRODUCT_IMAGE_STORAGE_KEY = 'pos_show_product_image';
 
 const PAYMENT_OPTIONS = [
-  { id: 'line', labelKey: 'payLine' },
-  { id: 'cash', labelKey: 'payCash' },
-  { id: 'card', labelKey: 'payCard' },
+  { id: 'line', labelKey: 'payLine', activeClass: 'bg-green-600 hover:bg-green-700 text-white', inactiveClass: 'bg-green-50 text-green-800 border border-green-200 hover:bg-green-100' },
+  { id: 'cash', labelKey: 'payCash', activeClass: 'bg-amber-600 hover:bg-amber-700 text-white', inactiveClass: 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100' },
+  { id: 'card', labelKey: 'payCard', activeClass: 'bg-blue-600 hover:bg-blue-700 text-white', inactiveClass: 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100' },
 ];
 
 export default function PosPage() {
@@ -57,6 +57,7 @@ export default function PosPage() {
     } catch (_) {}
     return true;
   });
+  const [discountSectionExpanded, setDiscountSectionExpanded] = useState(false);
   const confirmBackRef = useRef(null);
 
   useEffect(() => {
@@ -197,29 +198,29 @@ export default function PosPage() {
   }, [showCheckoutConfirm]);
 
   return (
-    <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 pos-font-${fontSize}`}>
-      {/* 今日營業摘要 + 字型大小 */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 bg-white/80 rounded-xl border border-stone-200 shrink-0 mx-2 sm:mx-3 mt-1">
-        <span className="text-stone-600 font-medium text-sm">{t('todaySales')}</span>
-        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+    <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
+      <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0`}>
+      {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white/80 rounded-xl border border-stone-200 shrink-0 mx-2 sm:mx-3 mt-1">
+        <div className="flex items-center gap-3">
+          <span className="text-stone-600 font-medium text-sm">{t('todaySales')}</span>
           <span className="text-stone-700 text-sm"><span className="text-stone-500">{t('ordersCount')} </span><strong>{todayReport.count}</strong></span>
           <span className="text-amber-800 font-semibold text-sm">NT$ {todayReport.total}</span>
-          <span className="text-stone-500 text-xs sm:text-sm">|</span>
-          <div className="flex items-center gap-1">
-            <span className="text-stone-500 text-xs">{t('fontSize')}</span>
-            {['small', 'medium', 'large'].map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setFontSize(size)}
-                className={`min-w-[2rem] sm:min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-medium transition ${
-                  fontSize === size ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                }`}
-              >
-                {size === 'small' ? t('fontSizeSmall') : size === 'medium' ? t('fontSizeMedium') : t('fontSizeLarge')}
-              </button>
-            ))}
-          </div>
+        </div>
+        <div className="flex items-center gap-1.5 border-t border-stone-100 pt-2 sm:pt-0 sm:border-t-0">
+          <span className="text-stone-500 text-xs">{t('fontSize')}</span>
+          {['small', 'medium', 'large'].map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => setFontSize(size)}
+              className={`min-w-[2.25rem] sm:min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-medium transition min-h-[36px] ${
+                fontSize === size ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              }`}
+            >
+              {size === 'small' ? t('fontSizeSmall') : size === 'medium' ? t('fontSizeMedium') : t('fontSizeLarge')}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -378,13 +379,9 @@ export default function PosPage() {
         <div className="fixed inset-0 z-50 flex flex-col sm:flex-row" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
           <div className="relative ml-auto w-full sm:max-w-md max-h-[90vh] sm:max-h-full bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col">
-            <div className="flex items-center gap-2 p-4 border-b border-stone-200 shrink-0">
-              <button type="button" onClick={() => setShowCartDrawer(false)} className="flex items-center gap-1.5 py-2 pr-2 pl-2 rounded-xl hover:bg-stone-100 text-stone-600 font-medium text-sm min-h-[44px] transition flex-shrink-0" aria-label={t('backToPrev')}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                <span>{t('backToPrev')}</span>
-              </button>
-              <h2 className="flex-1 text-center text-lg font-semibold text-stone-800">{t('cart')}</h2>
-              <button type="button" onClick={() => setShowCartDrawer(false)} className="p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0" aria-label={t('close')}>
+            <div className="flex items-center justify-center relative p-4 border-b border-stone-200 shrink-0">
+              <h2 className="text-lg font-semibold text-stone-800">{t('cart')}</h2>
+              <button type="button" onClick={() => setShowCartDrawer(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0" aria-label={t('close')}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -392,8 +389,8 @@ export default function PosPage() {
             {cart.length > 0 && (
               <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 shrink-0">
                 <div className="text-center">
-                  <div className="text-xs text-stone-500 mb-0.5">{t('total')}</div>
-                  <div className="text-3xl sm:text-4xl font-bold text-amber-800">NT$ {total}</div>
+                  <div className="text-sm text-stone-500 mb-1">{t('total')}</div>
+                  <div className="text-4xl sm:text-5xl font-bold text-amber-800">NT$ {total}</div>
                 </div>
               </div>
             )}
@@ -439,7 +436,7 @@ export default function PosPage() {
                       key={opt.id}
                       type="button"
                       onClick={() => setPaymentMethod(opt.id)}
-                      className={`flex-1 min-w-[80px] py-3 rounded-xl text-sm font-medium transition min-h-[48px] ${paymentMethod === opt.id ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                      className={`flex-1 min-w-[80px] py-3 rounded-xl text-sm font-medium transition min-h-[48px] ${paymentMethod === opt.id ? opt.activeClass : opt.inactiveClass}`}
                     >
                       {t(opt.labelKey)}
                     </button>
@@ -471,37 +468,52 @@ export default function PosPage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex justify-between text-sm text-stone-600 items-center flex-wrap gap-2">
-                  <span>{t('discount')}</span>
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]">
-                      <option value="none">{t('discountNone')}</option>
-                      <option value="amount">{t('discountAmount')}</option>
-                      <option value="percent">{t('discountPercent')}</option>
-                    </select>
-                    {(discountType === 'amount' || discountType === 'percent') && (
-                      <input
-                        type="number"
-                        min={0}
-                        step={discountType === 'percent' ? 1 : 1}
-                        value={discountValue}
-                        onChange={(e) => setDiscountValue(e.target.value)}
-                        placeholder={discountType === 'percent' ? '10' : '50'}
-                        className="w-24 border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]"
-                      />
-                    )}
-                  </div>
+                <div className="border-t border-stone-100 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDiscountSectionExpanded((e) => !e)}
+                    className="w-full flex items-center justify-between py-2 text-sm font-medium text-stone-600 hover:text-stone-800 rounded-lg hover:bg-stone-50 min-h-[44px]"
+                    aria-expanded={discountSectionExpanded}
+                  >
+                    <span>{t('discountCustom')}</span>
+                    <svg className={`w-5 h-5 transition-transform ${discountSectionExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {discountSectionExpanded && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex justify-between text-sm text-stone-600 items-center flex-wrap gap-2">
+                        <span>{t('discount')}</span>
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                          <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]">
+                            <option value="none">{t('discountNone')}</option>
+                            <option value="amount">{t('discountAmount')}</option>
+                            <option value="percent">{t('discountPercent')}</option>
+                          </select>
+                          {(discountType === 'amount' || discountType === 'percent') && (
+                            <input
+                              type="number"
+                              min={0}
+                              step={discountType === 'percent' ? 1 : 1}
+                              value={discountValue}
+                              onChange={(e) => setDiscountValue(e.target.value)}
+                              placeholder={discountType === 'percent' ? '10' : '50'}
+                              className="w-24 border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]"
+                            />
+                          )}
+                        </div>
+                      </div>
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-amber-700">
+                          <span>{t('discountDeduct')}</span>
+                          <span>- NT$ {discountAmount}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-amber-700">
-                    <span>{t('discountDeduct')}</span>
-                    <span>- NT$ {discountAmount}</span>
-                  </div>
-                )}
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-stone-600 font-medium">{t('total')}</span>
-                <span className="text-2xl sm:text-3xl font-bold text-amber-800">NT$ {total}</span>
+                <span className="text-stone-600 font-medium text-base">{t('total')}</span>
+                <span className="text-3xl sm:text-4xl font-bold text-amber-800">NT$ {total}</span>
               </div>
               <button
                 type="button"
@@ -510,6 +522,15 @@ export default function PosPage() {
                 className="btn-primary w-full py-4 rounded-xl text-lg font-semibold min-h-[56px] disabled:opacity-50 disabled:cursor-not-allowed transition transform active:scale-[0.98]"
               >
                 {isSubmitting ? '...' : t('checkout')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCartDrawer(false)}
+                className="w-full py-3.5 rounded-xl font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 flex items-center justify-center gap-2 min-h-[48px] transition"
+                aria-label={t('backToPrev')}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                <span>{t('backToPrev')}</span>
               </button>
             </div>
           </div>
@@ -579,6 +600,7 @@ export default function PosPage() {
       {receiptOrder && (
         <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
       )}
+      </div>
     </div>
   );
 }

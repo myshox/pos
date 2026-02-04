@@ -29,10 +29,32 @@ export default function StoreSettings() {
     showToast(t('save'));
   };
 
+  const handlePinDisabledChange = (e) => {
+    const checked = e.target.checked;
+    updateStore({ pinDisabled: checked });
+    showToast(checked ? t('pinDisabledLabel') + ' ✓' : t('save'));
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-stone-800">{t('storeSettingsTitle')}</h2>
       <p className="text-stone-600 text-sm">{t('storeSettingsHint')}</p>
+
+      {/* 暫時關閉 PIN：即時生效 */}
+      <div className="card-market rounded-2xl p-5 sm:p-6 max-w-xl">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!!store.pinDisabled}
+            onChange={handlePinDisabledChange}
+            className="mt-1 w-5 h-5 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+          />
+          <div>
+            <span className="font-medium text-stone-800">{t('pinDisabledLabel')}</span>
+            <p className="text-stone-500 text-sm mt-0.5">{t('pinDisabledHint')}</p>
+          </div>
+        </label>
+      </div>
 
       <form onSubmit={handleSubmit} className="card-market rounded-2xl p-5 sm:p-6 space-y-4 max-w-xl">
         <label className="block">

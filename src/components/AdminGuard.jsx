@@ -5,8 +5,9 @@ import PinGate from './PinGate';
 
 export default function AdminGuard({ children }) {
   const location = useLocation();
-  const { isAdminUnlocked, adminHasPin } = useStore();
-  const needUnlock = location.pathname.startsWith('/admin') && (!adminHasPin || !isAdminUnlocked);
+  const { isAdminUnlocked, adminHasPin, store } = useStore();
+  const pinDisabled = !!store?.pinDisabled;
+  const needUnlock = location.pathname.startsWith('/admin') && !pinDisabled && (!adminHasPin || !isAdminUnlocked);
   if (needUnlock) return <PinGate />;
   return children;
 }
