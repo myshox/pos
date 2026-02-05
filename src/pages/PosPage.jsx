@@ -365,13 +365,22 @@ export default function PosPage() {
       <button
         type="button"
         onClick={() => setShowCartDrawer(true)}
-        className="fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn"
+        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn px-4 sm:px-5 gap-2"
         aria-label={t('cartCount').replace('{n}', String(cartTotalQty))}
         title={t('cartCount').replace('{n}', String(cartTotalQty))}
       >
-        <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
+        <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden bg-white/15 flex-shrink-0">
+          <img
+            src="/cart-hams.png"
+            alt=""
+            className="w-full h-full object-cover"
+            draggable="false"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        </span>
+        <span className="font-extrabold text-base sm:text-lg tracking-wide whitespace-nowrap">
+          {t('checkout')}
+        </span>
         {cartTotalQty > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1.5 rounded-full bg-amber-600 text-white text-xs font-bold flex items-center justify-center">
             {cartTotalQty > 99 ? '99+' : cartTotalQty}
@@ -524,7 +533,9 @@ export default function PosPage() {
                 type="button"
                 onClick={openCheckoutConfirm}
                 disabled={cart.length === 0 || total === 0 || isSubmitting}
-                className="btn-primary w-full py-4 rounded-xl text-lg font-semibold min-h-[56px] disabled:opacity-50 disabled:cursor-not-allowed transition transform active:scale-[0.98] flex items-center justify-center gap-2"
+                className={`btn-primary w-full py-4 rounded-2xl text-xl font-extrabold min-h-[64px] disabled:opacity-45 disabled:cursor-not-allowed transition transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg ${
+                  cart.length > 0 && total > 0 && !isSubmitting ? 'ring-2 ring-amber-200/80' : 'ring-0'
+                }`}
               >
                 {isSubmitting ? (
                   <>
@@ -535,7 +546,12 @@ export default function PosPage() {
                     <span>{t('checkoutProcessing')}</span>
                   </>
                 ) : (
-                  t('checkout')
+                  <>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span>{t('checkout')}</span>
+                  </>
                 )}
               </button>
               <button

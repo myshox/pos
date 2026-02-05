@@ -8,6 +8,8 @@
 html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
+  /* iOS overscroll 露出的底層背景 */
+  background: linear-gradient(165deg, #f8f6f2 0%, #efeae4 45%, #e6dfd6 100%);
 }
 body {
   height: 100%;
@@ -42,8 +44,9 @@ button, a, [role="button"], input, select, textarea {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 .floating-cart-btn {
-  bottom: max(1.5rem, env(safe-area-inset-bottom));
-  right: max(1rem, env(safe-area-inset-right));
+  /* 往內縮，避免 iPhone 邊緣/圓角切到 */
+  bottom: max(1.75rem, calc(env(safe-area-inset-bottom) + 0.75rem));
+  right: max(1.25rem, calc(env(safe-area-inset-right) + 0.75rem));
 }
 
 /* 文創市集主色 - 溫潤協調 */
@@ -69,6 +72,22 @@ button, a, [role="button"], input, select, textarea {
 }
 .btn-primary:active {
   box-shadow: 0 1px 6px rgba(166, 124, 0, 0.4);
+}
+
+/* 浮動購物車按鈕：更顯眼（提高 selector specificity 覆蓋 btn-primary） */
+.btn-primary.floating-cart-btn {
+  /* 品牌暖金色系（符合整體 IP） */
+  background: linear-gradient(180deg, #d6a312 0%, #a97900 100%);
+  box-shadow: 0 10px 22px rgba(166, 124, 0, 0.38);
+  border: 3px solid rgba(255, 255, 255, 0.92);
+}
+.btn-primary.floating-cart-btn:hover {
+  background: linear-gradient(180deg, #e1b01f 0%, #bf8a0a 100%);
+  box-shadow: 0 12px 26px rgba(166, 124, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.98);
+}
+.btn-primary.floating-cart-btn:active {
+  box-shadow: 0 8px 18px rgba(166, 124, 0, 0.5);
 }
 
 .category-badge {
