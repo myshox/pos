@@ -16,8 +16,17 @@ function getClient() {
   if (client !== null) return client;
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const storeKey = import.meta.env.VITE_STORE_KEY;
   if (!url || !key || typeof url !== 'string' || typeof key !== 'string') return null;
-  client = createClient(url, key);
+  // 啟用「店鋪密鑰」後必須提供 storeKey，否則不同步（避免匿名公開讀寫）
+  if (!storeKey || typeof storeKey !== 'string') return null;
+  client = createClient(url, key, {
+    global: {
+      headers: {
+        'x-store-key': storeKey,
+      },
+    },
+  });
   return client;
 }
 
@@ -77,10 +86,13 @@ export function scheduleUpload(getCurrentData, options = {}) {
     const { onUploadStart, onUploadEnd } = options;
     try {
       onUploadStart?.();
+      const storeKey = import.meta.env.VITE_STORE_KEY;
       const d = getCurrentData();
       await c.from(TABLE).upsert(
         {
           id: STORE_ID,
+          // 重要：啟用店鋪密鑰 RLS 時，INSERT/UPSERT 需要帶 store_key 才能通過 policy
+          store_key: typeof storeKey === 'string' ? storeKey : '',
           products: d.products || [],
           orders: d.orders || [],
           categories: d.categories || [],
