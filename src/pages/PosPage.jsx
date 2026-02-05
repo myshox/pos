@@ -32,6 +32,7 @@ export default function PosPage() {
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
+  const [showDiscountPrompt, setShowDiscountPrompt] = useState(false);
   const [discountType, setDiscountType] = useState('none');
   const [discountValue, setDiscountValue] = useState('');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
@@ -58,6 +59,7 @@ export default function PosPage() {
     return true;
   });
   const [discountSectionExpanded, setDiscountSectionExpanded] = useState(false);
+  const [confirmRemoveId, setConfirmRemoveId] = useState(null);
   const confirmBackRef = useRef(null);
 
   useEffect(() => {
@@ -161,7 +163,7 @@ export default function PosPage() {
       showToast(t('checkoutTotalZeroWarning'), 'error');
       return;
     }
-    setShowCheckoutConfirm(true);
+    setShowDiscountPrompt(true);
   }, [cart, products, total, showToast, t]);
 
   const handleConfirmCheckout = useCallback(() => {
@@ -187,17 +189,24 @@ export default function PosPage() {
   );
 
   useEffect(() => {
-    if (!showCheckoutConfirm) return;
     const onKey = (e) => {
-      if (e.key === 'Escape') setShowCheckoutConfirm(false);
+      if (e.key !== 'Escape') return;
+      if (showDiscountPrompt) setShowDiscountPrompt(false);
+      else if (showCheckoutConfirm) setShowCheckoutConfirm(false);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [showCheckoutConfirm]);
+    if (showDiscountPrompt || showCheckoutConfirm) {
+      window.addEventListener('keydown', onKey);
+      return () => window.removeEventListener('keydown', onKey);
+    }
+  }, [showDiscountPrompt, showCheckoutConfirm]);
 
   useEffect(() => {
     if (showCheckoutConfirm && confirmBackRef.current) confirmBackRef.current.focus();
   }, [showCheckoutConfirm]);
+
+  useEffect(() => {
+    if (!showCartDrawer) setConfirmRemoveId(null);
+  }, [showCartDrawer]);
 
   return (
     <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 overflow-hidden`}>
@@ -392,7 +401,7 @@ export default function PosPage() {
       {showCartDrawer && (
         <div className="fixed inset-0 z-50 flex flex-col sm:flex-row" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
-          <div className="relative ml-auto w-full sm:max-w-md max-h-[90vh] sm:max-h-full bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col">
+          <div className="relative ml-auto w-full sm:max-w-md max-h-[90vh] sm:max-h-full bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col min-h-0">
             <div className="flex items-center justify-center relative p-4 border-b border-stone-200 shrink-0">
               <h2 className="text-lg font-semibold text-stone-800">{t('cart')}</h2>
               <button type="button" onClick={() => setShowCartDrawer(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0" aria-label={t('close')}>
@@ -401,47 +410,54 @@ export default function PosPage() {
             </div>
             {/* 結帳總金額置頂讓客人確認 */}
             {cart.length > 0 && (
-              <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 shrink-0">
-                <div className="text-center">
+              <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 shrink-0 min-w-0">
+                <div className="text-center min-w-0">
                   <div className="text-sm text-stone-500 mb-1">{t('total')}</div>
-                  <div className="text-4xl sm:text-5xl font-bold text-amber-800">NT$ {total}</div>
+                  <div className="overflow-x-auto overflow-y-hidden text-center" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    <span className="inline-block text-2xl sm:text-4xl font-bold text-amber-800 whitespace-nowrap">NT$ {total}</span>
+                  </div>
                 </div>
               </div>
             )}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 min-h-0 bg-stone-100/50 snap-y snap-mandatory scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
               {cart.length === 0 ? (
                 <p className="text-stone-400 text-center py-8 text-sm">{t('cartEmpty')}</p>
               ) : (
                 cart.map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-stone-50/80 p-3 sm:p-3 rounded-xl">
-                    <div className="flex gap-3 min-w-0 flex-1">
-                      <div className="w-14 h-14 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-stone-200 flex-shrink-0">
-                        {item.image ? (
-                          <img src={item.image} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">{item.name.charAt(0)}</div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-stone-800 truncate">{item.name}</div>
-                        <div className="text-xs text-stone-500">NT$ {item.price} × {item.qty}</div>
-                        <span className="font-semibold text-stone-800 text-sm sm:hidden">NT$ {item.price * item.qty}</span>
-                      </div>
+                  <article key={item.id} className="flex gap-2 sm:gap-3 items-center bg-white border-2 border-stone-200 p-3 rounded-xl shadow-md snap-start shrink-0 min-w-0">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0 ring-1 ring-stone-200/80">
+                      {item.image ? (
+                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-stone-400 font-medium">{item.name.charAt(0)}</div>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-2">
-                      <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => updateQty(item.id, -1)} className="w-11 h-11 sm:w-9 sm:h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center touch-target flex-shrink-0" aria-label="-">−</button>
-                        <span className="w-10 sm:w-8 text-center font-medium text-sm">{item.qty}</span>
-                        <button type="button" onClick={() => updateQty(item.id, 1)} className="w-11 h-11 sm:w-9 sm:h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center touch-target flex-shrink-0" aria-label="+">+</button>
-                      </div>
-                      <span className="font-semibold text-stone-800 w-14 text-right text-sm hidden sm:block">NT$ {item.price * item.qty}</span>
-                      <button type="button" onClick={() => removeFromCart(item.id)} className="text-amber-800/80 hover:text-red-600 text-sm px-3 py-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg">{t('remove')}</button>
+                    <span className="font-semibold text-stone-800 text-sm truncate min-w-0 flex-1">{item.name}</span>
+                    <span className="text-sm font-semibold text-amber-800 shrink-0 tabular-nums">NT$ {item.price * item.qty}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button type="button" onClick={() => updateQty(item.id, -1)} className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center text-sm" aria-label="-">−</button>
+                      <span className="w-7 text-center font-semibold text-sm tabular-nums">{item.qty}</span>
+                      <button type="button" onClick={() => updateQty(item.id, 1)} className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center text-sm" aria-label="+">+</button>
                     </div>
-                  </div>
+                    {confirmRemoveId === item.id ? (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" onClick={() => { removeFromCart(item.id); setConfirmRemoveId(null); }} className="text-red-600 text-xs font-medium px-2 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 min-h-[36px] flex items-center justify-center" aria-label={t('confirmRemoveItem')}>
+                          {t('confirmRemoveItem')}
+                        </button>
+                        <button type="button" onClick={() => setConfirmRemoveId(null)} className="text-stone-600 text-xs font-medium px-2 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 min-h-[36px] flex items-center justify-center" aria-label={t('cancel')}>
+                          {t('cancel')}
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => setConfirmRemoveId(item.id)} className="text-amber-800/80 hover:text-red-600 text-xs font-medium px-2 py-1.5 rounded-lg hover:bg-red-50 min-h-[36px] flex items-center justify-center shrink-0" aria-label={t('remove')}>
+                        {t('remove')}
+                      </button>
+                    )}
+                  </article>
                 ))
               )}
             </div>
-            <div className="p-4 pt-3 border-t border-stone-200 space-y-3 shrink-0 bg-stone-50/50 cart-drawer-footer">
+            <div className="p-4 pt-3 border-t border-stone-200 space-y-3 shrink-0 bg-stone-50/50 cart-drawer-footer overflow-y-auto max-h-[50vh] min-h-0">
               <div>
                 <label className="block text-xs text-stone-600 mb-1">{t('paymentMethod')}</label>
                 <div className="flex gap-2 flex-wrap">
@@ -460,70 +476,6 @@ export default function PosPage() {
               <div>
                 <label className="block text-xs text-stone-600 mb-1">{t('orderNote')}</label>
                 <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="w-full border border-stone-300 rounded-xl px-4 py-3 text-base min-h-[48px]" />
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-xs text-stone-600 mb-1.5">{t('discountQuick')}</label>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => applyQuickDiscount('percent', 10)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
-                      {t('discount9off')}
-                    </button>
-                    <button type="button" onClick={() => applyQuickDiscount('percent', 5)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
-                      {t('discount95off')}
-                    </button>
-                    <button type="button" onClick={() => applyQuickDiscount('amount', 50)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
-                      {t('discount50')}
-                    </button>
-                    <button type="button" onClick={() => applyQuickDiscount('amount', 100)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
-                      {t('discount100')}
-                    </button>
-                    <button type="button" onClick={() => applyQuickDiscount('none')} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 min-h-[48px]">
-                      {t('discountClear')}
-                    </button>
-                  </div>
-                </div>
-                <div className="border-t border-stone-100 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setDiscountSectionExpanded((e) => !e)}
-                    className="w-full flex items-center justify-between py-2 text-sm font-medium text-stone-600 hover:text-stone-800 rounded-lg hover:bg-stone-50 min-h-[44px]"
-                    aria-expanded={discountSectionExpanded}
-                  >
-                    <span>{t('discountCustom')}</span>
-                    <svg className={`w-5 h-5 transition-transform ${discountSectionExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {discountSectionExpanded && (
-                    <div className="space-y-2 pt-1">
-                      <div className="flex justify-between text-sm text-stone-600 items-center flex-wrap gap-2">
-                        <span>{t('discount')}</span>
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
-                          <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]">
-                            <option value="none">{t('discountNone')}</option>
-                            <option value="amount">{t('discountAmount')}</option>
-                            <option value="percent">{t('discountPercent')}</option>
-                          </select>
-                          {(discountType === 'amount' || discountType === 'percent') && (
-                            <input
-                              type="number"
-                              min={0}
-                              step={discountType === 'percent' ? 1 : 1}
-                              value={discountValue}
-                              onChange={(e) => setDiscountValue(e.target.value)}
-                              placeholder={discountType === 'percent' ? '10' : '50'}
-                              className="w-24 border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]"
-                            />
-                          )}
-                        </div>
-                      </div>
-                      {discountAmount > 0 && (
-                        <div className="flex justify-between text-sm text-amber-700">
-                          <span>{t('discountDeduct')}</span>
-                          <span>- NT$ {discountAmount}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-stone-600 font-medium text-base">{t('total')}</span>
@@ -562,6 +514,102 @@ export default function PosPage() {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 <span>{t('backToPrev')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 結帳後：是否有折扣？小視窗 */}
+      {showDiscountPrompt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={() => setShowDiscountPrompt(false)}>
+          <div className="modal-panel bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="discount-prompt-title">
+            <div className="p-5 border-b border-stone-200">
+              <h3 id="discount-prompt-title" className="text-lg font-semibold text-stone-800">{t('discountPromptTitle')}</h3>
+              <p className="text-sm text-stone-500 mt-1">{t('discountPromptHint')}</p>
+            </div>
+            <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs text-stone-600 mb-1.5">{t('discountQuick')}</label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => applyQuickDiscount('percent', 10)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
+                    {t('discount9off')}
+                  </button>
+                  <button type="button" onClick={() => applyQuickDiscount('percent', 5)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
+                    {t('discount95off')}
+                  </button>
+                  <button type="button" onClick={() => applyQuickDiscount('amount', 50)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
+                    {t('discount50')}
+                  </button>
+                  <button type="button" onClick={() => applyQuickDiscount('amount', 100)} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 border border-transparent hover:border-amber-200 min-h-[48px]">
+                    {t('discount100')}
+                  </button>
+                  <button type="button" onClick={() => applyQuickDiscount('none')} className="px-4 py-3 rounded-xl text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 min-h-[48px]">
+                    {t('discountClear')}
+                  </button>
+                </div>
+              </div>
+              <div className="border-t border-stone-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setDiscountSectionExpanded((e) => !e)}
+                  className="w-full flex items-center justify-between py-2 text-sm font-medium text-stone-600 hover:text-stone-800 rounded-lg hover:bg-stone-50 min-h-[44px]"
+                  aria-expanded={discountSectionExpanded}
+                >
+                  <span>{t('discountCustom')}</span>
+                  <svg className={`w-5 h-5 transition-transform ${discountSectionExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {discountSectionExpanded && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex justify-between text-sm text-stone-600 items-center flex-wrap gap-2">
+                      <span>{t('discount')}</span>
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]">
+                          <option value="none">{t('discountNone')}</option>
+                          <option value="amount">{t('discountAmount')}</option>
+                          <option value="percent">{t('discountPercent')}</option>
+                        </select>
+                        {(discountType === 'amount' || discountType === 'percent') && (
+                          <input
+                            type="number"
+                            min={0}
+                            step={discountType === 'percent' ? 1 : 1}
+                            value={discountValue}
+                            onChange={(e) => setDiscountValue(e.target.value)}
+                            placeholder={discountType === 'percent' ? '10' : '50'}
+                            className="w-24 border border-stone-300 rounded-xl px-3 py-2 text-base min-h-[48px]"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-amber-700">
+                        <span>{t('discountDeduct')}</span>
+                        <span>- NT$ {discountAmount}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-stone-100">
+                <span className="text-stone-600 font-medium">{t('total')}</span>
+                <span className="text-2xl font-bold text-amber-800">NT$ {total}</span>
+              </div>
+            </div>
+            <div className="p-5 border-t border-stone-200 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDiscountPrompt(false)}
+                className="flex-1 py-3 rounded-xl font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 min-h-[48px] transition"
+              >
+                {t('backToPrev')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowDiscountPrompt(false); setShowCheckoutConfirm(true); }}
+                className="flex-1 py-3 rounded-xl font-semibold bg-amber-600 text-white hover:bg-amber-700 min-h-[48px] transition"
+              >
+                {t('discountNextStep')}
               </button>
             </div>
           </div>
