@@ -53,6 +53,25 @@ export async function checkConnection() {
 }
 
 /**
+ * 測試「寫入」權限是否正常（只更新 updated_at，不覆蓋資料）
+ * 回傳 { ok: true } 或 { ok: false, error: string }
+ */
+export async function testUpload() {
+  const c = getClient();
+  if (!c) return { ok: false, error: '未設定 Supabase' };
+  try {
+    const { error } = await c
+      .from(TABLE)
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', STORE_ID);
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
+
+/**
  * 從雲端取得最新資料，失敗或未設定則回傳 null
  */
 export async function fetchStoreData() {

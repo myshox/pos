@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { exportAllData, importAllData } from '../lib/storage';
-import { checkConnection } from '../lib/syncSupabase';
+import { checkConnection, testUpload } from '../lib/syncSupabase';
 
 export default function BackupRestore() {
   const { refreshProducts, refreshOrders, refreshStore, syncNow, isSyncEnabled } = useStore();
@@ -12,6 +12,7 @@ export default function BackupRestore() {
   const fileRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
+  const [testingUpload, setTestingUpload] = useState(false);
 
   useEffect(() => {
     if (!isSyncEnabled) return;
@@ -21,6 +22,15 @@ export default function BackupRestore() {
     });
     return () => { cancelled = true; };
   }, [isSyncEnabled]);
+
+  const handleTestUpload = async () => {
+    if (!isSyncEnabled || testingUpload) return;
+    setTestingUpload(true);
+    const res = await testUpload();
+    if (res.ok) showToast(t('syncWriteOk'));
+    else showToast(`${t('syncWriteError')}: ${res.error}`, 'error');
+    setTestingUpload(false);
+  };
 
   const handleExport = () => {
     const data = exportAllData();
@@ -77,6 +87,16 @@ export default function BackupRestore() {
           {syncStatus && syncStatus !== 'ok' && typeof syncStatus === 'object' && (
             <p className="text-red-600 text-sm">{t('syncStatusError')}: {syncStatus.error}</p>
           )}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleTestUpload}
+              disabled={testingUpload}
+              className="px-3 py-2 rounded-xl text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-700 min-h-[44px] disabled:opacity-50"
+            >
+              {testingUpload ? '...' : t('syncTestWrite')}
+            </button>
+          </div>
         </div>
       )}
 
