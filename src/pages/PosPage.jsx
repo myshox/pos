@@ -200,34 +200,36 @@ export default function PosPage() {
   }, [showCheckoutConfirm]);
 
   return (
-    <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
-      <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0`}>
-      {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white/80 rounded-xl border border-stone-200 shrink-0 mx-2 sm:mx-3 mt-1">
-        <div className="flex items-center gap-3">
-          <span className="text-stone-600 font-medium text-sm">{t('todaySales')}</span>
-          <span className="text-stone-700 text-sm"><span className="text-stone-500">{t('ordersCount')} </span><strong>{todayReport.count}</strong></span>
-          <span className="text-amber-800 font-semibold text-sm">NT$ {todayReport.total}</span>
+    <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 overflow-hidden`}>
+      {/* 注意：iOS 上父層有 transform 會影響 fixed/點擊座標。
+          因此縮放只套用在「主內容」，固定抽屜/彈窗不套用縮放。 */}
+      <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
+        {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white/80 rounded-xl border border-stone-200 shrink-0 mx-2 sm:mx-3 mt-1">
+          <div className="flex items-center gap-3">
+            <span className="text-stone-600 font-medium text-sm">{t('todaySales')}</span>
+            <span className="text-stone-700 text-sm"><span className="text-stone-500">{t('ordersCount')} </span><strong>{todayReport.count}</strong></span>
+            <span className="text-amber-800 font-semibold text-sm">NT$ {todayReport.total}</span>
+          </div>
+          <div className="flex items-center gap-1.5 border-t border-stone-100 pt-2 sm:pt-0 sm:border-t-0">
+            <span className="text-stone-500 text-xs">{t('fontSize')}</span>
+            {['small', 'medium', 'large'].map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setFontSize(size)}
+                className={`min-w-[2.25rem] sm:min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-medium transition min-h-[36px] ${
+                  fontSize === size ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                {size === 'small' ? t('fontSizeSmall') : size === 'medium' ? t('fontSizeMedium') : t('fontSizeLarge')}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 border-t border-stone-100 pt-2 sm:pt-0 sm:border-t-0">
-          <span className="text-stone-500 text-xs">{t('fontSize')}</span>
-          {['small', 'medium', 'large'].map((size) => (
-            <button
-              key={size}
-              type="button"
-              onClick={() => setFontSize(size)}
-              className={`min-w-[2.25rem] sm:min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-medium transition min-h-[36px] ${
-                fontSize === size ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }`}
-            >
-              {size === 'small' ? t('fontSizeSmall') : size === 'medium' ? t('fontSizeMedium') : t('fontSizeLarge')}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* 商品區 - 獨立一頁，全區塊捲動 */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-3">
+        {/* 商品區 - 獨立一頁，全區塊捲動 */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h1 className="text-xl sm:text-2xl font-semibold text-stone-800" style={{ fontFamily: 'var(--font-cute)' }}>
             {t('productArea')}
@@ -356,6 +358,7 @@ export default function PosPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       {/* 浮動購物車按鈕 */}
@@ -623,7 +626,6 @@ export default function PosPage() {
       {receiptOrder && (
         <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
       )}
-      </div>
     </div>
   );
 }
