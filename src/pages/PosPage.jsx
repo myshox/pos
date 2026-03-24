@@ -135,7 +135,6 @@ export default function PosPage() {
 
   const addProductDirect = useCallback((product) => {
     addToCartWithQty(product, 1);
-    setShowCartDrawer(true);
     showToast(`${product.name} × 1 ${t('addToCart')}`);
   }, [addToCartWithQty, showToast, t]);
 
@@ -315,6 +314,9 @@ export default function PosPage() {
             </div>
           )}
         </div>
+        {activeProducts.length > 0 && (
+          <p className="text-sm text-slate-500 mb-3 max-w-2xl leading-relaxed">{t('checkoutFlowHint')}</p>
+        )}
         {activeProducts.length > 0 && (
           <div className="relative w-full max-w-2xl mb-4">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden>

@@ -12,6 +12,7 @@ export default function ProductManager() {
   const defaultCategory = categories.length > 0 ? categories[0] : '';
   const [form, setForm] = useState({ name: '', sku: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
   const [isAdding, setIsAdding] = useState(false);
+  const [isDuplicate, setIsDuplicate] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [imageError, setImageError] = useState('');
 
@@ -28,7 +29,28 @@ export default function ProductManager() {
     setForm({ name: '', sku: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
     setEditing(null);
     setIsAdding(true);
+    setIsDuplicate(false);
     setImageError('');
+  };
+
+  /** 複製：帶入內容並走「新增」流程（新 ID） */
+  const openDuplicate = (product) => {
+    const baseSku = (product.sku && String(product.sku).trim()) ? `${String(product.sku).trim()}-copy` : '';
+    setForm({
+      name: `${product.name}${t('copySuffix')}`,
+      sku: baseSku,
+      price: String(product.price),
+      category: product.category || defaultCategory,
+      description: product.description || '',
+      image: product.image || null,
+      useStock: !!product.useStock,
+      stock: typeof product.stock === 'number' ? product.stock : 0,
+    });
+    setEditing(null);
+    setIsAdding(true);
+    setIsDuplicate(true);
+    setImageError('');
+    showToast(t('duplicateProductHint'));
   };
 
   const openEdit = (product) => {
@@ -44,12 +66,14 @@ export default function ProductManager() {
     });
     setEditing(product.id);
     setIsAdding(false);
+    setIsDuplicate(false);
     setImageError('');
   };
 
   const closeForm = () => {
     setEditing(null);
     setIsAdding(false);
+    setIsDuplicate(false);
     setForm({ name: '', sku: '', price: '', category: defaultCategory, description: '', image: null, useStock: false, stock: 0 });
     setImageError('');
   };
@@ -83,6 +107,7 @@ export default function ProductManager() {
     if (Number.isNaN(price) || price < 0) { showToast(t('validationPrice'), 'error'); return; }
     if (isAdding) {
       addProduct({ name, sku, price, category, description, image, isActive: true, useStock, stock });
+      showToast(isDuplicate ? t('toastDuplicateSaved') : t('toastSaved'));
       closeForm();
     } else if (editing) {
       updateProduct(editing, { name, sku, price, category, description, image: image ?? '', useStock, stock });
@@ -117,7 +142,9 @@ export default function ProductManager() {
 
       {(isAdding || editing) && (
         <form onSubmit={handleSubmit} className="mb-6 p-5 card-market rounded-2xl space-y-4">
-          <h3 className="font-semibold text-slate-700">{isAdding ? t('addProductTitle') : t('editProductTitle')}</h3>
+          <h3 className="font-semibold text-slate-700">
+            {editing ? t('editProductTitle') : isDuplicate ? t('duplicateProductTitle') : t('addProductTitle')}
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">{t('productName')}</label>
@@ -231,7 +258,7 @@ export default function ProductManager() {
           </div>
           <div className="flex gap-2">
             <button type="submit" className="btn-primary px-4 py-2 rounded-xl">
-              {isAdding ? t('add') : t('save')}
+              {isAdding ? (isDuplicate ? t('duplicateProductSave') : t('add')) : t('save')}
             </button>
             <button type="button" onClick={closeForm} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl">
               {t('cancel')}
@@ -297,6 +324,14 @@ export default function ProductManager() {
                 className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-teal-100 hover:bg-teal-200 text-slate-800"
               >
                 {t('edit')}
+              </button>
+              <button
+                type="button"
+                onClick={() => openDuplicate(p)}
+                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
+                aria-label={t('duplicateProduct')}
+              >
+                {t('duplicateProduct')}
               </button>
               <button
                 type="button"
@@ -378,6 +413,14 @@ export default function ProductManager() {
                       className="text-xs px-2.5 py-1.5 rounded-lg bg-teal-100 hover:bg-teal-200 text-slate-800 whitespace-nowrap"
                     >
                       {t('edit')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDuplicate(p)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 whitespace-nowrap"
+                      title={t('duplicateProduct')}
+                    >
+                      {t('duplicateProduct')}
                     </button>
                     <button
                       type="button"
