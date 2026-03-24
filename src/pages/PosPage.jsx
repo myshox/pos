@@ -215,10 +215,10 @@ export default function PosPage() {
       <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
         {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white/80 rounded-xl border border-stone-200 shrink-0 mx-2 sm:mx-3 mt-1">
-          <div className="flex items-center gap-3">
-            <span className="text-stone-600 font-medium text-sm">{t('todaySales')}</span>
-            <span className="text-stone-700 text-sm"><span className="text-stone-500">{t('ordersCount')} </span><strong>{todayReport.count}</strong></span>
-            <span className="text-amber-800 font-semibold text-sm">NT$ {todayReport.total}</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+            <span className="text-stone-600 font-medium text-sm shrink-0">{t('todaySales')}</span>
+            <span className="text-stone-700 text-sm min-w-0"><span className="text-stone-500">{t('ordersCount')} </span><strong>{todayReport.count}</strong></span>
+            <span className="text-amber-800 font-semibold text-sm tabular-nums whitespace-nowrap">NT$ {todayReport.total}</span>
           </div>
           <div className="flex items-center gap-1.5 border-t border-stone-100 pt-2 sm:pt-0 sm:border-t-0">
             <span className="text-stone-500 text-xs">{t('fontSize')}</span>
@@ -237,16 +237,17 @@ export default function PosPage() {
           </div>
         </div>
 
-        {/* 商品區 - 獨立一頁，全區塊捲動 */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h1 className="text-xl sm:text-2xl font-semibold text-stone-800" style={{ fontFamily: 'var(--font-cute)' }}>
+        {/* 商品區 - 獨立一頁，全區塊捲動（底部留白避免被浮動結帳鈕遮字） */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-3 pos-product-scroll">
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+          <h1 className="text-xl sm:text-2xl font-semibold text-stone-800 shrink-0" style={{ fontFamily: 'var(--font-cute)' }}>
             {t('productArea')}
           </h1>
           {activeProducts.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-stone-500 text-xs">{t('productViewLabel')}</span>
-              <div className="flex rounded-lg overflow-hidden border border-stone-200">
+            <div className="flex flex-col gap-2 w-full min-w-0 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+              <span className="text-stone-500 text-xs shrink-0">{t('productViewLabel')}</span>
+              <div className="flex rounded-lg overflow-hidden border border-stone-200 shrink-0">
                 <button
                   type="button"
                   onClick={() => setProductViewMode('grid')}
@@ -262,8 +263,10 @@ export default function PosPage() {
                   {t('productViewList')}
                 </button>
               </div>
-              <span className="text-stone-500 text-xs ml-1">{t('showProductImage')}</span>
-              <div className="flex rounded-lg overflow-hidden border border-stone-200">
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+              <span className="text-stone-500 text-xs shrink-0">{t('showProductImage')}</span>
+              <div className="flex rounded-lg overflow-hidden border border-stone-200 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowProductImage(true)}
@@ -278,6 +281,7 @@ export default function PosPage() {
                 >
                   {t('hideProductImage')}
                 </button>
+              </div>
               </div>
             </div>
           )}
@@ -328,7 +332,7 @@ export default function PosPage() {
             {categories.length > 0 && categories.map((cat) => (
               <div key={cat}>
                 <h2 className="text-sm font-medium text-stone-500 mb-3 uppercase tracking-wider">{cat}</h2>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                   {activeProducts
                     .filter((p) => (cat === '其他' ? !(p.category && p.category.trim()) : p.category === cat))
                     .map((product) => (
@@ -336,7 +340,7 @@ export default function PosPage() {
                         key={product.id}
                         onClick={() => addProductDirect(product)}
                         type="button"
-                        className="card-market rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[100px] sm:min-h-[110px]"
+                        className="card-market rounded-lg overflow-hidden text-left hover:border-amber-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[108px] sm:min-h-[110px]"
                       >
                         {showProductImage && (
                           <div className="w-full aspect-square bg-stone-100 flex-shrink-0 min-h-[56px] sm:min-h-[60px]">
@@ -354,7 +358,7 @@ export default function PosPage() {
                           </div>
                         )}
                         <div className="p-1.5 sm:p-2 flex flex-col flex-1 min-w-0">
-                          <span className="font-semibold text-stone-800 truncate text-xs sm:text-sm">{product.name}</span>
+                          <span className="font-semibold text-stone-800 line-clamp-2 text-left text-xs sm:text-sm leading-snug">{product.name}</span>
                           {product.sku && (
                             <span className="text-[10px] sm:text-xs text-stone-500 font-mono mt-0.5">{product.sku}</span>
                           )}
@@ -374,7 +378,7 @@ export default function PosPage() {
       <button
         type="button"
         onClick={() => setShowCartDrawer(true)}
-        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn px-4 sm:px-5 gap-2"
+        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn px-4 sm:px-5 gap-2 max-w-[min(100vw-2rem,20rem)]"
         aria-label={t('cartCount').replace('{n}', String(cartTotalQty))}
         title={t('cartCount').replace('{n}', String(cartTotalQty))}
       >
@@ -387,7 +391,7 @@ export default function PosPage() {
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </span>
-        <span className="font-extrabold text-base sm:text-lg tracking-wide whitespace-nowrap">
+        <span className="font-extrabold text-base sm:text-lg tracking-wide truncate min-w-0 text-left">
           {t('checkout')}
         </span>
         {cartTotalQty > 0 && (
@@ -401,10 +405,10 @@ export default function PosPage() {
       {showCartDrawer && (
         <div className="fixed inset-0 z-50 flex flex-col sm:flex-row" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
-          <div className="relative ml-auto w-full sm:max-w-md max-h-[90vh] sm:max-h-full bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col min-h-0">
-            <div className="flex items-center justify-center relative p-4 border-b border-stone-200 shrink-0">
-              <h2 className="text-lg font-semibold text-stone-800">{t('cart')}</h2>
-              <button type="button" onClick={() => setShowCartDrawer(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0" aria-label={t('close')}>
+          <div className="relative ml-auto w-full sm:max-w-md md:max-w-lg max-h-[min(92dvh,92vh)] sm:max-h-full sm:h-full sm:min-h-0 bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col min-h-0">
+            <div className="flex items-center justify-center relative p-4 pr-14 border-b border-stone-200 shrink-0">
+              <h2 className="text-lg font-semibold text-stone-800 text-center px-2">{t('cart')}</h2>
+              <button type="button" onClick={() => setShowCartDrawer(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full hover:bg-stone-100 text-stone-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 z-10" aria-label={t('close')}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -424,40 +428,48 @@ export default function PosPage() {
                 <p className="text-stone-400 text-center py-8 text-sm">{t('cartEmpty')}</p>
               ) : (
                 cart.map((item) => (
-                  <article key={item.id} className="flex gap-2 sm:gap-3 items-center bg-white border-2 border-stone-200 p-3 rounded-xl shadow-md snap-start shrink-0 min-w-0">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0 ring-1 ring-stone-200/80">
-                      {item.image ? (
-                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                  <article key={item.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 bg-white border-2 border-stone-200 p-3 rounded-xl shadow-md snap-start shrink-0 min-w-0">
+                    <div className="flex gap-2 sm:gap-3 items-start sm:items-center flex-1 min-w-0">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0 ring-1 ring-stone-200/80">
+                        {item.image ? (
+                          <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-stone-400 font-medium">{item.name.charAt(0)}</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold text-stone-800 text-sm line-clamp-2 sm:truncate leading-snug block">{item.name}</span>
+                        <span className="text-xs text-stone-500 tabular-nums mt-0.5 block sm:hidden">NT$ {item.price} × {item.qty}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-amber-800 shrink-0 tabular-nums sm:hidden">NT$ {item.price * item.qty}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end sm:gap-3 sm:flex-nowrap sm:shrink-0">
+                      <span className="hidden sm:inline text-sm font-semibold text-amber-800 shrink-0 tabular-nums order-first sm:order-none">NT$ {item.price * item.qty}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" onClick={() => updateQty(item.id, -1)} className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center text-sm touch-manipulation" aria-label="-">−</button>
+                        <span className="w-8 text-center font-semibold text-sm tabular-nums">{item.qty}</span>
+                        <button type="button" onClick={() => updateQty(item.id, 1)} className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center text-sm touch-manipulation" aria-label="+">+</button>
+                      </div>
+                      {confirmRemoveId === item.id ? (
+                        <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                          <button type="button" onClick={() => { removeFromCart(item.id); setConfirmRemoveId(null); }} className="text-red-600 text-xs font-medium px-3 py-2 rounded-lg bg-red-100 hover:bg-red-200 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-0 flex items-center justify-center" aria-label={t('confirmRemoveItem')}>
+                            {t('confirmRemoveItem')}
+                          </button>
+                          <button type="button" onClick={() => setConfirmRemoveId(null)} className="text-stone-600 text-xs font-medium px-3 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-0 flex items-center justify-center" aria-label={t('cancel')}>
+                            {t('cancel')}
+                          </button>
+                        </div>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-stone-400 font-medium">{item.name.charAt(0)}</div>
+                        <button type="button" onClick={() => setConfirmRemoveId(item.id)} className="text-amber-800/80 hover:text-red-600 text-xs font-medium px-3 py-2 rounded-lg hover:bg-red-50 min-h-[44px] sm:min-h-[36px] flex items-center justify-center shrink-0 touch-manipulation" aria-label={t('remove')}>
+                          {t('remove')}
+                        </button>
                       )}
                     </div>
-                    <span className="font-semibold text-stone-800 text-sm truncate min-w-0 flex-1">{item.name}</span>
-                    <span className="text-sm font-semibold text-amber-800 shrink-0 tabular-nums">NT$ {item.price * item.qty}</span>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button type="button" onClick={() => updateQty(item.id, -1)} className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center text-sm" aria-label="-">−</button>
-                      <span className="w-7 text-center font-semibold text-sm tabular-nums">{item.qty}</span>
-                      <button type="button" onClick={() => updateQty(item.id, 1)} className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 font-bold flex items-center justify-center text-sm" aria-label="+">+</button>
-                    </div>
-                    {confirmRemoveId === item.id ? (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button type="button" onClick={() => { removeFromCart(item.id); setConfirmRemoveId(null); }} className="text-red-600 text-xs font-medium px-2 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 min-h-[36px] flex items-center justify-center" aria-label={t('confirmRemoveItem')}>
-                          {t('confirmRemoveItem')}
-                        </button>
-                        <button type="button" onClick={() => setConfirmRemoveId(null)} className="text-stone-600 text-xs font-medium px-2 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 min-h-[36px] flex items-center justify-center" aria-label={t('cancel')}>
-                          {t('cancel')}
-                        </button>
-                      </div>
-                    ) : (
-                      <button type="button" onClick={() => setConfirmRemoveId(item.id)} className="text-amber-800/80 hover:text-red-600 text-xs font-medium px-2 py-1.5 rounded-lg hover:bg-red-50 min-h-[36px] flex items-center justify-center shrink-0" aria-label={t('remove')}>
-                        {t('remove')}
-                      </button>
-                    )}
                   </article>
                 ))
               )}
             </div>
-            <div className="p-4 pt-3 border-t border-stone-200 space-y-3 shrink-0 bg-stone-50/50 cart-drawer-footer overflow-y-auto max-h-[50vh] min-h-0">
+            <div className="p-4 pt-3 border-t border-stone-200 space-y-3 shrink-0 bg-stone-50/50 cart-drawer-footer overflow-y-auto max-h-[min(48vh,320px)] sm:max-h-[50vh] min-h-0">
               <div>
                 <label className="block text-xs text-stone-600 mb-1">{t('paymentMethod')}</label>
                 <div className="flex gap-2 flex-wrap">
@@ -477,9 +489,9 @@ export default function PosPage() {
                 <label className="block text-xs text-stone-600 mb-1">{t('orderNote')}</label>
                 <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="w-full border border-stone-300 rounded-xl px-4 py-3 text-base min-h-[48px]" />
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-stone-600 font-medium text-base">{t('total')}</span>
-                <span className="text-3xl sm:text-4xl font-bold text-amber-800">NT$ {total}</span>
+              <div className="flex justify-between items-baseline gap-2 min-w-0">
+                <span className="text-stone-600 font-medium text-base shrink-0">{t('total')}</span>
+                <span className="text-2xl sm:text-4xl font-bold text-amber-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
               </div>
               <button
                 type="button"
@@ -522,13 +534,13 @@ export default function PosPage() {
 
       {/* 結帳後：是否有折扣？小視窗 */}
       {showDiscountPrompt && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={() => setShowDiscountPrompt(false)}>
-          <div className="modal-panel bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="discount-prompt-title">
-            <div className="p-5 border-b border-stone-200">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" onClick={() => setShowDiscountPrompt(false)}>
+          <div className="modal-panel bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[min(85dvh,85vh)] overflow-hidden flex flex-col min-h-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="discount-prompt-title">
+            <div className="p-5 border-b border-stone-200 shrink-0">
               <h3 id="discount-prompt-title" className="text-lg font-semibold text-stone-800">{t('discountPromptTitle')}</h3>
               <p className="text-sm text-stone-500 mt-1">{t('discountPromptHint')}</p>
             </div>
-            <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-5 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <div>
                 <label className="block text-xs text-stone-600 mb-1.5">{t('discountQuick')}</label>
                 <div className="flex flex-wrap gap-2">
@@ -596,7 +608,7 @@ export default function PosPage() {
                 <span className="text-2xl font-bold text-amber-800">NT$ {total}</span>
               </div>
             </div>
-            <div className="p-5 border-t border-stone-200 flex gap-3">
+            <div className="p-5 border-t border-stone-200 flex gap-3 shrink-0 bg-white pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5">
               <button
                 type="button"
                 onClick={() => setShowDiscountPrompt(false)}
@@ -618,13 +630,13 @@ export default function PosPage() {
 
       {/* 結帳確認防呆彈窗 */}
       {showCheckoutConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={() => setShowCheckoutConfirm(false)}>
-          <div className="modal-panel bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-checkout-title">
-            <div className="p-5 border-b border-stone-200">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" onClick={() => setShowCheckoutConfirm(false)}>
+          <div className="modal-panel bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[min(85dvh,85vh)] overflow-hidden flex flex-col min-h-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-checkout-title">
+            <div className="p-5 border-b border-stone-200 shrink-0">
               <h3 id="confirm-checkout-title" className="text-lg font-semibold text-stone-800">{t('confirmCheckoutTitle')}</h3>
               <p className="text-sm text-stone-500 mt-1">{t('confirmCheckoutHint')}</p>
             </div>
-            <div className="p-5 space-y-3 max-h-[50vh] overflow-y-auto">
+            <div className="p-5 space-y-3 flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <div className="text-sm text-stone-600">
                 {t('confirmCheckoutItems')}：{cart.length} {t('confirmCheckoutItemCount')}，{cart.reduce((s, i) => s + i.qty, 0)} {t('confirmCheckoutQty')}
               </div>
@@ -649,12 +661,12 @@ export default function PosPage() {
                 <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : 'payCash')}</span>
               </div>
               {orderNote.trim() && (
-                <div className="text-sm text-stone-600">
+                <div className="text-sm text-stone-600 break-words">
                   <span className="text-stone-500">{t('note')}：</span>{orderNote.trim()}
                 </div>
               )}
             </div>
-            <div className="p-4 flex gap-3 border-t border-stone-200 bg-stone-50/50">
+            <div className="p-4 flex gap-3 border-t border-stone-200 bg-stone-50/50 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
               <button
                 ref={confirmBackRef}
                 type="button"

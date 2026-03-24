@@ -49,6 +49,16 @@ button, a, [role="button"], input, select, textarea {
   right: max(1.25rem, calc(env(safe-area-inset-right) + 0.75rem));
 }
 
+/* 商品列表底部留白：避免最後一排被浮動結帳鈕遮住 */
+.pos-product-scroll {
+  padding-bottom: max(1.25rem, calc(5.75rem + env(safe-area-inset-bottom)));
+}
+@media (min-width: 640px) {
+  .pos-product-scroll {
+    padding-bottom: max(1.25rem, calc(5rem + env(safe-area-inset-bottom)));
+  }
+}
+
 /* 文創市集主色 - 溫潤協調 */
 .header-bar {
   background: linear-gradient(135deg, #5a4d42 0%, #453a30 50%, #3d3329 100%);
