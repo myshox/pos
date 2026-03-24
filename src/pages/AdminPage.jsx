@@ -8,18 +8,26 @@ import OrderList from '../components/OrderList';
 import ReportSettlement from '../components/ReportSettlement';
 import StoreSettings from '../components/StoreSettings';
 import BackupRestore from '../components/BackupRestore';
+import AdminDashboard from '../components/AdminDashboard';
+import InventoryPanel from '../components/InventoryPanel';
 
-const TAB_IDS = ['products', 'categories', 'orders', 'report', 'settings', 'backup'];
+const SECTION_IDS = ['dashboard', 'orders', 'products', 'categories', 'inventory', 'report', 'settings', 'backup'];
+
 const TAB_KEYS = {
+  dashboard: 'tabDashboard',
+  orders: 'tabOrders',
   products: 'tabProducts',
   categories: 'tabCategories',
-  orders: 'tabOrders',
+  inventory: 'tabInventory',
   report: 'tabReport',
   settings: 'tabSettings',
   backup: 'tabBackup',
 };
 
 const TAB_ICONS = {
+  dashboard: (
+    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" /></svg>
+  ),
   products: (
     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
   ),
@@ -28,6 +36,9 @@ const TAB_ICONS = {
   ),
   orders: (
     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+  ),
+  inventory: (
+    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
   ),
   report: (
     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -41,7 +52,7 @@ const TAB_ICONS = {
 };
 
 export default function AdminPage() {
-  const [tab, setTab] = useState('products');
+  const [tab, setTab] = useState('dashboard');
   const { t } = useLocale();
   const { adminHasPin, adminLock } = useStore();
   const navigate = useNavigate();
@@ -51,66 +62,74 @@ export default function AdminPage() {
     navigate('/');
   };
 
-  const tabButtonClass = (id) =>
-    `flex items-center justify-center gap-2 font-medium transition min-h-[48px] ${
-      tab === id ? 'bg-pink-500 text-white shadow-sm' : 'bg-rose-100 text-rose-600 hover:bg-rose-200'
+  const navBtn = (id) =>
+    `w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium transition min-h-[48px] ${
+      tab === id ? 'bg-teal-600 text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
+    }`;
+
+  const navBtnMobile = (id) =>
+    `flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition min-h-[44px] snap-start ${
+      tab === id ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700'
     }`;
 
   return (
-    <div className="card-market rounded-2xl overflow-hidden w-full">
-      {/* 手機：2x3 網格分頁 */}
-      <div className="md:hidden grid grid-cols-2 gap-2 p-3 border-b border-rose-200">
-        {TAB_IDS.map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={`${tabButtonClass(id)} rounded-xl py-3 px-3 text-sm`}
-          >
-            {TAB_ICONS[id]}
-            <span className="truncate">{t(TAB_KEYS[id])}</span>
-          </button>
-        ))}
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden w-full flex flex-col min-h-[min(85vh,900px)]">
+      {/* 手機：橫向分頁 */}
+      <div className="md:hidden border-b border-slate-200 bg-slate-50/90">
+        <div className="flex overflow-x-auto gap-2 p-3 snap-x scrollbar-thin">
+          {SECTION_IDS.map((id) => (
+            <button key={id} type="button" onClick={() => setTab(id)} className={navBtnMobile(id)}>
+              {TAB_ICONS[id]}
+              <span className="whitespace-nowrap">{t(TAB_KEYS[id])}</span>
+            </button>
+          ))}
+        </div>
         {adminHasPin && (
-          <button
-            type="button"
-            onClick={handleLock}
-            className="col-span-2 py-3 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-100 text-sm font-medium min-h-[48px] flex items-center justify-center gap-1"
-          >
-            <span>🔒</span> {t('adminLock')}
-          </button>
+          <div className="px-3 pb-3">
+            <button
+              type="button"
+              onClick={handleLock}
+              className="w-full py-2.5 rounded-xl text-slate-600 bg-white border border-slate-200 text-sm font-medium"
+            >
+              🔒 {t('adminLock')}
+            </button>
+          </div>
         )}
       </div>
 
-      {/* 桌機：橫向分頁列 + icon */}
-      <div className="hidden md:block border-b border-rose-200 overflow-x-auto">
-        <div className="flex items-stretch min-w-0">
-          {TAB_IDS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={`${tabButtonClass(id)} flex-1 min-w-[100px] py-4 px-4 text-base shrink-0`}
-            >
+      <div className="flex flex-1 min-h-0 min-w-0">
+        {/* 桌機：側欄 */}
+        <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-slate-200 bg-slate-50/95 p-3 gap-1">
+          <div className="px-2 py-2 mb-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('adminConsole')}</p>
+          </div>
+          {SECTION_IDS.map((id) => (
+            <button key={id} type="button" onClick={() => setTab(id)} className={navBtn(id)}>
               {TAB_ICONS[id]}
-              {t(TAB_KEYS[id])}
+              <span className="truncate">{t(TAB_KEYS[id])}</span>
             </button>
           ))}
           {adminHasPin && (
-            <button type="button" onClick={handleLock} className="shrink-0 px-4 py-4 text-rose-500 hover:text-rose-700 hover:bg-rose-100 text-sm font-medium min-h-[48px] flex items-center gap-1">
-              <span>{t('adminLock')}</span> 🔒
+            <button
+              type="button"
+              onClick={handleLock}
+              className="mt-auto w-full flex items-center gap-2 px-3 py-3 rounded-xl text-sm text-slate-600 hover:bg-slate-200/80 border border-slate-200"
+            >
+              <span>🔒</span> {t('adminLock')}
             </button>
           )}
-        </div>
-      </div>
+        </aside>
 
-      <div className="p-4 sm:p-6 min-h-[320px] sm:min-h-[420px] overflow-x-hidden">
-        {tab === 'products' && <ProductManager />}
-        {tab === 'categories' && <CategoryManager />}
-        {tab === 'orders' && <OrderList />}
-        {tab === 'report' && <ReportSettlement />}
-        {tab === 'settings' && <StoreSettings />}
-        {tab === 'backup' && <BackupRestore />}
+        <div className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 md:p-8 bg-white">
+          {tab === 'dashboard' && <AdminDashboard onNavigateToTab={setTab} />}
+          {tab === 'orders' && <OrderList />}
+          {tab === 'products' && <ProductManager />}
+          {tab === 'categories' && <CategoryManager />}
+          {tab === 'inventory' && <InventoryPanel />}
+          {tab === 'report' && <ReportSettlement />}
+          {tab === 'settings' && <StoreSettings />}
+          {tab === 'backup' && <BackupRestore />}
+        </div>
       </div>
     </div>
   );

@@ -78,11 +78,11 @@ export default function BackupRestore() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-rose-800">{t('backupRestoreTitle')}</h2>
-      <p className="text-rose-600 text-sm">{t('backupRestoreHint')}</p>
+      <h2 className="text-xl font-semibold text-slate-800">{t('backupRestoreTitle')}</h2>
+      <p className="text-slate-600 text-sm">{t('backupRestoreHint')}</p>
       {isSyncEnabled && (
         <div className="space-y-1">
-          <p className="text-pink-700 text-sm font-medium">{t('syncEnabledHint')}</p>
+          <p className="text-teal-700 text-sm font-medium">{t('syncEnabledHint')}</p>
           {syncStatus === 'ok' && <p className="text-green-700 text-sm">{t('syncStatusOk')}</p>}
           {syncStatus && syncStatus !== 'ok' && typeof syncStatus === 'object' && (
             <p className="text-red-600 text-sm">{t('syncStatusError')}: {syncStatus.error}</p>
@@ -92,7 +92,7 @@ export default function BackupRestore() {
               type="button"
               onClick={handleTestUpload}
               disabled={testingUpload}
-              className="px-3 py-2 rounded-xl text-sm font-medium bg-rose-100 hover:bg-rose-200 text-rose-700 min-h-[44px] disabled:opacity-50"
+              className="px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 min-h-[44px] disabled:opacity-50"
             >
               {testingUpload ? '...' : t('syncTestWrite')}
             </button>
@@ -102,15 +102,15 @@ export default function BackupRestore() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="card-market rounded-2xl p-5">
-          <h3 className="font-medium text-rose-800 mb-2">{t('backupExport')}</h3>
-          <p className="text-sm text-rose-500 mb-4">{t('backupExportHint')}</p>
+          <h3 className="font-medium text-slate-800 mb-2">{t('backupExport')}</h3>
+          <p className="text-sm text-slate-500 mb-4">{t('backupExportHint')}</p>
           <button type="button" onClick={handleExport} className="btn-primary px-4 py-2.5 rounded-xl font-medium min-h-[44px]">
             {t('backupDownload')}
           </button>
         </div>
         <div className="card-market rounded-2xl p-5">
-          <h3 className="font-medium text-rose-800 mb-2">{t('backupImport')}</h3>
-          <p className="text-sm text-rose-500 mb-4">{t('backupImportHint')}</p>
+          <h3 className="font-medium text-slate-800 mb-2">{t('backupImport')}</h3>
+          <p className="text-sm text-slate-500 mb-4">{t('backupImportHint')}</p>
           <input
             ref={fileRef}
             type="file"

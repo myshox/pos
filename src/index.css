@@ -8,38 +8,36 @@
 html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
-  /* 可愛少女風：奶油粉 × 淡薰衣草 */
-  background: linear-gradient(165deg, #fff5f8 0%, #ffe8f0 38%, #f3e8ff 100%);
+  /* 舒適閱讀：暖灰底，不染色 */
+  background: linear-gradient(165deg, #f1f5f9 0%, #eef2f6 45%, #e8edf3 100%);
 }
 body {
   height: 100%;
   margin: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  background: linear-gradient(165deg, #fff5f8 0%, #ffe8f0 38%, #f3e8ff 100%);
+  background: linear-gradient(165deg, #f1f5f9 0%, #eef2f6 45%, #e8edf3 100%);
   font-family: var(--font-cute);
   overflow-x: hidden;
+  color: #1e293b;
 }
 #root {
   height: 100%;
   min-height: 100%;
 }
 
-/* 觸控友善 */
 .touch-target {
   min-height: 44px;
   min-width: 44px;
 }
 button, a, [role="button"], input, select, textarea {
-  -webkit-tap-highlight-color: rgba(236, 72, 153, 0.12);
+  -webkit-tap-highlight-color: rgba(15, 118, 110, 0.12);
   touch-action: manipulation;
 }
 
-/* 手機/平板橫向捲動表格 */
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 購物車/結帳區底部留安全區（iPhone 等有 Home 指示條） */
 .cart-drawer-footer {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
@@ -48,7 +46,6 @@ button, a, [role="button"], input, select, textarea {
   right: max(1.25rem, calc(env(safe-area-inset-right) + 0.75rem));
 }
 
-/* 商品列表底部留白：避免最後一排被浮動結帳鈕遮住 */
 .pos-product-scroll {
   padding-bottom: max(1.25rem, calc(5.75rem + env(safe-area-inset-bottom)));
 }
@@ -58,52 +55,51 @@ button, a, [role="button"], input, select, textarea {
   }
 }
 
-/* 頂欄：草莓牛奶粉 × 玫瑰粉 */
+/* 頂欄：深灰藍，白字對比清楚 */
 .header-bar {
-  background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 45%, #ec4899 100%);
-  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.28);
+  background: linear-gradient(135deg, #334155 0%, #1e293b 52%, #0f172a 100%);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.15);
 }
 
-/* 商品卡片：柔白偏粉 */
+/* 卡片：白底、淡邊框 */
 .card-market {
-  background: #fffafd;
-  border: 1px solid #fce7f3;
-  box-shadow: 0 2px 16px rgba(236, 72, 153, 0.08);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
-/* 主按鈕：玫瑰粉漸層 */
+/* 主按鈕：青綠，清晰不刺眼 */
 .btn-primary {
-  background: linear-gradient(180deg, #f472b6 0%, #db2777 100%);
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(219, 39, 119, 0.35);
+  box-shadow: 0 2px 10px rgba(13, 148, 136, 0.28);
 }
 .btn-primary:hover {
-  background: linear-gradient(180deg, #f9a8d4 0%, #ec4899 100%);
-  box-shadow: 0 4px 16px rgba(219, 39, 119, 0.4);
+  background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
 }
 .btn-primary:active {
-  box-shadow: 0 1px 8px rgba(190, 24, 93, 0.45);
+  box-shadow: 0 1px 6px rgba(15, 118, 110, 0.45);
 }
 
-/* 浮動結帳鈕：略亮一階、白邊 */
 .btn-primary.floating-cart-btn {
-  background: linear-gradient(180deg, #f9a8d4 0%, #e11d48 100%);
-  box-shadow: 0 10px 24px rgba(225, 29, 72, 0.38);
-  border: 3px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(180deg, #2dd4bf 0%, #0f766e 100%);
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.35);
+  border: 3px solid rgba(255, 255, 255, 0.92);
 }
 .btn-primary.floating-cart-btn:hover {
-  background: linear-gradient(180deg, #fbcfe8 0%, #f43f5e 100%);
-  box-shadow: 0 12px 28px rgba(225, 29, 72, 0.42);
-  border-color: rgba(255, 255, 255, 1);
+  background: linear-gradient(180deg, #5eead4 0%, #14b8a6 100%);
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.4);
+  border-color: rgba(255, 255, 255, 0.98);
 }
 .btn-primary.floating-cart-btn:active {
-  box-shadow: 0 8px 18px rgba(190, 24, 93, 0.48);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.45);
 }
 
 .category-badge {
-  background: #fdf2f8;
-  color: #9d174d;
-  border: 1px solid #fbcfe8;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
 }
 
 @keyframes toast-in {
@@ -122,7 +118,6 @@ button, a, [role="button"], input, select, textarea {
   animation: modal-in 0.2s ease-out;
 }
 
-/* POS 字型大小：transform 相容 iOS */
 .pos-font-scaler.pos-font-small {
   -webkit-transform: scale(0.88);
   transform: scale(0.88);

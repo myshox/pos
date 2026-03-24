@@ -41,7 +41,7 @@ export default function CategoryManager() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-rose-800 mb-6">{t('mainCategories')}</h2>
+      <h2 className="text-xl font-semibold text-slate-800 mb-6">{t('mainCategories')}</h2>
 
       <form onSubmit={handleAdd} className="flex flex-wrap gap-3 mb-6">
         <input
@@ -49,7 +49,7 @@ export default function CategoryManager() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder={t('categoryNamePlaceholder')}
-          className="border border-rose-300 rounded-xl px-4 py-2 w-48"
+          className="border border-slate-300 rounded-xl px-4 py-2 w-48"
         />
         <button type="submit" className="btn-primary px-4 py-2 rounded-xl font-medium">
           {t('addCategory')}
@@ -57,13 +57,13 @@ export default function CategoryManager() {
       </form>
 
       {categories.length === 0 ? (
-        <p className="text-rose-500 py-8">{t('noCategoriesYet')}</p>
+        <p className="text-slate-500 py-8">{t('noCategoriesYet')}</p>
       ) : (
         <ul className="space-y-2">
           {categories.map((name) => (
             <li
               key={name}
-              className="flex items-center justify-between gap-4 py-3 px-4 bg-rose-50 rounded-xl border border-rose-100"
+              className="flex items-center justify-between gap-4 py-3 px-4 bg-slate-50 rounded-xl border border-slate-100"
             >
               {editing === name ? (
                 <>
@@ -71,30 +71,30 @@ export default function CategoryManager() {
                     type="text"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    className="flex-1 border border-rose-300 rounded-lg px-3 py-2"
+                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2"
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
                   />
                   <div className="flex gap-2">
-                    <button type="button" onClick={saveEdit} className="px-3 py-1.5 bg-pink-100 text-pink-800 rounded-lg text-sm">
+                    <button type="button" onClick={saveEdit} className="px-3 py-1.5 bg-teal-100 text-slate-800 rounded-lg text-sm">
                       {t('save')}
                     </button>
-                    <button type="button" onClick={() => { setEditing(null); setEditValue(''); }} className="px-3 py-1.5 bg-rose-200 rounded-lg text-sm">
+                    <button type="button" onClick={() => { setEditing(null); setEditValue(''); }} className="px-3 py-1.5 bg-slate-200 rounded-lg text-sm">
                       {t('cancel')}
                     </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <span className="font-medium text-rose-800">{name}</span>
+                  <span className="font-medium text-slate-800">{name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-rose-500">
+                    <span className="text-sm text-slate-500">
                       {t('categoryInUse').replace('{n}', countByCategory(name))}
                     </span>
                     <button
                       type="button"
                       onClick={() => startEdit(name)}
-                      className="text-sm px-3 py-1 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-800"
+                      className="text-sm px-3 py-1 rounded-lg bg-teal-100 hover:bg-teal-200 text-slate-800"
                     >
                       {t('edit')}
                     </button>

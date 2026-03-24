@@ -37,17 +37,17 @@ export default function Layout({ children }) {
                   key={l}
                   type="button"
                   onClick={() => setLang(l)}
-                  className={`px-3 py-1.5 text-sm font-medium transition min-h-[40px] ${lang === l ? 'bg-white/95 text-pink-600 shadow-sm' : 'text-white/95 hover:bg-white/20'}`}
+                  className={`px-3 py-1.5 text-sm font-medium transition min-h-[40px] ${lang === l ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:bg-white/20'}`}
                 >
                   {langLabels[l]}
                 </button>
               ))}
             </div>
             <nav className="flex gap-2">
-              <Link to="/" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${!isAdmin ? 'bg-white/95 text-pink-600 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+              <Link to="/" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${!isAdmin ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
                 {t('navCheckout')}
               </Link>
-              <Link to="/admin" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${isAdmin ? 'bg-white/95 text-pink-600 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+              <Link to="/admin" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${isAdmin ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
                 {t('navAdmin')}
               </Link>
             </nav>
@@ -68,20 +68,20 @@ export default function Layout({ children }) {
 
         {/* 手機展開選單 */}
         {menuOpen && (
-          <div className="md:hidden border-t border-white/20 bg-[#9d174d]/95 px-4 py-4 flex flex-col gap-2">
+          <div className="md:hidden border-t border-white/15 bg-slate-950/95 px-4 py-4 flex flex-col gap-2">
             <div className="flex gap-2 mb-2">
               {LANGS.map((l) => (
                 <button
                   key={l}
                   type="button"
                   onClick={() => setLang(l)}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition ${lang === l ? 'bg-white text-pink-600 shadow-sm' : 'bg-white/15 text-white/95'}`}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition ${lang === l ? 'bg-white text-teal-700 shadow-sm' : 'bg-white/10 text-white/95'}`}
                 >
                   {langLabels[l]}
                 </button>
               ))}
             </div>
-            <Link to="/" className="py-3 px-4 rounded-xl font-medium text-center bg-white text-pink-600 shadow-sm" onClick={() => setMenuOpen(false)}>
+            <Link to="/" className="py-3 px-4 rounded-xl font-medium text-center bg-white text-teal-700 shadow-sm" onClick={() => setMenuOpen(false)}>
               {t('navCheckout')}
             </Link>
             <Link to="/admin" className="py-3 px-4 rounded-xl font-medium text-center text-white/95 bg-white/15" onClick={() => setMenuOpen(false)}>
@@ -91,7 +91,7 @@ export default function Layout({ children }) {
         )}
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 min-w-0">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 min-w-0 text-slate-800 antialiased">
         {children}
       </main>
     </div>

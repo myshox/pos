@@ -67,6 +67,7 @@ export function addOrder(order) {
     note: order.note || '',
     paymentMethod,
     createdAt: new Date().toISOString(),
+    voided: false,
   };
   orders.unshift(newOrder);
   saveOrders(orders);
@@ -78,7 +79,7 @@ export function updateOrder(orderId, updates) {
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return null;
   const next = [...orders];
-  const allowed = ['note', 'total', 'subtotal', 'discount', 'paymentMethod', 'items'];
+  const allowed = ['note', 'total', 'subtotal', 'discount', 'paymentMethod', 'items', 'voided', 'voidReason', 'voidedAt'];
   const patch = {};
   allowed.forEach((k) => { if (updates[k] !== undefined) patch[k] = updates[k]; });
   next[idx] = { ...next[idx], ...patch };

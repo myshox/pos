@@ -221,6 +221,17 @@ export function StoreProvider({ children }) {
     triggerSync();
   }, [triggerSync]);
 
+  const voidOrder = useCallback((orderId, reason = '') => {
+    const updated = updateOrderStorage(orderId, {
+      voided: true,
+      voidedAt: new Date().toISOString(),
+      voidReason: String(reason || '').trim(),
+    });
+    if (updated) setOrders(getOrders());
+    triggerSync();
+    return updated;
+  }, [triggerSync]);
+
   const value = {
     products,
     activeProducts,
@@ -241,6 +252,7 @@ export function StoreProvider({ children }) {
     refreshProducts,
     updateOrder,
     deleteOrder,
+    voidOrder,
     addCategory,
     removeCategory,
     updateCategory,

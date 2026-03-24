@@ -46,15 +46,26 @@ export function endOfMonth(d) {
   return x;
 }
 
+/** 訂單是否已作廢（不計入營收與報表） */
+export function isOrderVoided(order) {
+  return order && order.voided === true;
+}
+
+/** 僅有效訂單（未作廢） */
+export function activeOrdersOnly(orders) {
+  if (!Array.isArray(orders)) return [];
+  return orders.filter((o) => !isOrderVoided(o));
+}
+
 /** 訂單是否在 [start, end] 區間內（含 start、end） */
 export function orderInRange(order, start, end) {
   const t = new Date(order.createdAt).getTime();
   return t >= start.getTime() && t <= end.getTime();
 }
 
-/** 依日期區間篩選訂單，回傳 { orders, count, total } */
+/** 依日期區間篩選訂單，回傳 { orders, count, total }（已作廢訂單不計入） */
 export function getOrdersInRange(orders, start, end) {
-  const list = orders.filter((o) => orderInRange(o, start, end));
+  const list = activeOrdersOnly(orders).filter((o) => orderInRange(o, start, end));
   const total = list.reduce((sum, o) => sum + o.total, 0);
   return { orders: list, count: list.length, total };
 }
@@ -126,7 +137,7 @@ export function formatReportDate(iso) {
 /** 付款方式統計：{ line: { count, total }, cash: { count, total }, card: { count, total } } */
 export function getPaymentBreakdown(orders) {
   const breakdown = { line: { count: 0, total: 0 }, cash: { count: 0, total: 0 }, card: { count: 0, total: 0 } };
-  for (const o of orders) {
+  for (const o of activeOrdersOnly(orders)) {
     const key = o.paymentMethod === 'line' || o.paymentMethod === 'card' ? o.paymentMethod : 'cash';
     breakdown[key].count += 1;
     breakdown[key].total += o.total;
@@ -138,7 +149,7 @@ export function getPaymentBreakdown(orders) {
 export function getProductAnalysis(orders) {
   const productMap = new Map(); // key: product id or name
   const categoryMap = new Map();
-  for (const order of orders) {
+  for (const order of activeOrdersOnly(orders)) {
     if (!order.items || !Array.isArray(order.items)) continue;
     for (const item of order.items) {
       const qty = Number(item.qty) || 0;

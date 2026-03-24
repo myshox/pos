@@ -58,28 +58,28 @@ export default function ReceiptModal({ order, onClose }) {
         onClick={(e) => e.stopPropagation()}
         style={{ fontFamily: 'var(--font-cute)' }}
       >
-        <div className="p-4 sm:p-6 border-b border-rose-200 flex justify-between items-center gap-2">
-          <h3 className="text-base sm:text-lg font-semibold text-rose-800">{t('receiptTitle')}</h3>
+        <div className="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center gap-2">
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800">{t('receiptTitle')}</h3>
           <div className="flex gap-2 flex-shrink-0">
-            <button type="button" onClick={copyReceipt} className="px-3 py-2 sm:py-1.5 text-sm bg-pink-100 text-pink-800 rounded-lg hover:bg-pink-200 min-h-[44px] sm:min-h-0">
+            <button type="button" onClick={copyReceipt} className="px-3 py-2 sm:py-1.5 text-sm bg-teal-100 text-slate-800 rounded-lg hover:bg-teal-200 min-h-[44px] sm:min-h-0">
               {t('copy')}
             </button>
-            <button type="button" onClick={printReceipt} className="px-3 py-2 sm:py-1.5 text-sm bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 min-h-[44px] sm:min-h-0">
+            <button type="button" onClick={printReceipt} className="px-3 py-2 sm:py-1.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 min-h-[44px] sm:min-h-0">
               {t('printReceipt')}
             </button>
-            <button type="button" onClick={onClose} className="px-3 py-2 sm:py-1.5 text-sm bg-rose-200 text-rose-700 rounded-lg hover:bg-rose-300 min-h-[44px] sm:min-h-0">
+            <button type="button" onClick={onClose} className="px-3 py-2 sm:py-1.5 text-sm bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 min-h-[44px] sm:min-h-0">
               {t('close')}
             </button>
           </div>
         </div>
-        <div ref={blockRef} className="p-6 overflow-y-auto text-sm text-rose-700 space-y-1">
-          <div className="text-center border-b border-dashed border-rose-300 pb-3 mb-3">
-            <div className="font-semibold text-rose-800">{store.name || t('appName')}</div>
-            {store.phone && <div className="text-rose-600 text-xs mt-0.5">{store.phone}</div>}
-            {store.address && <div className="text-rose-500 text-xs">{store.address}</div>}
-            <div className="text-rose-500 text-xs mt-1">{t('orderLabel')} #{order.id.slice(0, 8)}</div>
-            <div className="text-rose-500 text-xs">{formatReceiptDate(order.createdAt, lang)}</div>
-            {store.taxId && <div className="text-rose-600 text-xs mt-0.5">{t('storeTaxId')}：{store.taxId}</div>}
+        <div ref={blockRef} className="p-6 overflow-y-auto text-sm text-slate-700 space-y-1">
+          <div className="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
+            <div className="font-semibold text-slate-800">{store.name || t('appName')}</div>
+            {store.phone && <div className="text-slate-600 text-xs mt-0.5">{store.phone}</div>}
+            {store.address && <div className="text-slate-500 text-xs">{store.address}</div>}
+            <div className="text-slate-500 text-xs mt-1">{t('orderLabel')} #{order.id.slice(0, 8)}</div>
+            <div className="text-slate-500 text-xs">{formatReceiptDate(order.createdAt, lang)}</div>
+            {store.taxId && <div className="text-slate-600 text-xs mt-0.5">{t('storeTaxId')}：{store.taxId}</div>}
           </div>
           {order.items.map((item, i) => (
             <div key={i} className="flex justify-between">
@@ -88,30 +88,30 @@ export default function ReceiptModal({ order, onClose }) {
             </div>
           ))}
           {order.note && (
-            <div className="pt-2 text-pink-800/90 text-xs">{t('note')}：{order.note}</div>
+            <div className="pt-2 text-slate-800/90 text-xs">{t('note')}：{order.note}</div>
           )}
           {order.subtotal != null && order.subtotal !== order.total && (
-            <div className="flex justify-between text-rose-600 text-xs pt-1">
+            <div className="flex justify-between text-slate-600 text-xs pt-1">
               <span>{t('subtotal')}</span>
               <span>NT$ {order.subtotal}</span>
             </div>
           )}
           {order.discount && (order.discount.type === 'amount' || order.discount.type === 'percent') && (
-            <div className="flex justify-between text-pink-700 text-xs">
+            <div className="flex justify-between text-teal-700 text-xs">
               <span>{t('discount')}（{formatDiscount(order, t)}）</span>
               <span>- NT$ {(order.subtotal ?? order.total) - order.total}</span>
             </div>
           )}
           {order.paymentMethod && (
-            <div className="pt-1 text-rose-600 text-xs">
+            <div className="pt-1 text-slate-600 text-xs">
               {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
             </div>
           )}
-          <div className="flex justify-between font-semibold pt-3 border-t border-rose-300 mt-3">
+          <div className="flex justify-between font-semibold pt-3 border-t border-slate-300 mt-3">
             <span>{t('totalLabel')}</span>
             <span>NT$ {order.total}</span>
           </div>
-          <div className="text-center text-rose-500 text-xs pt-5 border-t border-dashed border-rose-200 mt-3">{t('thanksVisit')}</div>
+          <div className="text-center text-slate-500 text-xs pt-5 border-t border-dashed border-slate-200 mt-3">{t('thanksVisit')}</div>
         </div>
       </div>
     </div>
