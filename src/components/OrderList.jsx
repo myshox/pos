@@ -99,25 +99,25 @@ export default function OrderList() {
       {/* 今日摘要 */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="card-market rounded-2xl p-5">
-          <div className="text-sm text-stone-500">{t('todayOrders')}</div>
-          <div className="text-2xl font-bold text-stone-800">{todayCount}</div>
+          <div className="text-sm text-rose-500">{t('todayOrders')}</div>
+          <div className="text-2xl font-bold text-rose-800">{todayCount}</div>
         </div>
         <div className="card-market rounded-2xl p-5">
-          <div className="text-sm text-stone-500">{t('todayRevenue')}</div>
-          <div className="text-2xl font-bold text-amber-800">NT$ {todayTotal}</div>
+          <div className="text-sm text-rose-500">{t('todayRevenue')}</div>
+          <div className="text-2xl font-bold text-pink-800">NT$ {todayTotal}</div>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-3 sm:gap-4 mb-5">
-        <h2 className="text-lg sm:text-xl font-semibold text-stone-800">{t('tabOrders')}</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-rose-800">{t('tabOrders')}</h2>
         <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
-          <button type="button" onClick={exportOrdersCSV} className="px-3 py-2 bg-amber-100 text-amber-800 hover:bg-amber-200 rounded-xl text-sm font-medium min-h-[44px]">
+          <button type="button" onClick={exportOrdersCSV} className="px-3 py-2 bg-pink-100 text-pink-800 hover:bg-pink-200 rounded-xl text-sm font-medium min-h-[44px]">
             {t('exportCSV')}
           </button>
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="border border-stone-300 rounded-xl px-3 py-2 text-sm bg-white min-h-[44px]"
+            className="border border-rose-300 rounded-xl px-3 py-2 text-sm bg-white min-h-[44px]"
           >
             <option value="all">{t('filterAll')}</option>
             <option value="today">{t('filterToday')}</option>
@@ -126,9 +126,9 @@ export default function OrderList() {
           </select>
           {dateFilter === 'range' && (
             <div className="flex items-center gap-2 flex-wrap">
-              <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-sm min-h-[44px]" />
-              <span className="text-stone-400">~</span>
-              <input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-sm min-h-[44px]" />
+              <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} className="border border-rose-300 rounded-xl px-3 py-2 text-sm min-h-[44px]" />
+              <span className="text-rose-400">~</span>
+              <input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)} className="border border-rose-300 rounded-xl px-3 py-2 text-sm min-h-[44px]" />
             </div>
           )}
           <input
@@ -136,12 +136,12 @@ export default function OrderList() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchOrderPlaceholder')}
-            className="border border-stone-300 rounded-xl px-3 py-2 text-sm w-full min-w-0 sm:w-56 min-h-[44px]"
+            className="border border-rose-300 rounded-xl px-3 py-2 text-sm w-full min-w-0 sm:w-56 min-h-[44px]"
           />
           <button
             type="button"
             onClick={refreshOrders}
-            className="px-4 py-2 bg-stone-200 hover:bg-stone-300 rounded-xl text-sm font-medium"
+            className="px-4 py-2 bg-rose-200 hover:bg-rose-300 rounded-xl text-sm font-medium"
           >
             {t('refresh')}
           </button>
@@ -150,7 +150,7 @@ export default function OrderList() {
 
       {filteredOrders.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-stone-500 mb-1">{orders.length === 0 ? t('emptyOrdersHint') : t('noOrders')}</p>
+          <p className="text-rose-500 mb-1">{orders.length === 0 ? t('emptyOrdersHint') : t('noOrders')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -162,46 +162,46 @@ export default function OrderList() {
               <button
                 type="button"
                 onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
-                className="w-full flex justify-between items-center p-4 bg-stone-50/60 hover:bg-stone-50 text-left"
+                className="w-full flex justify-between items-center p-4 bg-rose-50/60 hover:bg-rose-50 text-left"
               >
                 <div className="flex gap-4 items-center">
-                  <span className="font-mono text-stone-500 text-sm">#{order.id.slice(0, 8)}</span>
-                  <span className="text-stone-600">{formatDate(order.createdAt, lang)}</span>
+                  <span className="font-mono text-rose-500 text-sm">#{order.id.slice(0, 8)}</span>
+                  <span className="text-rose-600">{formatDate(order.createdAt, lang)}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-amber-800">NT$ {order.total}</span>
+                  <span className="font-bold text-pink-800">NT$ {order.total}</span>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setReceiptOrder(order);
                     }}
-                    className="px-3 py-1.5 text-sm bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200"
+                    className="px-3 py-1.5 text-sm bg-pink-100 text-pink-800 rounded-lg hover:bg-pink-200"
                   >
                     {t('receipt')}
                   </button>
                 </div>
               </button>
               {expandedId === order.id && (
-                <div className="p-4 border-t border-stone-200 bg-white">
+                <div className="p-4 border-t border-rose-200 bg-white">
                   <ul className="space-y-2">
                     {order.items.map((item, i) => (
-                      <li key={i} className="flex justify-between text-stone-700">
+                      <li key={i} className="flex justify-between text-rose-700">
                         <span>{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
                         <span>NT$ {item.price * item.qty}</span>
                       </li>
                     ))}
                   </ul>
                   {order.note && (
-                    <div className="mt-2 text-sm text-amber-800/90">{t('note')}：{order.note}</div>
+                    <div className="mt-2 text-sm text-pink-800/90">{t('note')}：{order.note}</div>
                   )}
                   {order.paymentMethod && (
-                    <div className="mt-2 text-sm text-stone-600">
+                    <div className="mt-2 text-sm text-rose-600">
                       {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
                     </div>
                   )}
-                  <div className="mt-3 pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-bold text-stone-800">{t('total')} NT$ {order.total}</span>
+                  <div className="mt-3 pt-3 border-t border-rose-100 flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-bold text-rose-800">{t('total')} NT$ {order.total}</span>
                     <button
                       type="button"
                       onClick={() => {

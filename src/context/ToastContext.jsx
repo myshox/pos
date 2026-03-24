@@ -18,7 +18,7 @@ export function ToastProvider({ children }) {
         <div
           className="toast-enter fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-medium"
           style={{
-            background: toast.type === 'error' ? '#b91c1c' : 'linear-gradient(135deg, #b8860b 0%, #8b6914 100%)',
+            background: toast.type === 'error' ? 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)' : 'linear-gradient(135deg, #f9a8d4 0%, #db2777 100%)',
           }}
           role="alert"
         >

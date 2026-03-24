@@ -155,17 +155,17 @@ export default function ReportSettlement() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-wrap justify-between items-center gap-4">
-        <h2 className="text-xl font-semibold text-stone-800">{t('reportTitle')}</h2>
+        <h2 className="text-xl font-semibold text-rose-800">{t('reportTitle')}</h2>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={exportReportCSV} className="px-4 py-2 bg-amber-100 text-amber-800 hover:bg-amber-200 rounded-xl text-sm font-medium min-h-[44px]">
+          <button type="button" onClick={exportReportCSV} className="px-4 py-2 bg-pink-100 text-pink-800 hover:bg-pink-200 rounded-xl text-sm font-medium min-h-[44px]">
             {t('exportCSV')}
           </button>
           {period === 'day' && (
-            <button type="button" onClick={printDaySettlement} className="px-4 py-2 bg-stone-200 hover:bg-stone-300 rounded-xl text-sm font-medium min-h-[44px]">
+            <button type="button" onClick={printDaySettlement} className="px-4 py-2 bg-rose-200 hover:bg-rose-300 rounded-xl text-sm font-medium min-h-[44px]">
               {t('daySettlementPrint')}
             </button>
           )}
-          <button type="button" onClick={refreshOrders} className="px-4 py-2 bg-stone-200 hover:bg-stone-300 rounded-xl text-sm font-medium min-h-[44px]">
+          <button type="button" onClick={refreshOrders} className="px-4 py-2 bg-rose-200 hover:bg-rose-300 rounded-xl text-sm font-medium min-h-[44px]">
             {t('refresh')}
           </button>
         </div>
@@ -178,7 +178,7 @@ export default function ReportSettlement() {
             type="button"
             onClick={() => setPeriod(p)}
             className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl font-medium transition text-sm sm:text-base min-h-[44px] ${
-              period === p ? 'btn-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              period === p ? 'btn-primary text-white' : 'bg-rose-100 text-rose-600 hover:bg-rose-200'
             }`}
           >
             {t(p === 'day' ? 'daySettle' : p === 'week' ? 'weekSettle' : p === 'range' ? 'rangeSettle' : 'monthSettle')}
@@ -189,22 +189,22 @@ export default function ReportSettlement() {
       <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-3 sm:gap-4">
         {period === 'day' && (
           <label className="flex items-center gap-2">
-            <span className="text-stone-600">{t('selectDate')}</span>
+            <span className="text-rose-600">{t('selectDate')}</span>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="border border-stone-300 rounded-xl px-3 py-2 min-h-[44px]"
+              className="border border-rose-300 rounded-xl px-3 py-2 min-h-[44px]"
             />
           </label>
         )}
         {period === 'week' && (
           <label className="flex items-center gap-2">
-            <span className="text-stone-600">{t('selectWeek')}</span>
+            <span className="text-rose-600">{t('selectWeek')}</span>
             <select
               value={selectedWeekIndex}
               onChange={(e) => setSelectedWeekIndex(Number(e.target.value))}
-              className="border border-stone-300 rounded-xl px-3 py-2 min-w-[200px] min-h-[44px]"
+              className="border border-rose-300 rounded-xl px-3 py-2 min-w-[200px] min-h-[44px]"
             >
               {weekOptions.map((opt, i) => (
                 <option key={i} value={i}>{opt.label}</option>
@@ -214,11 +214,11 @@ export default function ReportSettlement() {
         )}
         {period === 'month' && (
           <label className="flex items-center gap-2">
-            <span className="text-stone-600">{t('selectMonth')}</span>
+            <span className="text-rose-600">{t('selectMonth')}</span>
             <select
               value={selectedMonthIndex}
               onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
-              className="border border-stone-300 rounded-xl px-3 py-2 min-w-[160px] min-h-[44px]"
+              className="border border-rose-300 rounded-xl px-3 py-2 min-w-[160px] min-h-[44px]"
             >
               {monthOptions.map((opt, i) => (
                 <option key={i} value={i}>{opt.label}</option>
@@ -229,13 +229,13 @@ export default function ReportSettlement() {
         {period === 'range' && (
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <label className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-stone-600 text-sm shrink-0">{t('rangeStart')}</span>
-              <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-sm min-h-[44px] flex-1 min-w-0" />
+              <span className="text-rose-600 text-sm shrink-0">{t('rangeStart')}</span>
+              <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} className="border border-rose-300 rounded-xl px-3 py-2 text-sm min-h-[44px] flex-1 min-w-0" />
             </label>
-            <span className="text-stone-400">~</span>
+            <span className="text-rose-400">~</span>
             <label className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-stone-600 text-sm shrink-0">{t('rangeEnd')}</span>
-              <input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)} className="border border-stone-300 rounded-xl px-3 py-2 text-sm min-h-[44px] flex-1 min-w-0" />
+              <span className="text-rose-600 text-sm shrink-0">{t('rangeEnd')}</span>
+              <input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)} className="border border-rose-300 rounded-xl px-3 py-2 text-sm min-h-[44px] flex-1 min-w-0" />
             </label>
           </div>
         )}
@@ -244,29 +244,29 @@ export default function ReportSettlement() {
       {/* 摘要卡片 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-market rounded-2xl p-5">
-          <div className="text-sm text-stone-500">{t('period')}</div>
-          <div className="text-lg font-semibold text-stone-800 mt-1">{periodLabel}</div>
+          <div className="text-sm text-rose-500">{t('period')}</div>
+          <div className="text-lg font-semibold text-rose-800 mt-1">{periodLabel}</div>
         </div>
         <div className="card-market rounded-2xl p-5">
-          <div className="text-sm text-stone-500">{t('orderCount')}</div>
-          <div className="text-2xl font-bold text-stone-800 mt-1">{report.count}</div>
+          <div className="text-sm text-rose-500">{t('orderCount')}</div>
+          <div className="text-2xl font-bold text-rose-800 mt-1">{report.count}</div>
         </div>
         <div className="card-market rounded-2xl p-5">
-          <div className="text-sm text-stone-500">{t('revenue')}</div>
-          <div className="text-2xl font-bold text-amber-800 mt-1">NT$ {report.total.toLocaleString()}</div>
+          <div className="text-sm text-rose-500">{t('revenue')}</div>
+          <div className="text-2xl font-bold text-pink-800 mt-1">NT$ {report.total.toLocaleString()}</div>
         </div>
       </div>
 
       {/* 付款方式統計 */}
       {report.orders.length > 0 && (
         <section>
-          <h3 className="text-stone-700 font-medium mb-3">{t('reportPaymentBreakdown')}</h3>
+          <h3 className="text-rose-700 font-medium mb-3">{t('reportPaymentBreakdown')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {['line', 'cash', 'card'].map((key) => (
               <div key={key} className="card-market rounded-2xl p-4 flex flex-col">
-                <div className="text-sm text-stone-500">{paymentLabel(t, key)}</div>
-                <div className="text-lg font-semibold text-stone-800 mt-1">NT$ {paymentBreakdown[key].total.toLocaleString()}</div>
-                <div className="text-xs text-stone-400 mt-0.5">{paymentBreakdown[key].count} {t('orderCount').toLowerCase()}</div>
+                <div className="text-sm text-rose-500">{paymentLabel(t, key)}</div>
+                <div className="text-lg font-semibold text-rose-800 mt-1">NT$ {paymentBreakdown[key].total.toLocaleString()}</div>
+                <div className="text-xs text-rose-400 mt-0.5">{paymentBreakdown[key].count} {t('orderCount').toLowerCase()}</div>
               </div>
             ))}
           </div>
@@ -276,28 +276,28 @@ export default function ReportSettlement() {
       {/* 產品分析 */}
       {productAnalysis.byProduct.length > 0 && (
         <section>
-          <h3 className="text-stone-700 font-medium mb-3">{t('reportProductAnalysis')} · {t('reportTopProducts')}</h3>
-          <div className="overflow-x-auto rounded-xl border border-stone-200">
+          <h3 className="text-rose-700 font-medium mb-3">{t('reportProductAnalysis')} · {t('reportTopProducts')}</h3>
+          <div className="overflow-x-auto rounded-xl border border-rose-200">
             <table className="w-full text-left min-w-[360px]">
               <thead>
-                <tr className="bg-stone-100">
-                  <th className="px-4 py-3 text-stone-600 font-medium text-sm">#</th>
-                  <th className="px-4 py-3 text-stone-600 font-medium">{t('productName')}</th>
-                  <th className="px-4 py-3 text-stone-600 font-medium">{t('category')}</th>
-                  <th className="px-4 py-3 text-stone-600 font-medium text-right">{t('reportQuantitySold')}</th>
-                  <th className="px-4 py-3 text-stone-600 font-medium text-right">{t('revenue')}</th>
-                  <th className="px-4 py-3 text-stone-600 font-medium text-right">{t('reportRevenueShare')}</th>
+                <tr className="bg-rose-100">
+                  <th className="px-4 py-3 text-rose-600 font-medium text-sm">#</th>
+                  <th className="px-4 py-3 text-rose-600 font-medium">{t('productName')}</th>
+                  <th className="px-4 py-3 text-rose-600 font-medium">{t('category')}</th>
+                  <th className="px-4 py-3 text-rose-600 font-medium text-right">{t('reportQuantitySold')}</th>
+                  <th className="px-4 py-3 text-rose-600 font-medium text-right">{t('revenue')}</th>
+                  <th className="px-4 py-3 text-rose-600 font-medium text-right">{t('reportRevenueShare')}</th>
                 </tr>
               </thead>
               <tbody>
                 {productAnalysis.byProduct.map((row, i) => (
-                  <tr key={row.id ?? row.name} className="border-t border-stone-100">
-                    <td className="px-4 py-2.5 text-stone-500 text-sm">{i + 1}</td>
-                    <td className="px-4 py-2.5 text-stone-800 font-medium">{row.name}</td>
-                    <td className="px-4 py-2.5 text-stone-600 text-sm">{row.category || '—'}</td>
-                    <td className="px-4 py-2.5 text-stone-700 text-right">{row.qty}</td>
-                    <td className="px-4 py-2.5 text-amber-800 font-medium text-right">NT$ {row.revenue.toLocaleString()}</td>
-                    <td className="px-4 py-2.5 text-stone-600 text-right">
+                  <tr key={row.id ?? row.name} className="border-t border-rose-100">
+                    <td className="px-4 py-2.5 text-rose-500 text-sm">{i + 1}</td>
+                    <td className="px-4 py-2.5 text-rose-800 font-medium">{row.name}</td>
+                    <td className="px-4 py-2.5 text-rose-600 text-sm">{row.category || '—'}</td>
+                    <td className="px-4 py-2.5 text-rose-700 text-right">{row.qty}</td>
+                    <td className="px-4 py-2.5 text-pink-800 font-medium text-right">NT$ {row.revenue.toLocaleString()}</td>
+                    <td className="px-4 py-2.5 text-rose-600 text-right">
                       {report.total > 0 ? ((100 * row.revenue) / report.total).toFixed(1) : 0}%
                     </td>
                   </tr>
@@ -311,8 +311,8 @@ export default function ReportSettlement() {
       {/* 分類營收佔比圖表 */}
       {productAnalysis.byCategory.length > 0 && report.total > 0 && (
         <section>
-          <h3 className="text-stone-700 font-medium mb-3">{t('reportCategoryChartTitle')}</h3>
-          <p className="text-sm text-stone-500 mb-4">{t('reportCategoryChartHint')}</p>
+          <h3 className="text-rose-700 font-medium mb-3">{t('reportCategoryChartTitle')}</h3>
+          <p className="text-sm text-rose-500 mb-4">{t('reportCategoryChartHint')}</p>
           <div className="card-market rounded-2xl p-4 sm:p-6">
             <CategoryRevenueChart byCategory={productAnalysis.byCategory} totalRevenue={report.total} />
           </div>
@@ -322,12 +322,12 @@ export default function ReportSettlement() {
       {/* 分類營收（金額卡片） */}
       {productAnalysis.byCategory.length > 0 && (
         <section>
-          <h3 className="text-stone-700 font-medium mb-3">{t('reportCategoryAnalysis')}</h3>
+          <h3 className="text-rose-700 font-medium mb-3">{t('reportCategoryAnalysis')}</h3>
           <div className="flex flex-wrap gap-3">
             {productAnalysis.byCategory.map((row) => (
               <div key={row.category} className="card-market rounded-xl px-4 py-3 flex items-center justify-between gap-4 min-w-[140px]">
-                <span className="text-stone-700 font-medium">{row.category}</span>
-                <span className="text-amber-800 font-semibold">NT$ {row.revenue.toLocaleString()}</span>
+                <span className="text-rose-700 font-medium">{row.category}</span>
+                <span className="text-pink-800 font-semibold">NT$ {row.revenue.toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -336,41 +336,41 @@ export default function ReportSettlement() {
 
       {/* 訂單明細（可編輯） */}
       <section>
-        <h3 className="text-stone-700 font-medium mb-3">{t('orderDetail')}</h3>
+        <h3 className="text-rose-700 font-medium mb-3">{t('orderDetail')}</h3>
         {report.orders.length === 0 ? (
-          <p className="text-stone-500 py-8 text-center">{t('noOrdersInPeriod')}</p>
+          <p className="text-rose-500 py-8 text-center">{t('noOrdersInPeriod')}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border border-stone-200 rounded-xl overflow-hidden min-w-[520px]">
+            <table className="w-full text-left border border-rose-200 rounded-xl overflow-hidden min-w-[520px]">
               <thead>
-                <tr className="bg-stone-100">
-                  <th className="px-3 py-3 text-stone-600 font-medium text-sm">{t('time')}</th>
-                  <th className="px-3 py-3 text-stone-600 font-medium text-sm">{t('orderId')}</th>
-                  <th className="px-3 py-3 text-stone-600 font-medium text-sm">{t('amount')}</th>
-                  <th className="px-3 py-3 text-stone-600 font-medium text-sm">{t('paymentMethod')}</th>
-                  <th className="px-3 py-3 text-stone-600 font-medium text-sm w-32">{t('actions')}</th>
+                <tr className="bg-rose-100">
+                  <th className="px-3 py-3 text-rose-600 font-medium text-sm">{t('time')}</th>
+                  <th className="px-3 py-3 text-rose-600 font-medium text-sm">{t('orderId')}</th>
+                  <th className="px-3 py-3 text-rose-600 font-medium text-sm">{t('amount')}</th>
+                  <th className="px-3 py-3 text-rose-600 font-medium text-sm">{t('paymentMethod')}</th>
+                  <th className="px-3 py-3 text-rose-600 font-medium text-sm w-32">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {report.orders.map((order) => (
-                  <tr key={order.id} className="border-t border-stone-100 hover:bg-stone-50/50">
-                    <td className="px-3 py-2.5 text-stone-700 text-sm whitespace-nowrap">{formatReportDate(order.createdAt)}</td>
-                    <td className="px-3 py-2.5 font-mono text-sm text-stone-600">#{order.id.slice(0, 8)}</td>
-                    <td className="px-3 py-2.5 font-semibold text-amber-800">NT$ {order.total.toLocaleString()}</td>
-                    <td className="px-3 py-2.5 text-stone-600 text-sm">{paymentLabel(t, order.paymentMethod || 'cash')}</td>
+                  <tr key={order.id} className="border-t border-rose-100 hover:bg-rose-50/50">
+                    <td className="px-3 py-2.5 text-rose-700 text-sm whitespace-nowrap">{formatReportDate(order.createdAt)}</td>
+                    <td className="px-3 py-2.5 font-mono text-sm text-rose-600">#{order.id.slice(0, 8)}</td>
+                    <td className="px-3 py-2.5 font-semibold text-pink-800">NT$ {order.total.toLocaleString()}</td>
+                    <td className="px-3 py-2.5 text-rose-600 text-sm">{paymentLabel(t, order.paymentMethod || 'cash')}</td>
                     <td className="px-3 py-2.5">
                       <div className="flex flex-wrap gap-1 sm:gap-2">
                         <button
                           type="button"
                           onClick={() => setReceiptOrder(order)}
-                          className="px-2 py-1.5 text-xs sm:text-sm bg-stone-100 hover:bg-stone-200 rounded-lg text-stone-700 min-h-[36px]"
+                          className="px-2 py-1.5 text-xs sm:text-sm bg-rose-100 hover:bg-rose-200 rounded-lg text-rose-700 min-h-[36px]"
                         >
                           {t('viewReceipt')}
                         </button>
                         <button
                           type="button"
                           onClick={() => openEdit(order)}
-                          className="px-2 py-1.5 text-xs sm:text-sm bg-amber-100 hover:bg-amber-200 rounded-lg text-amber-800 min-h-[36px]"
+                          className="px-2 py-1.5 text-xs sm:text-sm bg-pink-100 hover:bg-pink-200 rounded-lg text-pink-800 min-h-[36px]"
                         >
                           {t('edit')}
                         </button>
@@ -399,35 +399,35 @@ export default function ReportSettlement() {
       {editOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={closeEdit}>
           <div className="card-market rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-stone-800 mb-4">{t('edit')} #{editOrder.id.slice(0, 8)}</h3>
+            <h3 className="text-lg font-semibold text-rose-800 mb-4">{t('edit')} #{editOrder.id.slice(0, 8)}</h3>
             <div className="space-y-4">
               <label className="block">
-                <span className="text-sm text-stone-600">{t('note')}</span>
+                <span className="text-sm text-rose-600">{t('note')}</span>
                 <input
                   type="text"
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
-                  className="mt-1 w-full border border-stone-300 rounded-xl px-3 py-2 min-h-[44px]"
+                  className="mt-1 w-full border border-rose-300 rounded-xl px-3 py-2 min-h-[44px]"
                   placeholder={t('orderNotePlaceholder')}
                 />
               </label>
               <label className="block">
-                <span className="text-sm text-stone-600">{t('amount')}</span>
+                <span className="text-sm text-rose-600">{t('amount')}</span>
                 <input
                   type="number"
                   min={0}
                   step={1}
                   value={editTotal}
                   onChange={(e) => setEditTotal(e.target.value)}
-                  className="mt-1 w-full border border-stone-300 rounded-xl px-3 py-2 min-h-[44px]"
+                  className="mt-1 w-full border border-rose-300 rounded-xl px-3 py-2 min-h-[44px]"
                 />
               </label>
               <label className="block">
-                <span className="text-sm text-stone-600">{t('paymentMethod')}</span>
+                <span className="text-sm text-rose-600">{t('paymentMethod')}</span>
                 <select
                   value={editPayment}
                   onChange={(e) => setEditPayment(e.target.value)}
-                  className="mt-1 w-full border border-stone-300 rounded-xl px-3 py-2 min-h-[44px]"
+                  className="mt-1 w-full border border-rose-300 rounded-xl px-3 py-2 min-h-[44px]"
                 >
                   <option value="line">{t('payLine')}</option>
                   <option value="cash">{t('payCash')}</option>
@@ -439,7 +439,7 @@ export default function ReportSettlement() {
               <button type="button" onClick={saveEdit} className="btn-primary text-white px-4 py-2.5 rounded-xl font-medium flex-1 min-h-[44px]">
                 {t('save')}
               </button>
-              <button type="button" onClick={closeEdit} className="px-4 py-2.5 bg-stone-200 hover:bg-stone-300 rounded-xl font-medium min-h-[44px]">
+              <button type="button" onClick={closeEdit} className="px-4 py-2.5 bg-rose-200 hover:bg-rose-300 rounded-xl font-medium min-h-[44px]">
                 {t('cancelEdit')}
               </button>
             </div>

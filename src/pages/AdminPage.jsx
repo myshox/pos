@@ -53,13 +53,13 @@ export default function AdminPage() {
 
   const tabButtonClass = (id) =>
     `flex items-center justify-center gap-2 font-medium transition min-h-[48px] ${
-      tab === id ? 'bg-stone-800 text-amber-50' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+      tab === id ? 'bg-pink-500 text-white shadow-sm' : 'bg-rose-100 text-rose-600 hover:bg-rose-200'
     }`;
 
   return (
     <div className="card-market rounded-2xl overflow-hidden w-full">
       {/* 手機：2x3 網格分頁 */}
-      <div className="md:hidden grid grid-cols-2 gap-2 p-3 border-b border-stone-200">
+      <div className="md:hidden grid grid-cols-2 gap-2 p-3 border-b border-rose-200">
         {TAB_IDS.map((id) => (
           <button
             key={id}
@@ -75,7 +75,7 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={handleLock}
-            className="col-span-2 py-3 rounded-xl text-stone-500 hover:text-stone-700 hover:bg-stone-100 text-sm font-medium min-h-[48px] flex items-center justify-center gap-1"
+            className="col-span-2 py-3 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-100 text-sm font-medium min-h-[48px] flex items-center justify-center gap-1"
           >
             <span>🔒</span> {t('adminLock')}
           </button>
@@ -83,7 +83,7 @@ export default function AdminPage() {
       </div>
 
       {/* 桌機：橫向分頁列 + icon */}
-      <div className="hidden md:block border-b border-stone-200 overflow-x-auto">
+      <div className="hidden md:block border-b border-rose-200 overflow-x-auto">
         <div className="flex items-stretch min-w-0">
           {TAB_IDS.map((id) => (
             <button
@@ -97,7 +97,7 @@ export default function AdminPage() {
             </button>
           ))}
           {adminHasPin && (
-            <button type="button" onClick={handleLock} className="shrink-0 px-4 py-4 text-stone-500 hover:text-stone-700 hover:bg-stone-100 text-sm font-medium min-h-[48px] flex items-center gap-1">
+            <button type="button" onClick={handleLock} className="shrink-0 px-4 py-4 text-rose-500 hover:text-rose-700 hover:bg-rose-100 text-sm font-medium min-h-[48px] flex items-center gap-1">
               <span>{t('adminLock')}</span> 🔒
             </button>
           )}
