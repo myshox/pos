@@ -16,11 +16,11 @@ export function ToastProvider({ children }) {
       {children}
       {toast && (
         <div
-          className="toast-enter fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-medium"
+          className="toast-enter fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] max-w-[min(100vw-2rem,22rem)] px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-medium text-center leading-snug border border-white/15 backdrop-blur-sm"
           style={{
             background: toast.type === 'error'
-              ? 'linear-gradient(135deg, #f87171 0%, #dc2626 100%)'
-              : 'linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)',
+              ? 'linear-gradient(145deg, #f87171 0%, #b91c1c 100%)'
+              : 'linear-gradient(145deg, #2dd4bf 0%, #0f766e 100%)',
           }}
           role="alert"
         >

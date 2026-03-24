@@ -242,7 +242,7 @@ export default function PosPage() {
           因此縮放只套用在「主內容」，固定抽屜/彈窗不套用縮放。 */}
       <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
         {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white/80 rounded-xl border border-slate-200 shrink-0 mx-2 sm:mx-3 mt-1">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white rounded-xl border border-slate-200/90 shadow-sm ring-1 ring-slate-200/40 shrink-0 mx-2 sm:mx-3 mt-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
             <span className="text-slate-600 font-medium text-sm shrink-0">{t('todaySales')}</span>
             <span className="text-slate-700 text-sm min-w-0"><span className="text-slate-500">{t('ordersCount')} </span><strong>{todayReport.count}</strong></span>
@@ -268,25 +268,25 @@ export default function PosPage() {
         {/* 商品區 - 獨立一頁，全區塊捲動（底部留白避免被浮動結帳鈕遮字） */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-3 pos-product-scroll">
         <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-          <h1 className="text-xl sm:text-2xl font-semibold text-slate-800 shrink-0" style={{ fontFamily: 'var(--font-cute)' }}>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 shrink-0" style={{ fontFamily: 'var(--font-cute)' }}>
             {t('productArea')}
           </h1>
           {activeProducts.length > 0 && (
             <div className="flex flex-col gap-2 w-full min-w-0 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
               <div className="flex flex-wrap items-center gap-2">
               <span className="text-slate-500 text-xs shrink-0">{t('productViewLabel')}</span>
-              <div className="flex rounded-lg overflow-hidden border border-slate-200 shrink-0">
+              <div className="flex rounded-xl overflow-hidden border border-slate-200/90 bg-slate-50/90 p-0.5 gap-0.5 shadow-inner shrink-0">
                 <button
                   type="button"
                   onClick={() => setProductViewMode('grid')}
-                  className={productViewMode === 'grid' ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-slate-50 text-slate-600 hover:bg-slate-100'}
+                  className={productViewMode === 'grid' ? 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white shadow-sm' : 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-transparent text-slate-600 hover:bg-white/80'}
                 >
                   {t('productViewGrid')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setProductViewMode('list')}
-                  className={productViewMode === 'list' ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-slate-50 text-slate-600 hover:bg-slate-100'}
+                  className={productViewMode === 'list' ? 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white shadow-sm' : 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-transparent text-slate-600 hover:bg-white/80'}
                 >
                   {t('productViewList')}
                 </button>
@@ -294,18 +294,18 @@ export default function PosPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
               <span className="text-slate-500 text-xs shrink-0">{t('showProductImage')}</span>
-              <div className="flex rounded-lg overflow-hidden border border-slate-200 shrink-0">
+              <div className="flex rounded-xl overflow-hidden border border-slate-200/90 bg-slate-50/90 p-0.5 gap-0.5 shadow-inner shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowProductImage(true)}
-                  className={showProductImage ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-slate-50 text-slate-600 hover:bg-slate-100'}
+                  className={showProductImage ? 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white shadow-sm' : 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-transparent text-slate-600 hover:bg-white/80'}
                 >
                   {t('showProductImage')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowProductImage(false)}
-                  className={!showProductImage ? 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white' : 'py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-slate-50 text-slate-600 hover:bg-slate-100'}
+                  className={!showProductImage ? 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] btn-primary text-white shadow-sm' : 'rounded-lg py-1.5 px-3 text-xs font-medium transition min-h-[44px] sm:min-h-[40px] bg-transparent text-slate-600 hover:bg-white/80'}
                 >
                   {t('hideProductImage')}
                 </button>
@@ -333,7 +333,7 @@ export default function PosPage() {
               autoComplete="off"
               enterKeyHint="search"
               aria-label={t('productSearchPlaceholder')}
-              className="w-full rounded-xl border border-slate-200 bg-white/95 pl-11 pr-11 py-3 text-base text-slate-800 placeholder:text-slate-400 min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-11 pr-11 py-3 text-base text-slate-800 placeholder:text-slate-400 min-h-[48px] shadow-sm transition focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500"
             />
             {productSearch.trim() !== '' && (
               <button
@@ -355,7 +355,7 @@ export default function PosPage() {
           <div className="space-y-4">
             {categories.length > 0 && categories.map((cat) => (
               <div key={cat}>
-                <h2 className="text-sm font-medium text-slate-500 mb-2 uppercase tracking-wider">{cat}</h2>
+                <h2 className="pos-category-heading mb-2">{cat}</h2>
                 <div className="space-y-1">
                   {filteredProducts
                     .filter((p) => (cat === '其他' ? !(p.category && p.category.trim()) : p.category === cat))
@@ -364,7 +364,7 @@ export default function PosPage() {
                         key={product.id}
                         onClick={() => addProductDirect(product)}
                         type="button"
-                        className="card-market w-full rounded-lg overflow-hidden text-left hover:border-teal-300 hover:shadow-md active:scale-[0.99] transition border flex flex-row items-center gap-3 p-2 sm:p-3 min-h-[56px]"
+                        className="card-market w-full rounded-xl overflow-hidden text-left border border-slate-200 hover:border-teal-300/90 hover:shadow-md active:scale-[0.99] transition-all duration-200 flex flex-row items-center gap-3 p-2 sm:p-3 min-h-[56px]"
                       >
                         {showProductImage && (
                           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
@@ -394,7 +394,7 @@ export default function PosPage() {
           <div className="space-y-6">
             {categories.length > 0 && categories.map((cat) => (
               <div key={cat}>
-                <h2 className="text-sm font-medium text-slate-500 mb-3 uppercase tracking-wider">{cat}</h2>
+                <h2 className="pos-category-heading mb-3">{cat}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                   {filteredProducts
                     .filter((p) => (cat === '其他' ? !(p.category && p.category.trim()) : p.category === cat))
@@ -403,7 +403,7 @@ export default function PosPage() {
                         key={product.id}
                         onClick={() => addProductDirect(product)}
                         type="button"
-                        className="card-market rounded-lg overflow-hidden text-left hover:border-teal-300 hover:shadow-md active:scale-[0.98] transition border flex flex-col min-h-[108px] sm:min-h-[110px]"
+                        className="card-market rounded-xl overflow-hidden text-left border border-slate-200 hover:border-teal-300/90 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-col min-h-[108px] sm:min-h-[110px]"
                       >
                         {showProductImage && (
                           <div className="w-full aspect-square bg-slate-100 flex-shrink-0 min-h-[56px] sm:min-h-[60px]">
@@ -441,7 +441,7 @@ export default function PosPage() {
       <button
         type="button"
         onClick={() => setShowCartDrawer(true)}
-        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn px-4 sm:px-5 gap-2 max-w-[min(100vw-2rem,20rem)]"
+        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn px-4 sm:px-5 gap-2 max-w-[min(100vw-2rem,20rem)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/20"
         aria-label={t('cartCount').replace('{n}', String(cartTotalQty))}
         title={t('cartCount').replace('{n}', String(cartTotalQty))}
       >
@@ -467,8 +467,8 @@ export default function PosPage() {
       {/* 購物車抽屜 */}
       {showCartDrawer && (
         <div className="fixed inset-0 z-50 flex flex-col sm:flex-row" aria-modal="true">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
-          <div className="relative ml-auto w-full sm:max-w-md md:max-w-lg max-h-[min(92dvh,92vh)] sm:max-h-full sm:h-full sm:min-h-0 bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-xl flex flex-col min-h-0">
+          <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] sm:backdrop-blur-sm" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
+          <div className="relative ml-auto w-full sm:max-w-md md:max-w-lg max-h-[min(92dvh,92vh)] sm:max-h-full sm:h-full sm:min-h-0 bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-2xl ring-1 ring-slate-900/5 flex flex-col min-h-0">
             <div className="flex items-center justify-center relative p-4 pr-14 border-b border-slate-200 shrink-0">
               <h2 className="text-lg font-semibold text-slate-800 text-center px-2">{t('cart')}</h2>
               <button type="button" onClick={() => setShowCartDrawer(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full hover:bg-slate-100 text-slate-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 z-10" aria-label={t('close')}>
@@ -491,7 +491,7 @@ export default function PosPage() {
                 <p className="text-slate-400 text-center py-8 text-sm">{t('cartEmpty')}</p>
               ) : (
                 cart.map((item) => (
-                  <article key={item.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 bg-white border-2 border-slate-200 p-3 rounded-xl shadow-md snap-start shrink-0 min-w-0">
+                  <article key={item.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 bg-white border border-slate-200/95 p-3 rounded-xl shadow-sm ring-1 ring-slate-900/[0.04] snap-start shrink-0 min-w-0">
                     <div className="flex gap-2 sm:gap-3 items-start sm:items-center flex-1 min-w-0">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0 ring-1 ring-slate-200/80">
                         {item.image ? (
@@ -550,7 +550,7 @@ export default function PosPage() {
               </div>
               <div>
                 <label className="block text-xs text-slate-600 mb-1">{t('orderNote')}</label>
-                <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="w-full border border-slate-300 rounded-xl px-4 py-3 text-base min-h-[48px]" />
+                <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="input-pro w-full rounded-xl px-4 py-3 text-base min-h-[48px]" />
               </div>
               <div className="flex justify-between items-baseline gap-2 min-w-0">
                 <span className="text-slate-600 font-medium text-base shrink-0">{t('total')}</span>

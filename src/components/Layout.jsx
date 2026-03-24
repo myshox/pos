@@ -16,7 +16,7 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col">
       <header className="header-bar text-white drop-shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-h-[44px] items-center" onClick={() => setMenuOpen(false)}>
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900" onClick={() => setMenuOpen(false)}>
             <img src="/logo.png" alt="" className="h-8 sm:h-10 w-auto object-contain hidden sm:block" onError={(e) => { e.target.style.display = 'none'; }} />
             <span className="text-base sm:text-xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-cute)' }}>{t('appName')}</span>
           </Link>
@@ -91,7 +91,7 @@ export default function Layout({ children }) {
         )}
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 min-w-0 text-slate-800 antialiased">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 min-w-0 text-slate-800 antialiased">
         {children}
       </main>
     </div>

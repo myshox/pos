@@ -64,16 +64,16 @@ export default function AdminPage() {
 
   const navBtn = (id) =>
     `w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium transition min-h-[48px] ${
-      tab === id ? 'bg-teal-600 text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
+      tab === id ? 'bg-teal-600 text-white shadow-md ring-1 ring-teal-500/30' : 'text-slate-700 hover:bg-slate-100/90'
     }`;
 
   const navBtnMobile = (id) =>
     `flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition min-h-[44px] snap-start ${
-      tab === id ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700'
+      tab === id ? 'bg-teal-600 text-white shadow-sm ring-1 ring-teal-500/30' : 'bg-slate-100/90 text-slate-700 border border-slate-200/80'
     }`;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden w-full flex flex-col min-h-[min(85vh,900px)]">
+    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-md ring-1 ring-slate-200/50 overflow-hidden w-full flex flex-col min-h-[min(85vh,900px)]">
       {/* 手機：橫向分頁 */}
       <div className="md:hidden border-b border-slate-200 bg-slate-50/90">
         <div className="flex overflow-x-auto gap-2 p-3 snap-x scrollbar-thin">
@@ -99,7 +99,7 @@ export default function AdminPage() {
 
       <div className="flex flex-1 min-h-0 min-w-0">
         {/* 桌機：側欄 */}
-        <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-slate-200 bg-slate-50/95 p-3 gap-1">
+        <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-slate-200/80 bg-gradient-to-b from-slate-50 to-slate-100/90 p-3 gap-1">
           <div className="px-2 py-2 mb-2">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('adminConsole')}</p>
           </div>
