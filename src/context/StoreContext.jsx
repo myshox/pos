@@ -48,6 +48,18 @@ export function StoreProvider({ children }) {
     });
   }, [hasPendingSync, markSynced]);
 
+  const refreshFromCloud = useCallback(async () => {
+    if (!isSyncEnabled()) return;
+    const data = await fetchStoreData();
+    if (data && (data.products?.length > 0 || data.orders?.length > 0 || data.categories?.length > 0)) {
+      importAllData(data);
+      setProducts(getProducts());
+      setOrders(getOrders());
+      setCategoriesState(getCategories());
+      setStoreState(getStore());
+    }
+  }, []);
+
   // 若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
   useEffect(() => {
     if (!isSyncEnabled()) return;
@@ -60,19 +72,14 @@ export function StoreProvider({ children }) {
       setStoreState(getStore());
     });
 
-    (async () => {
-      const data = await fetchStoreData();
-      if (data && (data.products?.length > 0 || data.orders?.length > 0 || data.categories?.length > 0)) {
-        importAllData(data);
-        setProducts(getProducts());
-        setOrders(getOrders());
-        setCategoriesState(getCategories());
-        setStoreState(getStore());
-      }
-    })();
+    // 初始載入
+    refreshFromCloud();
 
-    return () => unsub();
-  }, []);
+    // Safari/iOS WebSocket 不穩定，加入 polling 備援（每 30 秒拉一次）
+    const pollId = setInterval(refreshFromCloud, 30000);
+
+    return () => { unsub(); clearInterval(pollId); };
+  }, [refreshFromCloud]);
 
   useEffect(() => {
     const keys = ['pos_products', 'pos_orders', 'pos_categories', 'pos_store'];
@@ -226,10 +233,13 @@ export function StoreProvider({ children }) {
     if (!isSyncEnabled()) return false;
     setIsSyncing(true);
     const ok = await uploadNow(getCurrentDataForSync);
+    if (ok) {
+      await refreshFromCloud();
+      markSynced();
+    }
     setIsSyncing(false);
-    if (ok) markSynced();
     return ok;
-  }, [markSynced]);
+  }, [markSynced, refreshFromCloud]);
 
   const updateOrder = useCallback((orderId, updates) => {
     const updated = updateOrderStorage(orderId, updates);
