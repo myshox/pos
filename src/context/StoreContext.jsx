@@ -85,6 +85,37 @@ export function StoreProvider({ children }) {
     } catch { /* network error, skip */ }
   }, []);
 
+  /** iOS Safari：背景分頁會暫停 setInterval、Realtime WebSocket 也常斷線；切回前景須主動拉雲端並上傳 */
+  const resumeSync = useCallback(() => {
+    if (!isSyncEnabled()) return;
+    void refreshFromCloud();
+    void uploadNow(getCurrentDataForSync).then((ok) => {
+      if (ok) markSynced();
+    });
+  }, [refreshFromCloud, markSynced]);
+
+  useEffect(() => {
+    if (!isSyncEnabled()) return undefined;
+    let debounceTimer = null;
+    const schedule = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (debounceTimer) window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        debounceTimer = null;
+        resumeSync();
+      }, 400);
+    };
+    document.addEventListener('visibilitychange', schedule);
+    window.addEventListener('pageshow', schedule);
+    window.addEventListener('online', schedule);
+    return () => {
+      if (debounceTimer) window.clearTimeout(debounceTimer);
+      document.removeEventListener('visibilitychange', schedule);
+      window.removeEventListener('pageshow', schedule);
+      window.removeEventListener('online', schedule);
+    };
+  }, [resumeSync]);
+
   // Supabase：即時訂閱 + 初次拉取 + HTTP 輪詢備援（游標避免誤覆寫）
   useEffect(() => {
     if (!isSyncEnabled()) return undefined;
