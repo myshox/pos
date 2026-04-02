@@ -62,7 +62,6 @@ export function addOrder(order) {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2),
     items: order.items,
     subtotal: order.subtotal != null ? order.subtotal : order.total,
-    discount: order.discount || null,
     total: order.total,
     note: order.note || '',
     paymentMethod,
@@ -80,7 +79,7 @@ export function updateOrder(orderId, updates) {
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return null;
   const next = [...orders];
-  const allowed = ['note', 'total', 'subtotal', 'discount', 'paymentMethod', 'items', 'voided', 'voidReason', 'voidedAt'];
+  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'items', 'voided', 'voidReason', 'voidedAt'];
   const patch = {};
   allowed.forEach((k) => { if (updates[k] !== undefined) patch[k] = updates[k]; });
   next[idx] = { ...next[idx], ...patch };

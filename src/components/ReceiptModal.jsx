@@ -16,12 +16,6 @@ function formatReceiptDate(iso, lang) {
   });
 }
 
-function formatDiscount(order, t) {
-  if (!order.discount || (order.discount.type !== 'amount' && order.discount.type !== 'percent')) return null;
-  const v = order.discount.value;
-  return order.discount.type === 'percent' ? `${v}% ${t('discountPercent')}` : `NT$ ${v}`;
-}
-
 export default function ReceiptModal({ order, onClose }) {
   const blockRef = useRef(null);
   const { store } = useStore();
@@ -89,18 +83,6 @@ export default function ReceiptModal({ order, onClose }) {
           ))}
           {order.note && (
             <div className="pt-2 text-slate-800/90 text-xs">{t('note')}：{order.note}</div>
-          )}
-          {order.subtotal != null && order.subtotal !== order.total && (
-            <div className="flex justify-between text-slate-600 text-xs pt-1">
-              <span>{t('subtotal')}</span>
-              <span>NT$ {order.subtotal}</span>
-            </div>
-          )}
-          {order.discount && (order.discount.type === 'amount' || order.discount.type === 'percent') && (
-            <div className="flex justify-between text-teal-700 text-xs">
-              <span>{t('discount')}（{formatDiscount(order, t)}）</span>
-              <span>- NT$ {(order.subtotal ?? order.total) - order.total}</span>
-            </div>
           )}
           {order.paymentMethod && (
             <div className="pt-1 text-slate-600 text-xs">
