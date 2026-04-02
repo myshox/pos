@@ -12,12 +12,12 @@ export function getCategories() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
     if (raw) return JSON.parse(raw);
-  } catch (_) {}
+  } catch { /* empty */ }
   return [...DEFAULT_CATEGORIES];
 }
 
 export function saveCategories(categories) {
-  try { localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories)); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories)); } catch { /* empty */ }
 }
 
 const defaultProducts = [
@@ -33,24 +33,24 @@ export function getProducts() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
     if (raw) return JSON.parse(raw);
-  } catch (_) {}
+  } catch { /* empty */ }
   return defaultProducts;
 }
 
 export function saveProducts(products) {
-  try { localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products)); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products)); } catch { /* empty */ }
 }
 
 export function getOrders() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.ORDERS);
     if (raw) return JSON.parse(raw);
-  } catch (_) {}
+  } catch { /* empty */ }
   return [];
 }
 
 export function saveOrders(orders) {
-  try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch { /* empty */ }
 }
 
 const PAYMENT_IDS = ['line', 'cash', 'card'];
@@ -100,12 +100,12 @@ export function getStore() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.STORE);
     if (raw) return { ...DEFAULT_STORE, ...JSON.parse(raw) };
-  } catch (_) {}
+  } catch { /* empty */ }
   return { ...DEFAULT_STORE };
 }
 
 export function saveStore(store) {
-  try { localStorage.setItem(STORAGE_KEYS.STORE, JSON.stringify({ ...DEFAULT_STORE, ...store })); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEYS.STORE, JSON.stringify({ ...DEFAULT_STORE, ...store })); } catch { /* empty */ }
 }
 
 // 後台 PIN（存雜湊較安全，此處簡化存明文，僅防誤觸）
@@ -119,7 +119,7 @@ export function hasPin() {
 
 export function setPin(pin) {
   const p = String(pin).trim();
-  if (p.length >= 4) { try { localStorage.setItem(PIN_KEY, p); } catch (_) {} }
+  if (p.length >= 4) { try { localStorage.setItem(PIN_KEY, p); } catch { /* empty */ } }
 }
 
 export function checkPin(input) {
@@ -129,19 +129,19 @@ export function checkPin(input) {
 
 export function setUnlockSession(minutes = 30) {
   const until = Date.now() + minutes * 60 * 1000;
-  try { sessionStorage.setItem(PIN_SESSION_KEY, String(until)); } catch (_) {}
+  try { sessionStorage.setItem(PIN_SESSION_KEY, String(until)); } catch { /* empty */ }
 }
 
 export function isUnlocked() {
   try {
     const until = sessionStorage.getItem(PIN_SESSION_KEY);
     return until != null && Date.now() < Number(until);
-  } catch (_) {}
+  } catch { /* empty */ }
   return false;
 }
 
 export function clearUnlockSession() {
-  try { sessionStorage.removeItem(PIN_SESSION_KEY); } catch (_) {}
+  try { sessionStorage.removeItem(PIN_SESSION_KEY); } catch { /* empty */ }
 }
 
 // 庫存扣減

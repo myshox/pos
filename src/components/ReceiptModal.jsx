@@ -25,12 +25,13 @@ export default function ReceiptModal({ order, onClose }) {
   const copyReceipt = () => {
     if (!blockRef.current) return;
     const text = blockRef.current.innerText;
-    navigator.clipboard?.writeText(text).then(() => showToast(t('copied')));
+    navigator.clipboard?.writeText(text).then(() => showToast(t('copied'))).catch(() => { /* clipboard not available */ });
   };
 
   const printReceipt = () => {
     if (!blockRef.current) return;
     const win = window.open('', '_blank');
+    if (!win) return;
     win.document.write(`<pre style="font-family: var(--font-cute), sans-serif; padding: 24px; font-size: 14px;">${blockRef.current.innerText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`);
     win.document.close();
     win.print();

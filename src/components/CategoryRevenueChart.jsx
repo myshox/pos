@@ -27,7 +27,7 @@ export default function CategoryRevenueChart({ byCategory, totalRevenue }) {
             dataKey="value"
             nameKey="name"
           >
-            {data.map((entry, index) => (
+            {data.map((entry) => (
               <Cell key={entry.name} fill={entry.color} stroke="none" />
             ))}
           </Pie>

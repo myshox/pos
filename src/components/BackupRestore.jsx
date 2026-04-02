@@ -67,7 +67,7 @@ export default function BackupRestore() {
         refreshStore();
         syncNow();
         showToast(t('backupImportSuccess'));
-      } catch (err) {
+      } catch {
         showToast(t('backupInvalidFile'), 'error');
       }
       setImporting(false);

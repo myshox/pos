@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
@@ -7,16 +7,12 @@ export default function StoreSettings() {
   const { store, updateStore } = useStore();
   const { t } = useLocale();
   const { showToast } = useToast();
-  const [form, setForm] = useState({ name: '', phone: '', address: '', taxId: '' });
-
-  useEffect(() => {
-    setForm({
-      name: store.name || '',
-      phone: store.phone || '',
-      address: store.address || '',
-      taxId: store.taxId || '',
-    });
-  }, [store]);
+  const [form, setForm] = useState(() => ({
+    name: store.name || '',
+    phone: store.phone || '',
+    address: store.address || '',
+    taxId: store.taxId || '',
+  }));
 
   const handleSubmit = (e) => {
     e.preventDefault();

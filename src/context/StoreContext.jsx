@@ -19,13 +19,13 @@ export const StoreContext = createContext(null);
 const PIN_SESSION_KEY = 'pos_admin_unlock_until';
 
 export function StoreProvider({ children }) {
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [categories, setCategoriesState] = useState([]);
+  const [products, setProducts] = useState(() => getProducts());
+  const [orders, setOrders] = useState(() => getOrders());
+  const [categories, setCategoriesState] = useState(() => getCategories());
   const [store, setStoreState] = useState(() => getStore());
   const [isSyncing, setIsSyncing] = useState(false);
   const [unlockUntil, setUnlockUntil] = useState(() => {
-    try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch (_) { return 0; }
+    try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch { return 0; }
   });
 
   const triggerSync = useCallback(() => {
@@ -36,13 +36,8 @@ export function StoreProvider({ children }) {
     });
   }, []);
 
-  // 初始載入：先本機，若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
+  // 若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
   useEffect(() => {
-    setProducts(getProducts());
-    setOrders(getOrders());
-    setCategoriesState(getCategories());
-    setStoreState(getStore());
-
     if (!isSyncEnabled()) return;
 
     const unsub = subscribeToStore((remote) => {
@@ -80,9 +75,16 @@ export function StoreProvider({ children }) {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  const isUnlocked = unlockUntil > Date.now();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (unlockUntil <= 0) return;
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [unlockUntil]);
+  const isUnlocked = unlockUntil > now;
   const updateUnlock = useCallback(() => {
-    try { setUnlockUntil(Number(sessionStorage.getItem(PIN_SESSION_KEY)) || 0); } catch (_) { setUnlockUntil(0); }
+    try { setUnlockUntil(Number(sessionStorage.getItem(PIN_SESSION_KEY)) || 0); } catch { setUnlockUntil(0); }
+    setNow(Date.now());
   }, []);
 
   const persistCategories = useCallback((next) => {
@@ -158,7 +160,7 @@ export function StoreProvider({ children }) {
 
   const activeProducts = products.filter((p) => p.isActive);
 
-  const submitOrder = useCallback((items, total, note = '', paymentMethod = 'cash', _unused = null, cashInfo = null) => {
+  const submitOrder = useCallback((items, total, note = '', paymentMethod = 'cash', cashInfo = null) => {
     const payload = { items: [...items], total, note, paymentMethod };
     if (cashInfo) { payload.cashReceived = cashInfo.cashReceived; payload.changeAmount = cashInfo.changeAmount; }
     const newOrder = saveOrder(payload);
@@ -192,7 +194,7 @@ export function StoreProvider({ children }) {
     setUnlockUntil(Date.now() + minutes * 60 * 1000);
   }, []);
   const adminLock = useCallback(() => {
-    try { sessionStorage.removeItem(PIN_SESSION_KEY); } catch (_) {}
+    try { sessionStorage.removeItem(PIN_SESSION_KEY); } catch { /* empty */ }
     setUnlockUntil(0);
   }, []);
 
