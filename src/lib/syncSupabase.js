@@ -83,10 +83,16 @@ export function isSyncEnabled() {
 
 export async function checkConnection() {
   const c = getClient();
-  if (!c) return { ok: false, error: '未設定 Supabase' };
+  if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*，請重新部署）' };
   try {
-    const { error } = await c.from(TABLE).select('id').eq('id', STORE_ID).maybeSingle();
+    const { data, error } = await c.from(TABLE).select('id').eq('id', STORE_ID).maybeSingle();
     if (error) return { ok: false, error: error.message || String(error) };
+    if (!data) {
+      return {
+        ok: false,
+        error: '讀不到 id=default 這一筆：請在 Supabase 執行 sql/supabase_store_data.sql 或檢查 RLS',
+      };
+    }
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err?.message || String(err) };
@@ -95,16 +101,24 @@ export async function checkConnection() {
 
 export async function testUpload() {
   const c = getClient();
-  if (!c) return { ok: false, error: '未設定 Supabase' };
+  if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*）' };
   try {
     const { data, error } = await c
       .from(TABLE)
       .update({ updated_at: new Date().toISOString() })
       .eq('id', STORE_ID)
-      .select('updated_at')
-      .maybeSingle();
+      .select('updated_at');
     if (error) return { ok: false, error: error.message || String(error) };
-    if (data?.updated_at) setRemoteCursor(data.updated_at);
+    const rows = Array.isArray(data) ? data : data ? [data] : [];
+    if (rows.length === 0) {
+      return {
+        ok: false,
+        error:
+          '更新 0 筆：請確認 (1) store_data 有 id=default (2) VITE_STORE_KEY 與表內 store_key 完全相同 (3) RLS policy 允許 x-store-key',
+      };
+    }
+    const updatedAt = rows[0]?.updated_at;
+    if (updatedAt) setRemoteCursor(updatedAt);
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err?.message || String(err) };

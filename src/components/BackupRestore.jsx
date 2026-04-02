@@ -80,14 +80,17 @@ export default function BackupRestore() {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-slate-800">{t('backupRestoreTitle')}</h2>
       <p className="text-slate-600 text-sm">{t('backupRestoreHint')}</p>
+      {!isSyncEnabled && (
+        <p className="text-amber-800 text-sm bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 max-w-xl">{t('syncNotEnabledHint')}</p>
+      )}
       {isSyncEnabled && (
         <div className="space-y-1">
           <p className="text-teal-700 text-sm font-medium">{t('syncEnabledHint')}</p>
           {syncStatus === 'ok' && <p className="text-green-700 text-sm">{t('syncStatusOk')}</p>}
           {syncStatus && syncStatus !== 'ok' && typeof syncStatus === 'object' && (
-            <p className="text-red-600 text-sm">{t('syncStatusError')}: {syncStatus.error}</p>
+            <p className="text-red-600 text-sm break-words">{t('syncStatusError')}: {syncStatus.error}</p>
           )}
-          <div className="pt-2">
+          <div className="pt-2 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleTestUpload}
@@ -96,7 +99,28 @@ export default function BackupRestore() {
             >
               {testingUpload ? '...' : t('syncTestWrite')}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSyncStatus(null);
+                checkConnection().then((res) => {
+                  setSyncStatus(res.ok ? 'ok' : { error: res.error });
+                });
+              }}
+              className="px-3 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 text-slate-700 min-h-[44px] hover:bg-slate-50"
+            >
+              {t('syncRecheck')}
+            </button>
           </div>
+          <details className="pt-2 text-xs text-slate-600 leading-relaxed max-w-xl">
+            <summary className="cursor-pointer text-slate-700 font-medium py-1">{t('syncTroubleshootTitle')}</summary>
+            <ul className="list-disc pl-5 mt-2 space-y-1">
+              <li>{t('syncTroubleshoot1')}</li>
+              <li>{t('syncTroubleshoot2')}</li>
+              <li>{t('syncTroubleshoot3')}</li>
+              <li>{t('syncTroubleshoot4')}</li>
+            </ul>
+          </details>
         </div>
       )}
 
