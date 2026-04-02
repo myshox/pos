@@ -6,13 +6,14 @@ import { exportAllData, importAllDataOverwrite } from '../lib/storage';
 import { checkConnection, testUpload } from '../lib/syncSupabase';
 
 export default function BackupRestore() {
-  const { refreshProducts, refreshOrders, refreshStore, syncNow, isSyncEnabled } = useStore();
+  const { refreshProducts, refreshOrders, refreshStore, syncNow, manualSync, isSyncEnabled } = useStore();
   const { t } = useLocale();
   const { showToast } = useToast();
   const fileRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
   const [testingUpload, setTestingUpload] = useState(false);
+  const [forceSyncing, setForceSyncing] = useState(false);
 
   useEffect(() => {
     if (!isSyncEnabled) return;
@@ -30,6 +31,17 @@ export default function BackupRestore() {
     if (res.ok) showToast(t('syncWriteOk'));
     else showToast(`${t('syncWriteError')}: ${res.error}`, 'error');
     setTestingUpload(false);
+  };
+
+  const handleForceSync = async () => {
+    if (!isSyncEnabled || forceSyncing) return;
+    setForceSyncing(true);
+    const ok = await manualSync();
+    refreshProducts();
+    refreshOrders();
+    refreshStore();
+    showToast(ok ? t('syncForceOk') : t('syncForceError'), ok ? 'success' : 'error');
+    setForceSyncing(false);
   };
 
   const handleExport = () => {
@@ -91,6 +103,14 @@ export default function BackupRestore() {
             <p className="text-red-600 text-sm break-words">{t('syncStatusError')}: {syncStatus.error}</p>
           )}
           <div className="pt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleForceSync}
+              disabled={forceSyncing}
+              className="px-3 py-2 rounded-xl text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white min-h-[44px] disabled:opacity-50"
+            >
+              {forceSyncing ? '...' : t('syncForceNow')}
+            </button>
             <button
               type="button"
               onClick={handleTestUpload}
