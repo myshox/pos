@@ -66,6 +66,7 @@ export function addOrder(order) {
     total: order.total,
     note: order.note || '',
     paymentMethod,
+    ...(order.cashReceived != null ? { cashReceived: order.cashReceived, changeAmount: order.changeAmount } : {}),
     createdAt: new Date().toISOString(),
     voided: false,
   };
