@@ -14,14 +14,14 @@ export function LocaleProvider({ children }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (LANGS.includes(saved)) return saved;
-    } catch (_) {}
+    } catch { /* empty */ }
     return 'tw';
   });
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, lang);
-    } catch (_) {}
+    } catch { /* empty */ }
     document.documentElement.dataset.lang = lang;
     document.documentElement.style.setProperty('--font-cute', FONT_BY_LANG[lang]);
   }, [lang]);

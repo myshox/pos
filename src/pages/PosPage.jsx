@@ -26,11 +26,12 @@ export default function PosPage() {
     try {
       const saved = localStorage.getItem(PAYMENT_STORAGE_KEY);
       if (['line', 'cash', 'card'].includes(saved)) return saved;
-    } catch (_) {}
+    } catch { /* empty */ }
     return 'line';
   });
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState('');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
@@ -38,14 +39,14 @@ export default function PosPage() {
     try {
       const s = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
       if (['small', 'medium', 'large'].includes(s)) return s;
-    } catch (_) {}
+    } catch { /* empty */ }
     return 'medium';
   });
   const [productViewMode, setProductViewMode] = useState(() => {
     try {
       const s = localStorage.getItem(PRODUCT_VIEW_STORAGE_KEY);
       if (['grid', 'list'].includes(s)) return s;
-    } catch (_) {}
+    } catch { /* empty */ }
     return 'grid';
   });
   const [showProductImage, setShowProductImage] = useState(() => {
@@ -53,7 +54,7 @@ export default function PosPage() {
       const s = localStorage.getItem(SHOW_PRODUCT_IMAGE_STORAGE_KEY);
       if (s === '0' || s === 'false') return false;
       if (s === '1' || s === 'true') return true;
-    } catch (_) {}
+    } catch { /* empty */ }
     return true;
   });
   const [confirmRemoveId, setConfirmRemoveId] = useState(null);
@@ -62,19 +63,19 @@ export default function PosPage() {
   const productSearchInputRef = useRef(null);
 
   useEffect(() => {
-    try { localStorage.setItem(PAYMENT_STORAGE_KEY, paymentMethod); } catch (_) {}
+    try { localStorage.setItem(PAYMENT_STORAGE_KEY, paymentMethod); } catch { /* empty */ }
   }, [paymentMethod]);
 
   useEffect(() => {
-    try { localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize); } catch (_) {}
+    try { localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize); } catch { /* empty */ }
   }, [fontSize]);
 
   useEffect(() => {
-    try { localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, productViewMode); } catch (_) {}
+    try { localStorage.setItem(PRODUCT_VIEW_STORAGE_KEY, productViewMode); } catch { /* empty */ }
   }, [productViewMode]);
 
   useEffect(() => {
-    try { localStorage.setItem(SHOW_PRODUCT_IMAGE_STORAGE_KEY, showProductImage ? '1' : '0'); } catch (_) {}
+    try { localStorage.setItem(SHOW_PRODUCT_IMAGE_STORAGE_KEY, showProductImage ? '1' : '0'); } catch { /* empty */ }
   }, [showProductImage]);
 
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function PosPage() {
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.qty, 0), [cart]);
   const cartTotalQty = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
   const cashReceivedNum = Number(cashReceived) || 0;
-  const changeAmount = cashReceivedNum >= total ? cashReceivedNum - total : 0;
+  const changeAmount = cashReceivedNum >= total ? Math.round((cashReceivedNum - total) * 100) / 100 : 0;
   const quickCashAmounts = useMemo(() => {
     if (total <= 0) return [];
     const amounts = [100, 500, 1000, 2000, 5000];
@@ -157,12 +158,13 @@ export default function PosPage() {
   }, [cart, products, total, showToast, t]);
 
   const handleConfirmCheckout = useCallback(() => {
-    if (cart.length === 0 || isSubmitting) return;
+    if (cart.length === 0 || submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     setTimeout(() => {
       try {
         const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
-        const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, null, cashInfo);
+        const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, cashInfo);
         setReceiptOrder(newOrder);
         setCart([]);
         setOrderNote('');
@@ -170,13 +172,13 @@ export default function PosPage() {
         setShowCheckoutConfirm(false);
         setShowCartDrawer(false);
         showToast(t('toastCheckoutSuccess'));
-      } catch (err) {
+      } catch {
         showToast(t('checkoutError') || '結帳失敗，請重試', 'error');
       } finally {
-        setTimeout(() => setIsSubmitting(false), 300);
+        setTimeout(() => { submittingRef.current = false; setIsSubmitting(false); }, 300);
       }
     }, 80);
-  }, [cart, total, orderNote, paymentMethod, cashReceivedNum, changeAmount, isSubmitting, submitOrder, showToast, t]);
+  }, [cart, total, orderNote, paymentMethod, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();

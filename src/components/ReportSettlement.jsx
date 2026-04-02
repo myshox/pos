@@ -135,6 +135,7 @@ export default function ReportSettlement() {
     const dayReport = period === 'day' ? report : getDailyReport(orders, new Date(selectedDate));
     const dateLabel = period === 'day' ? selectedDate : toDateStr(new Date());
     const win = window.open('', '_blank');
+    if (!win) return;
     win.document.write(`
       <!DOCTYPE html><html><head><meta charset="utf-8"><title>${t('daySettlementTitle')} ${dateLabel}</title>
       <style>body{font-family:sans-serif;padding:24px;max-width:600px;margin:0 auto} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ccc;padding:8px;text-align:left} th{background:#f5f5f5}</style>

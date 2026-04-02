@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 
-export default function PinGate({ children }) {
+export default function PinGate() {
   const { adminHasPin, adminCheckPin, adminSetPin, adminUnlock, updateUnlock } = useStore();
   const { t } = useLocale();
   const { showToast } = useToast();

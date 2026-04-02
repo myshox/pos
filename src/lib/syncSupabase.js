@@ -86,7 +86,7 @@ export async function fetchStoreData() {
       categories: Array.isArray(data.categories) ? data.categories : [],
       store: data.store_settings && typeof data.store_settings === 'object' ? data.store_settings : {},
     };
-  } catch (_) {
+  } catch {
     return null;
   }
 }
@@ -120,7 +120,7 @@ export function scheduleUpload(getCurrentData, options = {}) {
         },
         { onConflict: 'id' }
       );
-    } catch (_) {}
+    } catch { /* upload failed, ignore */ }
     onUploadEnd?.();
   }, UPLOAD_DEBOUNCE_MS);
 }
