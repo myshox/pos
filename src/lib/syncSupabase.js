@@ -19,11 +19,11 @@ export const POLL_INTERVAL_MS = 30000;
 
 function getClient() {
   if (client !== null) return client;
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const storeKey = import.meta.env.VITE_STORE_KEY;
-  if (!url || !key || typeof url !== 'string' || typeof key !== 'string') return null;
-  if (!storeKey || typeof storeKey !== 'string') return null;
+  const url = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const key = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const storeKey = String(import.meta.env.VITE_STORE_KEY || '').trim();
+  if (!url || !key) return null;
+  if (!storeKey) return null;
   client = createClient(url, key, {
     global: {
       headers: {
@@ -168,7 +168,7 @@ function mergeOrderArrays(localOrders, remoteOrders) {
  * 先拉遠端訂單合併再上傳，降低覆蓋其他裝置訂單的風險
  */
 async function mergeAndUpload(c, getCurrentData) {
-  const storeKey = import.meta.env.VITE_STORE_KEY;
+  const storeKey = String(import.meta.env.VITE_STORE_KEY || '').trim();
   const local = getCurrentData();
 
   let remoteOrders = [];
