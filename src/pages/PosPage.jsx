@@ -481,7 +481,7 @@ export default function PosPage() {
                 <div className="text-center min-w-0">
                   <div className="text-sm text-slate-500 mb-1">{t('total')}</div>
                   <div className="overflow-x-auto overflow-y-hidden text-center" style={{ WebkitOverflowScrolling: 'touch' }}>
-                    <span className="inline-block text-2xl sm:text-4xl font-bold text-slate-800 whitespace-nowrap">NT$ {total}</span>
+                    <span className="inline-block text-4xl sm:text-6xl font-bold text-slate-800 whitespace-nowrap">NT$ {total}</span>
                   </div>
                 </div>
               </div>
@@ -554,7 +554,7 @@ export default function PosPage() {
               </div>
               <div className="flex justify-between items-baseline gap-2 min-w-0">
                 <span className="text-slate-600 font-medium text-base shrink-0">{t('total')}</span>
-                <span className="text-2xl sm:text-4xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
+                <span className="text-4xl sm:text-6xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
               </div>
               <button
                 type="button"
@@ -668,7 +668,7 @@ export default function PosPage() {
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                 <span className="text-slate-600 font-medium">{t('total')}</span>
-                <span className="text-2xl font-bold text-slate-800">NT$ {total}</span>
+                <span className="text-3xl font-bold text-slate-800">NT$ {total}</span>
               </div>
             </div>
             <div className="p-5 border-t border-slate-200 flex gap-3 shrink-0 bg-white pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5">
@@ -715,9 +715,9 @@ export default function PosPage() {
                   </div>
                 </>
               )}
-              <div className="flex justify-between font-semibold text-base pt-2 border-t border-slate-100">
+              <div className="flex justify-between font-semibold text-lg pt-2 border-t border-slate-100">
                 <span className="text-slate-700">{t('total')}</span>
-                <span className="text-slate-800">NT$ {total}</span>
+                <span className="text-xl font-bold text-slate-800">NT$ {total}</span>
               </div>
               <div className="flex justify-between text-sm text-slate-600">
                 <span>{t('paymentMethod')}</span>
