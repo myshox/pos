@@ -495,7 +495,7 @@ export default function PosPage() {
                 <div className="text-center min-w-0">
                   <div className="text-sm text-slate-500 mb-1">{t('total')}</div>
                   <div className="overflow-x-auto overflow-y-hidden text-center" style={{ WebkitOverflowScrolling: 'touch' }}>
-                    <span className="inline-block text-3xl sm:text-5xl font-bold text-slate-800 whitespace-nowrap">NT$ {total}</span>
+                    <span className="inline-block text-3xl sm:text-4xl font-bold text-slate-800 whitespace-nowrap">NT$ {total}</span>
                   </div>
                 </div>
               </div>
@@ -568,7 +568,7 @@ export default function PosPage() {
               </div>
               <div className="flex justify-between items-baseline gap-2 min-w-0">
                 <span className="text-slate-600 font-medium text-base shrink-0">{t('total')}</span>
-                <span className="text-3xl sm:text-5xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
+                <span className="text-3xl sm:text-4xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
               </div>
               <button
                 type="button"
@@ -682,7 +682,7 @@ export default function PosPage() {
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                 <span className="text-slate-600 font-medium">{t('total')}</span>
-                <span className="text-3xl font-bold text-slate-800">NT$ {total}</span>
+                <span className="text-2xl font-bold text-slate-800">NT$ {total}</span>
               </div>
             </div>
             <div className="p-5 border-t border-slate-200 flex gap-3 shrink-0 bg-white pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5">
@@ -743,7 +743,7 @@ export default function PosPage() {
                   <div className="flex flex-wrap gap-2">
                     {quickCashAmounts.map((amt) => (
                       <button key={amt} type="button" onClick={() => setCashReceived(String(amt))} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${String(amt) === cashReceived ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'}`}>
-                        ${amt}
+                        NT${amt}
                       </button>
                     ))}
                   </div>
