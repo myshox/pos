@@ -49,19 +49,32 @@ export function setRemoteCursor(iso) {
   } catch (_) {}
 }
 
+function cursorTimeMs(iso) {
+  if (!iso || typeof iso !== 'string') return NaN;
+  const t = new Date(iso).getTime();
+  return Number.isFinite(t) ? t : NaN;
+}
+
 /**
  * 雲端是否比本機游標新（用於輪詢拉取）
- * 無游標時：僅在雲端有商品／訂單／分類資料時才視為「該套用」
+ * 無游標或游標無效：僅在雲端有實質資料（含店鋪設定）時才套用，避免空雲端覆寫本機
  */
 export function isRemoteAheadOfCursor(remote) {
   if (!remote?.updatedAt) return false;
+  const remoteMs = cursorTimeMs(remote.updatedAt);
+  if (!Number.isFinite(remoteMs)) return false;
   const last = getRemoteCursor();
+  const storeKeys = remote.store && typeof remote.store === 'object' ? Object.keys(remote.store).length : 0;
   const hasPayload =
     (remote.products?.length > 0) ||
     (remote.orders?.length > 0) ||
-    (remote.categories?.length > 0);
+    (remote.categories?.length > 0) ||
+    storeKeys > 0;
   if (!last) return hasPayload;
-  return new Date(remote.updatedAt).getTime() > new Date(last).getTime();
+  const lastMs = cursorTimeMs(last);
+  // iOS 若 localStorage 內游標毀損，NaN 會讓同步永遠不拉取 — 改為依雲端是否有資料決定
+  if (!Number.isFinite(lastMs)) return hasPayload;
+  return remoteMs > lastMs;
 }
 
 export function isSyncEnabled() {
@@ -167,10 +180,11 @@ async function mergeAndUpload(c, getCurrentData) {
       { onConflict: 'id' }
     )
     .select('updated_at')
-    .single();
+    .maybeSingle();
 
   if (error) return false;
   if (row?.updated_at) setRemoteCursor(row.updated_at);
+  else setRemoteCursor(new Date().toISOString());
   return true;
 }
 

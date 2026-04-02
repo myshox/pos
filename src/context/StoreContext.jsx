@@ -47,14 +47,25 @@ export function StoreProvider({ children }) {
     });
   }, [markPending, markSynced]);
 
-  // 有待同步資料時定期重試（處理 iOS WKWebView navigator.onLine 不可靠的情況）
+  // 有待同步時立即重試，並定時再試（先前只跑一次：上傳失敗後 iOS 會永遠卡在「待同步」）
   useEffect(() => {
-    if (!hasPendingSync || !isSyncEnabled()) return;
-    setIsSyncing(true);
-    uploadNow(getCurrentDataForSync).then((ok) => {
-      setIsSyncing(false);
-      if (ok) markSynced();
-    });
+    if (!hasPendingSync || !isSyncEnabled()) return undefined;
+    let cancelled = false;
+    const tryUpload = async () => {
+      if (cancelled) return;
+      setIsSyncing(true);
+      const ok = await uploadNow(getCurrentDataForSync);
+      if (!cancelled) {
+        setIsSyncing(false);
+        if (ok) markSynced();
+      }
+    };
+    void tryUpload();
+    const id = window.setInterval(() => { void tryUpload(); }, 45000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
   }, [hasPendingSync, markSynced]);
 
   const refreshFromCloud = useCallback(async () => {
