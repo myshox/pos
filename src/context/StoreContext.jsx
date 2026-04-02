@@ -32,22 +32,21 @@ export function StoreProvider({ children }) {
 
   const triggerSync = useCallback(() => {
     if (!isSyncEnabled()) return;
-    if (!navigator.onLine) { markPending(); return; }
     scheduleUpload(getCurrentDataForSync, {
       onUploadStart: () => setIsSyncing(true),
       onUploadEnd: (ok) => { setIsSyncing(false); if (ok) markSynced(); else markPending(); },
     });
   }, [markPending, markSynced]);
 
-  // 上線時自動同步待上傳的資料
+  // 有待同步資料時定期重試（處理 iOS WKWebView navigator.onLine 不可靠的情況）
   useEffect(() => {
-    if (!isOnline || !hasPendingSync || !isSyncEnabled()) return;
+    if (!hasPendingSync || !isSyncEnabled()) return;
     setIsSyncing(true);
     uploadNow(getCurrentDataForSync).then((ok) => {
       setIsSyncing(false);
       if (ok) markSynced();
     });
-  }, [isOnline, hasPendingSync, markSynced]);
+  }, [hasPendingSync, markSynced]);
 
   // 若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
   useEffect(() => {
