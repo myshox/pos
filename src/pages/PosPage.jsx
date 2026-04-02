@@ -225,7 +225,7 @@ export default function PosPage() {
   }, [showCheckoutConfirm, showCartDrawer, activeProducts.length]);
 
   return (
-    <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 overflow-hidden`}>
+    <div className={`flex flex-col h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-5rem)] min-h-0`}>
       {/* 注意：iOS 上父層有 transform 會影響 fixed/點擊座標。
           因此縮放只套用在「主內容」，固定抽屜/彈窗不套用縮放。 */}
       <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
@@ -429,7 +429,7 @@ export default function PosPage() {
       <button
         type="button"
         onClick={() => setShowCartDrawer(true)}
-        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 active:scale-95 transition floating-cart-btn px-4 sm:px-5 gap-2 max-w-[min(100vw-2rem,20rem)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/20"
+        className="fixed z-40 h-14 sm:h-16 rounded-full btn-primary shadow-lg flex items-center justify-center text-white hover:opacity-95 transition floating-cart-btn px-4 sm:px-5 gap-2 max-w-[min(100vw-2rem,20rem)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/20 touch-manipulation"
         aria-label={t('cartCount').replace('{n}', String(cartTotalQty))}
         title={t('cartCount').replace('{n}', String(cartTotalQty))}
       >
@@ -456,7 +456,7 @@ export default function PosPage() {
       {showCartDrawer && (
         <div className="fixed inset-0 z-50 flex flex-col sm:flex-row" aria-modal="true">
           <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] sm:backdrop-blur-sm" onClick={() => setShowCartDrawer(false)} aria-hidden="true" />
-          <div className="relative ml-auto w-full sm:max-w-md md:max-w-lg max-h-[min(92dvh,92vh)] sm:max-h-full sm:h-full sm:min-h-0 bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-2xl ring-1 ring-slate-900/5 flex flex-col min-h-0">
+          <div className="relative ml-auto w-full sm:max-w-md md:max-w-lg max-h-[92dvh] sm:max-h-full sm:h-full sm:min-h-0 bg-white rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-2xl ring-1 ring-slate-900/5 flex flex-col min-h-0">
             <div className="flex items-center justify-center relative p-4 pr-14 border-b border-slate-200 shrink-0">
               <h2 className="text-lg font-semibold text-slate-800 text-center px-2">{t('cart')}</h2>
               <button type="button" onClick={() => setShowCartDrawer(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-full hover:bg-slate-100 text-slate-600 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 z-10" aria-label={t('close')}>
@@ -520,7 +520,7 @@ export default function PosPage() {
                 ))
               )}
             </div>
-            <div className="p-4 pt-3 border-t border-slate-200 space-y-3 shrink-0 bg-slate-50/50 cart-drawer-footer overflow-y-auto max-h-[min(48vh,320px)] sm:max-h-[50vh] min-h-0">
+            <div className="p-4 pt-3 border-t border-slate-200 space-y-3 shrink-0 bg-slate-50/50 cart-drawer-footer min-h-0">
               <div>
                 <label className="block text-xs text-slate-600 mb-1">{t('paymentMethod')}</label>
                 <div className="flex gap-2 flex-wrap">
@@ -548,7 +548,7 @@ export default function PosPage() {
                 type="button"
                 onClick={openCheckoutConfirm}
                 disabled={cart.length === 0 || total === 0 || isSubmitting}
-                className={`btn-primary w-full py-4 rounded-2xl text-xl font-extrabold min-h-[64px] disabled:opacity-45 disabled:cursor-not-allowed transition transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg ${
+                className={`btn-primary w-full py-4 rounded-2xl text-xl font-extrabold min-h-[64px] disabled:opacity-45 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg touch-manipulation ${
                   cart.length > 0 && total > 0 && !isSubmitting ? 'ring-2 ring-teal-200/80' : 'ring-0'
                 }`}
               >
@@ -586,7 +586,7 @@ export default function PosPage() {
       {/* 結帳確認防呆彈窗 */}
       {showCheckoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" onClick={() => setShowCheckoutConfirm(false)}>
-          <div className="modal-panel bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[min(85dvh,85vh)] overflow-hidden flex flex-col min-h-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-checkout-title">
+          <div className="modal-panel bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[85dvh] flex flex-col min-h-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-checkout-title">
             <div className="p-5 border-b border-slate-200 shrink-0">
               <h3 id="confirm-checkout-title" className="text-lg font-semibold text-slate-800">{t('confirmCheckoutTitle')}</h3>
               <p className="text-sm text-slate-500 mt-1">{t('confirmCheckoutHint')}</p>
@@ -652,7 +652,7 @@ export default function PosPage() {
                 type="button"
                 onClick={handleConfirmCheckout}
                 disabled={isSubmitting}
-                className="flex-1 py-3 rounded-xl font-semibold btn-primary text-white min-h-[48px] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl font-semibold btn-primary text-white min-h-[48px] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
               >
                 {isSubmitting ? (
                   <>
