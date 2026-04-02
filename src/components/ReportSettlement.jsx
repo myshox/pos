@@ -118,16 +118,75 @@ export default function ReportSettlement() {
   };
 
   const exportReportCSV = () => {
-    const header = [t('time'), t('orderId'), t('amount'), t('paymentMethod')];
-    const rows = report.orders.map((o) => [
-      formatReportDate(o.createdAt),
-      '#' + o.id.slice(0, 8),
-      o.total,
-      paymentLabel(t, o.paymentMethod || 'cash'),
-    ]);
-    const summary = ['', t('orderCount') + ' ' + report.count, 'NT$ ' + report.total, ''];
     const filename = `report-${period === 'day' ? selectedDate : period === 'range' ? `${rangeStart}-${rangeEnd}` : 'export'}.csv`;
-    downloadCSV(filename, [header, ...rows, [], summary]);
+
+    // === 第一區：訂單品項明細（每件商品一列）===
+    const detailHeader = ['時間', '訂單編號', '商品名稱', '數量', '單價', '小計', '付款方式', '訂單總計', '備註'];
+    const detailRows = [];
+    for (const o of report.orders) {
+      const items = Array.isArray(o.items) ? o.items : [];
+      if (items.length === 0) {
+        detailRows.push([
+          formatReportDate(o.createdAt),
+          '#' + o.id.slice(0, 8),
+          '', '', '', '',
+          paymentLabel(t, o.paymentMethod || 'cash'),
+          o.total,
+          o.note || '',
+        ]);
+      } else {
+        items.forEach((item, idx) => {
+          const qty = Number(item.qty) || 0;
+          const price = Number(item.price) || 0;
+          detailRows.push([
+            idx === 0 ? formatReportDate(o.createdAt) : '',
+            idx === 0 ? '#' + o.id.slice(0, 8) : '',
+            item.name || '',
+            qty,
+            price,
+            qty * price,
+            idx === 0 ? paymentLabel(t, o.paymentMethod || 'cash') : '',
+            idx === 0 ? o.total : '',
+            idx === 0 ? (o.note || '') : '',
+          ]);
+        });
+      }
+    }
+    const detailSummary = ['', `共 ${report.count} 筆`, '', '', '', '', '', `NT$ ${report.total}`, ''];
+
+    // === 第二區：商品熱銷排行 ===
+    const hotHeader = ['排名', '商品名稱', '分類', '售出數量', '營收', '佔比%'];
+    const hotRows = productAnalysis.byProduct.map((row, i) => [
+      i + 1,
+      row.name,
+      row.category || '—',
+      row.qty,
+      row.revenue,
+      report.total > 0 ? ((100 * row.revenue) / report.total).toFixed(1) + '%' : '0%',
+    ]);
+
+    // === 第三區：分類彙整 ===
+    const catHeader = ['分類', '營收', '佔比%'];
+    const catRows = productAnalysis.byCategory.map((row) => [
+      row.category,
+      row.revenue,
+      report.total > 0 ? ((100 * row.revenue) / report.total).toFixed(1) + '%' : '0%',
+    ]);
+
+    downloadCSV(filename, [
+      ['=== 訂單品項明細 ==='],
+      detailHeader,
+      ...detailRows,
+      detailSummary,
+      [],
+      ['=== 商品熱銷排行 ==='],
+      hotHeader,
+      ...hotRows,
+      [],
+      ['=== 分類營收彙整 ==='],
+      catHeader,
+      ...catRows,
+    ]);
     showToast(t('backupExportSuccess'));
   };
 
