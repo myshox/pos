@@ -3,7 +3,8 @@ import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { exportAllData, importAllDataOverwrite } from '../lib/storage';
-import { checkConnection, testUpload } from '../lib/syncSupabase';
+import { checkConnection, testUpload, fetchCloudStats, clearRemoteCursor } from '../lib/syncSupabase';
+import { getProducts, getOrders, getCategories } from '../lib/storage';
 
 export default function BackupRestore() {
   const { refreshProducts, refreshOrders, refreshStore, syncNow, manualSync, isSyncEnabled } = useStore();
@@ -14,6 +15,14 @@ export default function BackupRestore() {
   const [syncStatus, setSyncStatus] = useState(null);
   const [testingUpload, setTestingUpload] = useState(false);
   const [forceSyncing, setForceSyncing] = useState(false);
+  const [cloudStats, setCloudStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  const localStats = {
+    products: getProducts().length,
+    orders: getOrders().length,
+    categories: getCategories().length,
+  };
 
   useEffect(() => {
     if (!isSyncEnabled) return;
@@ -42,6 +51,30 @@ export default function BackupRestore() {
     refreshStore();
     showToast(ok ? t('syncForceOk') : t('syncForceError'), ok ? 'success' : 'error');
     setForceSyncing(false);
+    const stats = await fetchCloudStats();
+    setCloudStats(stats);
+  };
+
+  const handleLoadStats = async () => {
+    if (!isSyncEnabled || loadingStats) return;
+    setLoadingStats(true);
+    const stats = await fetchCloudStats();
+    setCloudStats(stats);
+    setLoadingStats(false);
+  };
+
+  const handleForceRePull = async () => {
+    if (!isSyncEnabled || forceSyncing) return;
+    setForceSyncing(true);
+    clearRemoteCursor();
+    const ok = await manualSync();
+    refreshProducts();
+    refreshOrders();
+    refreshStore();
+    showToast(ok ? t('syncForceOk') : t('syncForceError'), ok ? 'success' : 'error');
+    setForceSyncing(false);
+    const stats = await fetchCloudStats();
+    setCloudStats(stats);
   };
 
   const handleExport = () => {
@@ -96,13 +129,40 @@ export default function BackupRestore() {
         <p className="text-amber-800 text-sm bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 max-w-xl">{t('syncNotEnabledHint')}</p>
       )}
       {isSyncEnabled && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <p className="text-teal-700 text-sm font-medium">{t('syncEnabledHint')}</p>
           {syncStatus === 'ok' && <p className="text-green-700 text-sm">{t('syncStatusOk')}</p>}
           {syncStatus && syncStatus !== 'ok' && typeof syncStatus === 'object' && (
             <p className="text-red-600 text-sm break-words">{t('syncStatusError')}: {syncStatus.error}</p>
           )}
-          <div className="pt-2 flex flex-wrap gap-2">
+
+          {/* 診斷：本機 vs 雲端筆數 */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm space-y-1 max-w-xl">
+            <p className="font-medium text-slate-700">本機資料</p>
+            <p className="text-slate-600">商品 {localStats.products} 筆　訂單 {localStats.orders} 筆　分類 {localStats.categories} 筆</p>
+            {cloudStats ? (
+              <>
+                <p className="font-medium text-slate-700 pt-1">雲端資料</p>
+                <p className={cloudStats.products === 0 ? 'text-red-600 font-semibold' : 'text-slate-600'}>
+                  商品 {cloudStats.products} 筆　訂單 {cloudStats.orders} 筆　分類 {cloudStats.categories} 筆
+                </p>
+                {cloudStats.updatedAt && (
+                  <p className="text-slate-400 text-xs">雲端更新：{new Date(cloudStats.updatedAt).toLocaleString('zh-TW')}</p>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleLoadStats}
+                disabled={loadingStats}
+                className="text-teal-600 underline text-xs disabled:opacity-50"
+              >
+                {loadingStats ? '查詢中...' : '查詢雲端筆數'}
+              </button>
+            )}
+          </div>
+
+          <div className="pt-1 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleForceSync}
@@ -110,6 +170,14 @@ export default function BackupRestore() {
               className="px-3 py-2 rounded-xl text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white min-h-[44px] disabled:opacity-50"
             >
               {forceSyncing ? '...' : t('syncForceNow')}
+            </button>
+            <button
+              type="button"
+              onClick={handleForceRePull}
+              disabled={forceSyncing}
+              className="px-3 py-2 rounded-xl text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white min-h-[44px] disabled:opacity-50"
+            >
+              {forceSyncing ? '...' : '強制重新拉取'}
             </button>
             <button
               type="button"

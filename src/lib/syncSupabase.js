@@ -116,6 +116,29 @@ export async function checkConnection() {
   }
 }
 
+/** 取得雲端目前各欄的筆數（診斷用） */
+export async function fetchCloudStats() {
+  const c = getClient();
+  if (!c) return null;
+  try {
+    const { data, error } = await c.from(TABLE).select('*').eq('id', STORE_ID).maybeSingle();
+    if (error || !data) return null;
+    return {
+      products: Array.isArray(data.products) ? data.products.length : 0,
+      orders: Array.isArray(data.orders) ? data.orders.length : 0,
+      categories: Array.isArray(data.categories) ? data.categories.length : 0,
+      updatedAt: data.updated_at || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 清除本機游標，下次 refreshFromCloud 會強制比對雲端並拉取 */
+export function clearRemoteCursor() {
+  try { localStorage.removeItem(REMOTE_TS_KEY); } catch { /* empty */ }
+}
+
 export async function testUpload() {
   const c = getClient();
   if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*）' };
