@@ -32,9 +32,6 @@ export default function PosPage() {
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
-  const [showDiscountPrompt, setShowDiscountPrompt] = useState(false);
-  const [discountType, setDiscountType] = useState('none');
-  const [discountValue, setDiscountValue] = useState('');
   const [cashReceived, setCashReceived] = useState('');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
@@ -59,7 +56,6 @@ export default function PosPage() {
     } catch (_) {}
     return true;
   });
-  const [discountSectionExpanded, setDiscountSectionExpanded] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState(null);
   const [productSearch, setProductSearch] = useState('');
   const confirmBackRef = useRef(null);
@@ -121,17 +117,7 @@ export default function PosPage() {
     );
   }, []);
 
-  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.qty, 0), [cart]);
-  const discountAmount = useMemo(() => {
-    if (discountType === 'none' || !discountValue) return 0;
-    const v = Number(discountValue);
-    if (Number.isNaN(v) || v < 0) return 0;
-    if (discountType === 'amount') return Math.min(v, subtotal);
-    if (discountType === 'percent') return Math.min(subtotal * (v / 100), subtotal);
-    return 0;
-  }, [discountType, discountValue, subtotal]);
-  const total = Math.max(0, Math.round(subtotal - discountAmount));
-  const discount = discountType !== 'none' && discountValue ? { type: discountType, value: Number(discountValue) || 0 } : null;
+  const total = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.qty, 0), [cart]);
   const cartTotalQty = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
   const cashReceivedNum = Number(cashReceived) || 0;
   const changeAmount = cashReceivedNum >= total ? cashReceivedNum - total : 0;
@@ -150,16 +136,6 @@ export default function PosPage() {
     showToast(`${product.name} × 1 ${t('addToCart')}`);
   }, [addToCartWithQty, showToast, t]);
 
-  const applyQuickDiscount = useCallback((type, value) => {
-    if (type === 'none') {
-      setDiscountType('none');
-      setDiscountValue('');
-      return;
-    }
-    setDiscountType(type);
-    setDiscountValue(String(value));
-  }, []);
-
   const openCheckoutConfirm = useCallback(() => {
     if (cart.length === 0) {
       showToast(t('toastCartEmpty'), 'error');
@@ -176,7 +152,8 @@ export default function PosPage() {
       showToast(t('checkoutTotalZeroWarning'), 'error');
       return;
     }
-    setShowDiscountPrompt(true);
+    setCashReceived('');
+    setShowCheckoutConfirm(true);
   }, [cart, products, total, showToast, t]);
 
   const handleConfirmCheckout = useCallback(() => {
@@ -184,19 +161,17 @@ export default function PosPage() {
     setIsSubmitting(true);
     setTimeout(() => {
       const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
-      const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, discount, cashInfo);
+      const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, null, cashInfo);
       setReceiptOrder(newOrder);
       setCart([]);
       setOrderNote('');
-      setDiscountType('none');
-      setDiscountValue('');
       setCashReceived('');
       setShowCheckoutConfirm(false);
       setShowCartDrawer(false);
       showToast(t('toastCheckoutSuccess'));
       setTimeout(() => setIsSubmitting(false), 300);
     }, 80);
-  }, [cart, total, orderNote, paymentMethod, discount, cashReceivedNum, changeAmount, isSubmitting, submitOrder, showToast, t]);
+  }, [cart, total, orderNote, paymentMethod, cashReceivedNum, changeAmount, isSubmitting, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -218,14 +193,13 @@ export default function PosPage() {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
-      if (showDiscountPrompt) setShowDiscountPrompt(false);
-      else if (showCheckoutConfirm) setShowCheckoutConfirm(false);
+      if (showCheckoutConfirm) setShowCheckoutConfirm(false);
     };
-    if (showDiscountPrompt || showCheckoutConfirm) {
+    if (showCheckoutConfirm) {
       window.addEventListener('keydown', onKey);
       return () => window.removeEventListener('keydown', onKey);
     }
-  }, [showDiscountPrompt, showCheckoutConfirm]);
+  }, [showCheckoutConfirm]);
 
   useEffect(() => {
     if (showCheckoutConfirm && confirmBackRef.current) confirmBackRef.current.focus();
@@ -241,14 +215,14 @@ export default function PosPage() {
       if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
       const el = e.target;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
-      if (showDiscountPrompt || showCheckoutConfirm || showCartDrawer) return;
+      if (showCheckoutConfirm || showCartDrawer) return;
       if (activeProducts.length === 0) return;
       e.preventDefault();
       productSearchInputRef.current?.focus();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showDiscountPrompt, showCheckoutConfirm, showCartDrawer, activeProducts.length]);
+  }, [showCheckoutConfirm, showCartDrawer, activeProducts.length]);
 
   return (
     <div className={`flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] min-h-0 overflow-hidden`}>
@@ -609,102 +583,6 @@ export default function PosPage() {
         </div>
       )}
 
-      {/* 結帳後：是否有折扣？小視窗 */}
-      {showDiscountPrompt && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" onClick={() => setShowDiscountPrompt(false)}>
-          <div className="modal-panel bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[min(85dvh,85vh)] overflow-hidden flex flex-col min-h-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="discount-prompt-title">
-            <div className="p-5 border-b border-slate-200 shrink-0">
-              <h3 id="discount-prompt-title" className="text-lg font-semibold text-slate-800">{t('discountPromptTitle')}</h3>
-              <p className="text-sm text-slate-500 mt-1">{t('discountPromptHint')}</p>
-            </div>
-            <div className="p-5 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
-              <div>
-                <label className="block text-xs text-slate-600 mb-1.5">{t('discountQuick')}</label>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => applyQuickDiscount('percent', 10)} className="px-4 py-3 rounded-xl text-sm font-medium bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-slate-800 border border-transparent hover:border-teal-200 min-h-[48px]">
-                    {t('discount9off')}
-                  </button>
-                  <button type="button" onClick={() => applyQuickDiscount('percent', 5)} className="px-4 py-3 rounded-xl text-sm font-medium bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-slate-800 border border-transparent hover:border-teal-200 min-h-[48px]">
-                    {t('discount95off')}
-                  </button>
-                  <button type="button" onClick={() => applyQuickDiscount('amount', 50)} className="px-4 py-3 rounded-xl text-sm font-medium bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-slate-800 border border-transparent hover:border-teal-200 min-h-[48px]">
-                    {t('discount50')}
-                  </button>
-                  <button type="button" onClick={() => applyQuickDiscount('amount', 100)} className="px-4 py-3 rounded-xl text-sm font-medium bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-slate-800 border border-transparent hover:border-teal-200 min-h-[48px]">
-                    {t('discount100')}
-                  </button>
-                  <button type="button" onClick={() => applyQuickDiscount('none')} className="px-4 py-3 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 min-h-[48px]">
-                    {t('discountClear')}
-                  </button>
-                </div>
-              </div>
-              <div className="border-t border-slate-100 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setDiscountSectionExpanded((e) => !e)}
-                  className="w-full flex items-center justify-between py-2 text-sm font-medium text-slate-600 hover:text-slate-800 rounded-lg hover:bg-slate-50 min-h-[44px]"
-                  aria-expanded={discountSectionExpanded}
-                >
-                  <span>{t('discountCustom')}</span>
-                  <svg className={`w-5 h-5 transition-transform ${discountSectionExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                </button>
-                {discountSectionExpanded && (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between text-sm text-slate-600 items-center flex-wrap gap-2">
-                      <span>{t('discount')}</span>
-                      <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <select value={discountType} onChange={(e) => setDiscountType(e.target.value)} className="border border-slate-300 rounded-xl px-3 py-2 text-base min-h-[48px]">
-                          <option value="none">{t('discountNone')}</option>
-                          <option value="amount">{t('discountAmount')}</option>
-                          <option value="percent">{t('discountPercent')}</option>
-                        </select>
-                        {(discountType === 'amount' || discountType === 'percent') && (
-                          <input
-                            type="number"
-                            min={0}
-                            step={discountType === 'percent' ? 1 : 1}
-                            value={discountValue}
-                            onChange={(e) => setDiscountValue(e.target.value)}
-                            placeholder={discountType === 'percent' ? '10' : '50'}
-                            className="w-24 border border-slate-300 rounded-xl px-3 py-2 text-base min-h-[48px]"
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between text-sm text-teal-700">
-                        <span>{t('discountDeduct')}</span>
-                        <span>- NT$ {discountAmount}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                <span className="text-slate-600 font-medium">{t('total')}</span>
-                <span className="text-2xl font-bold text-slate-800">NT$ {total}</span>
-              </div>
-            </div>
-            <div className="p-5 border-t border-slate-200 flex gap-3 shrink-0 bg-white pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5">
-              <button
-                type="button"
-                onClick={() => setShowDiscountPrompt(false)}
-                className="flex-1 py-3 rounded-xl font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 min-h-[48px] transition"
-              >
-                {t('backToPrev')}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowDiscountPrompt(false); setCashReceived(''); setShowCheckoutConfirm(true); }}
-                className="flex-1 py-3 rounded-xl font-semibold bg-teal-600 text-white hover:bg-teal-700 min-h-[48px] transition"
-              >
-                {t('discountNextStep')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 結帳確認防呆彈窗 */}
       {showCheckoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" onClick={() => setShowCheckoutConfirm(false)}>
@@ -717,18 +595,6 @@ export default function PosPage() {
               <div className="text-sm text-slate-600">
                 {t('confirmCheckoutItems')}：{cart.length} {t('confirmCheckoutItemCount')}，{cart.reduce((s, i) => s + i.qty, 0)} {t('confirmCheckoutQty')}
               </div>
-              {subtotal !== total && (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{t('subtotal')}</span>
-                    <span>NT$ {subtotal}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-teal-700">
-                    <span>{t('discount')}</span>
-                    <span>- NT$ {subtotal - total}</span>
-                  </div>
-                </>
-              )}
               <div className="flex justify-between font-semibold text-lg pt-2 border-t border-slate-100">
                 <span className="text-slate-700">{t('total')}</span>
                 <span className="text-xl font-bold text-slate-800">NT$ {total}</span>

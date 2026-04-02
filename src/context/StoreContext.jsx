@@ -158,9 +158,8 @@ export function StoreProvider({ children }) {
 
   const activeProducts = products.filter((p) => p.isActive);
 
-  const submitOrder = useCallback((items, total, note = '', paymentMethod = 'cash', discount = null, cashInfo = null) => {
-    const subtotal = items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
-    const payload = { items: [...items], subtotal, discount, total, note, paymentMethod };
+  const submitOrder = useCallback((items, total, note = '', paymentMethod = 'cash', _unused = null, cashInfo = null) => {
+    const payload = { items: [...items], total, note, paymentMethod };
     if (cashInfo) { payload.cashReceived = cashInfo.cashReceived; payload.changeAmount = cashInfo.changeAmount; }
     const newOrder = saveOrder(payload);
     setOrders(getOrders());
