@@ -1,0 +1,5 @@
+{
+  "VITE_SUPABASE_URL": "https://你的專案.supabase.co",
+  "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "VITE_STORE_KEY": "與資料庫 store_data.store_key 完全相同"
+}

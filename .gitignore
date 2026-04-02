@@ -15,6 +15,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# 本機／Capacitor 用 Supabase 設定（勿提交）
+public/config.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

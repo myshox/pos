@@ -186,16 +186,56 @@ function mergeOrders(localOrders, remoteOrders) {
   );
 }
 
+/** 本機「有效」筆數：未寫入過 key 時沿用預設範本，避免被雲端空 [] 蓋掉 */
+function getEffectiveLocalProductCount() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    if (raw == null) return defaultProducts.length;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.length : defaultProducts.length;
+  } catch {
+    return defaultProducts.length;
+  }
+}
+
+function getEffectiveLocalCategoryCount() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+    if (raw == null) return DEFAULT_CATEGORIES.length;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.length : DEFAULT_CATEGORIES.length;
+  } catch {
+    return DEFAULT_CATEGORIES.length;
+  }
+}
+
 // 匯入並合併（同步用：訂單合併，其他覆蓋）
+/** @returns {{ skippedEmptyRemote: boolean }} 若略過空雲端覆寫，應上傳本機以修復雲端 */
 export function importAllData(data) {
-  if (data.products && Array.isArray(data.products)) saveProducts(data.products);
+  if (!data || typeof data !== 'object') return { skippedEmptyRemote: false };
+  let skippedEmptyRemote = false;
+
+  if (Array.isArray(data.products)) {
+    if (data.products.length === 0 && getEffectiveLocalProductCount() > 0) {
+      skippedEmptyRemote = true;
+    } else {
+      saveProducts(data.products);
+    }
+  }
   if (data.orders && Array.isArray(data.orders)) {
     const local = getOrders();
     const merged = mergeOrders(local, data.orders);
     saveOrders(merged);
   }
-  if (data.categories && Array.isArray(data.categories)) saveCategories(data.categories);
+  if (Array.isArray(data.categories)) {
+    if (data.categories.length === 0 && getEffectiveLocalCategoryCount() > 0) {
+      skippedEmptyRemote = true;
+    } else {
+      saveCategories(data.categories);
+    }
+  }
   if (data.store && typeof data.store === 'object') saveStore(data.store);
+  return { skippedEmptyRemote };
 }
 
 // 完整覆蓋匯入（備份還原用）

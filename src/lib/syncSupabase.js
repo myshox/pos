@@ -17,11 +17,28 @@ const UPLOAD_DEBOUNCE_MS = 1500;
 /** 輪詢拉取間隔（Realtime 在部分 WebView 不穩時補強） */
 export const POLL_INTERVAL_MS = 30000;
 
+/** 優先 Vite 建置變數，否則見 main.jsx 載入的 public/config.json → globalThis.__POS_SYNC_CONFIG__ */
+function getSyncEnv(name) {
+  const fromVite = import.meta.env[name];
+  if (fromVite != null && String(fromVite).trim() !== '') return String(fromVite).trim();
+  try {
+    const cfg = typeof globalThis !== 'undefined' ? globalThis.__POS_SYNC_CONFIG__ : null;
+    if (cfg && typeof cfg === 'object') {
+      const short = name.startsWith('VITE_') ? name.slice(5) : name;
+      const v = cfg[name] ?? cfg[short];
+      if (v != null && String(v).trim() !== '') return String(v).trim();
+    }
+  } catch {
+    /* empty */
+  }
+  return '';
+}
+
 function getClient() {
   if (client !== null) return client;
-  const url = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
-  const key = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
-  const storeKey = String(import.meta.env.VITE_STORE_KEY || '').trim();
+  const url = getSyncEnv('VITE_SUPABASE_URL');
+  const key = getSyncEnv('VITE_SUPABASE_ANON_KEY');
+  const storeKey = getSyncEnv('VITE_STORE_KEY');
   if (!url || !key) return null;
   if (!storeKey) return null;
   client = createClient(url, key, {
@@ -168,16 +185,39 @@ function mergeOrderArrays(localOrders, remoteOrders) {
  * 先拉遠端訂單合併再上傳，降低覆蓋其他裝置訂單的風險
  */
 async function mergeAndUpload(c, getCurrentData) {
-  const storeKey = String(import.meta.env.VITE_STORE_KEY || '').trim();
+  const storeKey = getSyncEnv('VITE_STORE_KEY');
   const local = getCurrentData();
 
   let remoteOrders = [];
+  let remoteProducts = [];
+  let remoteCategories = [];
+  let remoteStore = {};
   try {
-    const { data } = await c.from(TABLE).select('orders').eq('id', STORE_ID).maybeSingle();
-    if (data && Array.isArray(data.orders)) remoteOrders = data.orders;
+    const { data } = await c
+      .from(TABLE)
+      .select('orders, products, categories, store_settings')
+      .eq('id', STORE_ID)
+      .maybeSingle();
+    if (data) {
+      if (Array.isArray(data.orders)) remoteOrders = data.orders;
+      if (Array.isArray(data.products)) remoteProducts = data.products;
+      if (Array.isArray(data.categories)) remoteCategories = data.categories;
+      if (data.store_settings && typeof data.store_settings === 'object') remoteStore = data.store_settings;
+    }
   } catch { /* 拉不到就用本地 */ }
 
   const mergedOrders = mergeOrderArrays(local.orders || [], remoteOrders);
+
+  const lp = local.products || [];
+  const rp = remoteProducts || [];
+  /** 本機商品為空但雲端有資料時沿用雲端，避免空裝置上傳洗掉他台已同步的商品 */
+  const mergedProducts = lp.length === 0 && rp.length > 0 ? rp : lp;
+
+  const lc = local.categories || [];
+  const rc = remoteCategories || [];
+  const mergedCategories = lc.length === 0 && rc.length > 0 ? rc : lc;
+
+  const mergedStore = { ...remoteStore, ...(local.store && typeof local.store === 'object' ? local.store : {}) };
 
   const { data: row, error } = await c
     .from(TABLE)
@@ -185,10 +225,10 @@ async function mergeAndUpload(c, getCurrentData) {
       {
         id: STORE_ID,
         store_key: typeof storeKey === 'string' ? storeKey : '',
-        products: local.products || [],
+        products: mergedProducts,
         orders: mergedOrders,
-        categories: local.categories || [],
-        store_settings: local.store || {},
+        categories: mergedCategories,
+        store_settings: mergedStore,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'id' }

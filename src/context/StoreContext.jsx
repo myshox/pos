@@ -75,15 +75,26 @@ export function StoreProvider({ children }) {
       if (!data) return;
       const shouldApply = isRemoteAheadOfCursor(data);
       if (shouldApply) {
-        importAllData(data);
+        const { skippedEmptyRemote } = importAllData(data);
         setProducts(getProducts());
         setOrders(getOrders());
         setCategoriesState(getCategories());
         setStoreState(getStore());
+        if (skippedEmptyRemote) triggerSync();
+      } else {
+        /**
+         * 游標已追上雲端（shouldApply=false），但仍需檢查「雲端商品是空的，本機卻有資料」。
+         * 常見原因：某次同步把 products:[] 寫進雲端，updated_at 更新後游標也跟上，
+         * 之後 shouldApply 永遠 false，本機好資料一直無法上傳給其他裝置（iOS 看起來永遠是 0）。
+         */
+        const remoteEmpty = !data.products || data.products.length === 0;
+        if (remoteEmpty && getProducts().length > 0) {
+          triggerSync();
+        }
       }
       if (data.updatedAt) setRemoteCursor(data.updatedAt);
     } catch { /* network error, skip */ }
-  }, []);
+  }, [triggerSync]);
 
   /** iOS Safari：背景分頁會暫停 setInterval、Realtime WebSocket 也常斷線；切回前景須主動拉雲端並上傳 */
   const resumeSync = useCallback(() => {
@@ -108,11 +119,14 @@ export function StoreProvider({ children }) {
     document.addEventListener('visibilitychange', schedule);
     window.addEventListener('pageshow', schedule);
     window.addEventListener('online', schedule);
+    // iOS WKWebView：從背景回前景時，有時不觸發 visibilitychange，focus 較可靠
+    window.addEventListener('focus', schedule);
     return () => {
       if (debounceTimer) window.clearTimeout(debounceTimer);
       document.removeEventListener('visibilitychange', schedule);
       window.removeEventListener('pageshow', schedule);
       window.removeEventListener('online', schedule);
+      window.removeEventListener('focus', schedule);
     };
   }, [resumeSync]);
 
@@ -123,11 +137,12 @@ export function StoreProvider({ children }) {
     let unsub = () => {};
     try {
       unsub = subscribeToStore((remote) => {
-        importAllData(remote);
+        const { skippedEmptyRemote } = importAllData(remote);
         setProducts(getProducts());
         setOrders(getOrders());
         setCategoriesState(getCategories());
         setStoreState(getStore());
+        if (skippedEmptyRemote) triggerSync();
       });
     } catch { /* WebSocket subscription failed */ }
 
@@ -138,7 +153,7 @@ export function StoreProvider({ children }) {
       unsub();
       window.clearInterval(pollId);
     };
-  }, [refreshFromCloud]);
+  }, [refreshFromCloud, triggerSync]);
 
   useEffect(() => {
     const keys = ['pos_products', 'pos_orders', 'pos_categories', 'pos_store'];
