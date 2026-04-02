@@ -92,9 +92,57 @@ export async function fetchStoreData() {
 }
 
 /**
- * 上傳目前資料到雲端（會 debounce）
- * getCurrentData: () => ({ products, orders, categories, store })
- * options: { onUploadStart?: () => void, onUploadEnd?: (ok: boolean) => void }
+ * 合併本地與遠端訂單（以 id 去重，保留兩邊所有訂單）
+ */
+function mergeOrderArrays(localOrders, remoteOrders) {
+  const map = new Map();
+  for (const o of (remoteOrders || [])) map.set(o.id, o);
+  for (const o of (localOrders || [])) {
+    const existing = map.get(o.id);
+    if (!existing) {
+      map.set(o.id, o);
+    } else if (o.voided && !existing.voided) {
+      map.set(o.id, o);
+    }
+  }
+  return Array.from(map.values()).sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+/**
+ * 先拉遠端資料合併訂單再上傳，確保不覆蓋其他裝置的訂單
+ */
+async function mergeAndUpload(c, getCurrentData) {
+  const storeKey = import.meta.env.VITE_STORE_KEY;
+  const local = getCurrentData();
+
+  // 先拉遠端訂單
+  let remoteOrders = [];
+  try {
+    const { data } = await c.from(TABLE).select('orders').eq('id', STORE_ID).maybeSingle();
+    if (data && Array.isArray(data.orders)) remoteOrders = data.orders;
+  } catch { /* 拉不到就用本地的 */ }
+
+  const mergedOrders = mergeOrderArrays(local.orders || [], remoteOrders);
+
+  const { error } = await c.from(TABLE).upsert(
+    {
+      id: STORE_ID,
+      store_key: typeof storeKey === 'string' ? storeKey : '',
+      products: local.products || [],
+      orders: mergedOrders,
+      categories: local.categories || [],
+      store_settings: local.store || {},
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' }
+  );
+  return !error;
+}
+
+/**
+ * 上傳目前資料到雲端（會 debounce，合併訂單後再上傳）
  */
 export function scheduleUpload(getCurrentData, options = {}) {
   const c = getClient();
@@ -106,48 +154,20 @@ export function scheduleUpload(getCurrentData, options = {}) {
     let ok = false;
     try {
       onUploadStart?.();
-      const storeKey = import.meta.env.VITE_STORE_KEY;
-      const d = getCurrentData();
-      const { error } = await c.from(TABLE).upsert(
-        {
-          id: STORE_ID,
-          store_key: typeof storeKey === 'string' ? storeKey : '',
-          products: d.products || [],
-          orders: d.orders || [],
-          categories: d.categories || [],
-          store_settings: d.store || {},
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
-      ok = !error;
+      ok = await mergeAndUpload(c, getCurrentData);
     } catch { /* upload failed */ }
     onUploadEnd?.(ok);
   }, UPLOAD_DEBOUNCE_MS);
 }
 
 /**
- * 立即上傳（不 debounce），回傳 boolean
+ * 立即上傳（不 debounce，合併訂單後再上傳），回傳 boolean
  */
 export async function uploadNow(getCurrentData) {
   const c = getClient();
   if (!c || typeof getCurrentData !== 'function') return false;
   try {
-    const storeKey = import.meta.env.VITE_STORE_KEY;
-    const d = getCurrentData();
-    const { error } = await c.from(TABLE).upsert(
-      {
-        id: STORE_ID,
-        store_key: typeof storeKey === 'string' ? storeKey : '',
-        products: d.products || [],
-        orders: d.orders || [],
-        categories: d.categories || [],
-        store_settings: d.store || {},
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' }
-    );
-    return !error;
+    return await mergeAndUpload(c, getCurrentData);
   } catch { /* empty */ }
   return false;
 }

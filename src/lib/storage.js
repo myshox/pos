@@ -167,8 +167,39 @@ export function exportAllData() {
   };
 }
 
-// 匯入並覆蓋（還原）
+// 合併遠端訂單：以 id 為 key，遠端有而本地沒有的加入，兩邊都有的以較新的為準
+function mergeOrders(localOrders, remoteOrders) {
+  const map = new Map();
+  for (const o of localOrders) map.set(o.id, o);
+  for (const o of remoteOrders) {
+    const existing = map.get(o.id);
+    if (!existing) {
+      map.set(o.id, o);
+    } else {
+      // 兩邊都有：以 voided/voidedAt 較新的為準（允許遠端作廢同步過來）
+      if (o.voided && !existing.voided) map.set(o.id, o);
+    }
+  }
+  // 依建立時間降序排列（最新在前）
+  return Array.from(map.values()).sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+// 匯入並合併（同步用：訂單合併，其他覆蓋）
 export function importAllData(data) {
+  if (data.products && Array.isArray(data.products)) saveProducts(data.products);
+  if (data.orders && Array.isArray(data.orders)) {
+    const local = getOrders();
+    const merged = mergeOrders(local, data.orders);
+    saveOrders(merged);
+  }
+  if (data.categories && Array.isArray(data.categories)) saveCategories(data.categories);
+  if (data.store && typeof data.store === 'object') saveStore(data.store);
+}
+
+// 完整覆蓋匯入（備份還原用）
+export function importAllDataOverwrite(data) {
   if (data.products && Array.isArray(data.products)) saveProducts(data.products);
   if (data.orders && Array.isArray(data.orders)) saveOrders(data.orders);
   if (data.categories && Array.isArray(data.categories)) saveCategories(data.categories);

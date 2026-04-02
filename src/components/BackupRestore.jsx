@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
-import { exportAllData, importAllData } from '../lib/storage';
+import { exportAllData, importAllDataOverwrite } from '../lib/storage';
 import { checkConnection, testUpload } from '../lib/syncSupabase';
 
 export default function BackupRestore() {
@@ -61,7 +61,7 @@ export default function BackupRestore() {
           setImporting(false);
           return;
         }
-        importAllData(data);
+        importAllDataOverwrite(data);
         refreshProducts();
         refreshOrders();
         refreshStore();
