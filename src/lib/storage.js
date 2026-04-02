@@ -17,7 +17,7 @@ export function getCategories() {
 }
 
 export function saveCategories(categories) {
-  localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+  try { localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories)); } catch (_) {}
 }
 
 const defaultProducts = [
@@ -38,7 +38,7 @@ export function getProducts() {
 }
 
 export function saveProducts(products) {
-  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+  try { localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products)); } catch (_) {}
 }
 
 export function getOrders() {
@@ -50,7 +50,7 @@ export function getOrders() {
 }
 
 export function saveOrders(orders) {
-  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch (_) {}
 }
 
 const PAYMENT_IDS = ['line', 'cash', 'card'];
@@ -105,7 +105,7 @@ export function getStore() {
 }
 
 export function saveStore(store) {
-  localStorage.setItem(STORAGE_KEYS.STORE, JSON.stringify({ ...DEFAULT_STORE, ...store }));
+  try { localStorage.setItem(STORAGE_KEYS.STORE, JSON.stringify({ ...DEFAULT_STORE, ...store })); } catch (_) {}
 }
 
 // 後台 PIN（存雜湊較安全，此處簡化存明文，僅防誤觸）
@@ -119,7 +119,7 @@ export function hasPin() {
 
 export function setPin(pin) {
   const p = String(pin).trim();
-  if (p.length >= 4) localStorage.setItem(PIN_KEY, p);
+  if (p.length >= 4) { try { localStorage.setItem(PIN_KEY, p); } catch (_) {} }
 }
 
 export function checkPin(input) {

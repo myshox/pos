@@ -160,16 +160,21 @@ export default function PosPage() {
     if (cart.length === 0 || isSubmitting) return;
     setIsSubmitting(true);
     setTimeout(() => {
-      const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
-      const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, null, cashInfo);
-      setReceiptOrder(newOrder);
-      setCart([]);
-      setOrderNote('');
-      setCashReceived('');
-      setShowCheckoutConfirm(false);
-      setShowCartDrawer(false);
-      showToast(t('toastCheckoutSuccess'));
-      setTimeout(() => setIsSubmitting(false), 300);
+      try {
+        const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
+        const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, null, cashInfo);
+        setReceiptOrder(newOrder);
+        setCart([]);
+        setOrderNote('');
+        setCashReceived('');
+        setShowCheckoutConfirm(false);
+        setShowCartDrawer(false);
+        showToast(t('toastCheckoutSuccess'));
+      } catch (err) {
+        showToast(t('checkoutError') || '結帳失敗，請重試', 'error');
+      } finally {
+        setTimeout(() => setIsSubmitting(false), 300);
+      }
     }, 80);
   }, [cart, total, orderNote, paymentMethod, cashReceivedNum, changeAmount, isSubmitting, submitOrder, showToast, t]);
 
