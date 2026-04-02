@@ -111,6 +111,18 @@ export default function ReceiptModal({ order, onClose }) {
             <span>{t('totalLabel')}</span>
             <span>NT$ {order.total}</span>
           </div>
+          {order.cashReceived != null && (
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>{t('cashReceived')}</span>
+                <span>NT$ {order.cashReceived}</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold text-emerald-700">
+                <span>{t('changeAmount')}</span>
+                <span>NT$ {order.changeAmount}</span>
+              </div>
+            </div>
+          )}
           <div className="text-center text-slate-500 text-xs pt-5 border-t border-dashed border-slate-200 mt-3">{t('thanksVisit')}</div>
         </div>
       </div>

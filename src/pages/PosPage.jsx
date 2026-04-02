@@ -35,6 +35,7 @@ export default function PosPage() {
   const [showDiscountPrompt, setShowDiscountPrompt] = useState(false);
   const [discountType, setDiscountType] = useState('none');
   const [discountValue, setDiscountValue] = useState('');
+  const [cashReceived, setCashReceived] = useState('');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
     try {
@@ -132,6 +133,17 @@ export default function PosPage() {
   const total = Math.max(0, Math.round(subtotal - discountAmount));
   const discount = discountType !== 'none' && discountValue ? { type: discountType, value: Number(discountValue) || 0 } : null;
   const cartTotalQty = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
+  const cashReceivedNum = Number(cashReceived) || 0;
+  const changeAmount = cashReceivedNum >= total ? cashReceivedNum - total : 0;
+  const quickCashAmounts = useMemo(() => {
+    if (total <= 0) return [];
+    const amounts = [100, 500, 1000, 2000, 5000];
+    const rounded = Math.ceil(total / 100) * 100;
+    const result = new Set();
+    if (rounded > total) result.add(rounded);
+    amounts.forEach((a) => { if (a >= total) result.add(a); });
+    return [...result].sort((a, b) => a - b).slice(0, 5);
+  }, [total]);
 
   const addProductDirect = useCallback((product) => {
     addToCartWithQty(product, 1);
@@ -171,18 +183,20 @@ export default function PosPage() {
     if (cart.length === 0 || isSubmitting) return;
     setIsSubmitting(true);
     setTimeout(() => {
-      const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, discount);
+      const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
+      const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, discount, cashInfo);
       setReceiptOrder(newOrder);
       setCart([]);
       setOrderNote('');
       setDiscountType('none');
       setDiscountValue('');
+      setCashReceived('');
       setShowCheckoutConfirm(false);
       setShowCartDrawer(false);
       showToast(t('toastCheckoutSuccess'));
       setTimeout(() => setIsSubmitting(false), 300);
     }, 80);
-  }, [cart, total, orderNote, paymentMethod, discount, isSubmitting, submitOrder, showToast, t]);
+  }, [cart, total, orderNote, paymentMethod, discount, cashReceivedNum, changeAmount, isSubmitting, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -681,7 +695,7 @@ export default function PosPage() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowDiscountPrompt(false); setShowCheckoutConfirm(true); }}
+                onClick={() => { setShowDiscountPrompt(false); setCashReceived(''); setShowCheckoutConfirm(true); }}
                 className="flex-1 py-3 rounded-xl font-semibold bg-teal-600 text-white hover:bg-teal-700 min-h-[48px] transition"
               >
                 {t('discountNextStep')}
@@ -723,6 +737,35 @@ export default function PosPage() {
                 <span>{t('paymentMethod')}</span>
                 <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : 'payCash')}</span>
               </div>
+              {paymentMethod === 'cash' && (
+                <div className="pt-2 space-y-2">
+                  <label className="text-sm font-medium text-slate-600">{t('cashReceived')}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {quickCashAmounts.map((amt) => (
+                      <button key={amt} type="button" onClick={() => setCashReceived(String(amt))} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${String(amt) === cashReceived ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'}`}>
+                        ${amt}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={cashReceived}
+                    onChange={(e) => setCashReceived(e.target.value)}
+                    placeholder={t('cashReceivedPlaceholder')}
+                    className="input-pro w-full rounded-xl px-4 py-3 text-base min-h-[48px]"
+                  />
+                  {cashReceivedNum > 0 && cashReceivedNum >= total && (
+                    <div className="flex justify-between items-center bg-emerald-50 rounded-xl px-4 py-3 border border-emerald-200">
+                      <span className="text-emerald-700 font-medium">{t('changeAmount')}</span>
+                      <span className="text-2xl font-bold text-emerald-700">NT$ {changeAmount}</span>
+                    </div>
+                  )}
+                  {cashReceivedNum > 0 && cashReceivedNum < total && (
+                    <div className="text-sm text-red-500 font-medium">{t('cashNotEnough')}</div>
+                  )}
+                </div>
+              )}
               {orderNote.trim() && (
                 <div className="text-sm text-slate-600 break-words">
                   <span className="text-slate-500">{t('note')}：</span>{orderNote.trim()}
