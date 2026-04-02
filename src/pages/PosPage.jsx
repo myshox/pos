@@ -118,7 +118,10 @@ export default function PosPage() {
     );
   }, []);
 
-  const total = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.qty, 0), [cart]);
+  const total = useMemo(() => {
+    const n = cart.reduce((sum, item) => sum + Number(item.price) * Number(item.qty), 0);
+    return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
+  }, [cart]);
   const cartTotalQty = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
   const cashReceivedNum = Number(cashReceived) || 0;
   const changeAmount = cashReceivedNum >= total ? Math.round((cashReceivedNum - total) * 100) / 100 : 0;
@@ -233,8 +236,8 @@ export default function PosPage() {
 
   return (
     <div className={`flex flex-col h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-5rem)] min-h-0`}>
-      {/* 注意：iOS 上父層有 transform 會影響 fixed/點擊座標。
-          因此縮放只套用在「主內容」，固定抽屜/彈窗不套用縮放。 */}
+      {/* 字型縮放改為 font-size（見 index.css），避免 iOS 上 transform: scale 造成金額數字不顯示。
+          固定抽屜/彈窗維持在縮放區外，以免影響 fixed。 */}
       <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
         {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 px-3 sm:px-4 py-2.5 bg-white rounded-xl border border-slate-200/90 shadow-sm ring-1 ring-slate-200/40 shrink-0 mx-2 sm:mx-3 mt-1">
@@ -497,12 +500,12 @@ export default function PosPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="font-semibold text-slate-800 text-sm line-clamp-2 sm:truncate leading-snug block">{item.name}</span>
-                        <span className="text-xs text-slate-500 tabular-nums mt-0.5 block sm:hidden">NT$ {item.price} × {item.qty}</span>
+                        <span className="text-xs text-slate-500 tabular-nums mt-0.5 block sm:hidden">NT$ {Number(item.price)} × {item.qty}</span>
                       </div>
-                      <span className="text-sm font-semibold text-slate-800 shrink-0 tabular-nums sm:hidden">NT$ {item.price * item.qty}</span>
+                      <span className="text-sm font-semibold text-slate-800 shrink-0 tabular-nums sm:hidden">NT$ {Math.round(Number(item.price) * Number(item.qty) * 100) / 100}</span>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end sm:gap-3 sm:flex-nowrap sm:shrink-0">
-                      <span className="hidden sm:inline text-sm font-semibold text-slate-800 shrink-0 tabular-nums order-first sm:order-none">NT$ {item.price * item.qty}</span>
+                      <span className="hidden sm:inline text-sm font-semibold text-slate-800 shrink-0 tabular-nums order-first sm:order-none">NT$ {Math.round(Number(item.price) * Number(item.qty) * 100) / 100}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button type="button" onClick={() => updateQty(item.id, -1)} className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-slate-200 hover:bg-slate-300 active:bg-slate-400 text-slate-700 font-bold flex items-center justify-center text-sm touch-manipulation" aria-label="-">−</button>
                         <span className="w-8 text-center font-semibold text-sm tabular-nums">{item.qty}</span>

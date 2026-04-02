@@ -76,12 +76,16 @@ export default function ReceiptModal({ order, onClose }) {
             <div className="text-slate-500 text-xs">{formatReceiptDate(order.createdAt, lang)}</div>
             {store.taxId && <div className="text-slate-600 text-xs mt-0.5">{t('storeTaxId')}：{store.taxId}</div>}
           </div>
-          {order.items.map((item, i) => (
-            <div key={i} className="flex justify-between">
-              <span>{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
-              <span>NT$ {item.price * item.qty}</span>
-            </div>
-          ))}
+          {order.items.map((item, i) => {
+            const line = Number(item.price) * Number(item.qty);
+            const lineAmt = Number.isFinite(line) ? Math.round(line * 100) / 100 : 0;
+            return (
+              <div key={i} className="flex justify-between gap-2 tabular-nums">
+                <span className="min-w-0 break-words">{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
+                <span className="shrink-0">NT$ {lineAmt}</span>
+              </div>
+            );
+          })}
           {order.note && (
             <div className="pt-2 text-slate-800/90 text-xs">{t('note')}：{order.note}</div>
           )}
@@ -90,9 +94,9 @@ export default function ReceiptModal({ order, onClose }) {
               {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
             </div>
           )}
-          <div className="flex justify-between font-semibold pt-3 border-t border-slate-300 mt-3">
+          <div className="flex justify-between font-semibold pt-3 border-t border-slate-300 mt-3 tabular-nums">
             <span>{t('totalLabel')}</span>
-            <span>NT$ {order.total}</span>
+            <span>NT$ {Number.isFinite(Number(order.total)) ? order.total : 0}</span>
           </div>
           {order.cashReceived != null && (
             <div className="mt-2 space-y-1">
