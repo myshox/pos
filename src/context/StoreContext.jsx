@@ -4,7 +4,8 @@ import {
   getCategories, saveCategories, getStore, saveStore, hasPin, checkPin as checkPinStorage, setPin as setPinStorage,
   setUnlockSession, decrementProductStock, importAllData,
 } from '../lib/storage';
-import { fetchStoreData, scheduleUpload, subscribeToStore, isSyncEnabled } from '../lib/syncSupabase';
+import { fetchStoreData, scheduleUpload, subscribeToStore, isSyncEnabled, uploadNow } from '../lib/syncSupabase';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 
 function getCurrentDataForSync() {
   return {
@@ -24,17 +25,29 @@ export function StoreProvider({ children }) {
   const [categories, setCategoriesState] = useState(() => getCategories());
   const [store, setStoreState] = useState(() => getStore());
   const [isSyncing, setIsSyncing] = useState(false);
+  const { isOnline, hasPendingSync, lastSyncAt, markPending, markSynced } = useOnlineStatus();
   const [unlockUntil, setUnlockUntil] = useState(() => {
     try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch { return 0; }
   });
 
   const triggerSync = useCallback(() => {
     if (!isSyncEnabled()) return;
+    if (!navigator.onLine) { markPending(); return; }
     scheduleUpload(getCurrentDataForSync, {
       onUploadStart: () => setIsSyncing(true),
-      onUploadEnd: () => setIsSyncing(false),
+      onUploadEnd: (ok) => { setIsSyncing(false); if (ok) markSynced(); else markPending(); },
     });
-  }, []);
+  }, [markPending, markSynced]);
+
+  // 上線時自動同步待上傳的資料
+  useEffect(() => {
+    if (!isOnline || !hasPendingSync || !isSyncEnabled()) return;
+    setIsSyncing(true);
+    uploadNow(getCurrentDataForSync).then((ok) => {
+      setIsSyncing(false);
+      if (ok) markSynced();
+    });
+  }, [isOnline, hasPendingSync, markSynced]);
 
   // 若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
   useEffect(() => {
@@ -210,6 +223,15 @@ export function StoreProvider({ children }) {
     triggerSync();
   }, [triggerSync]);
 
+  const manualSync = useCallback(async () => {
+    if (!isSyncEnabled()) return false;
+    setIsSyncing(true);
+    const ok = await uploadNow(getCurrentDataForSync);
+    setIsSyncing(false);
+    if (ok) markSynced();
+    return ok;
+  }, [markSynced]);
+
   const updateOrder = useCallback((orderId, updates) => {
     const updated = updateOrderStorage(orderId, updates);
     if (updated) setOrders(getOrders());
@@ -264,8 +286,12 @@ export function StoreProvider({ children }) {
     deleteProduct,
     persistProducts,
     syncNow,
+    manualSync,
     isSyncEnabled: isSyncEnabled(),
     isSyncing,
+    isOnline,
+    hasPendingSync,
+    lastSyncAt,
   };
 
   return (

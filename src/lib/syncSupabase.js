@@ -94,7 +94,7 @@ export async function fetchStoreData() {
 /**
  * 上傳目前資料到雲端（會 debounce）
  * getCurrentData: () => ({ products, orders, categories, store })
- * options: { onUploadStart?: () => void, onUploadEnd?: () => void }
+ * options: { onUploadStart?: () => void, onUploadEnd?: (ok: boolean) => void }
  */
 export function scheduleUpload(getCurrentData, options = {}) {
   const c = getClient();
@@ -103,14 +103,14 @@ export function scheduleUpload(getCurrentData, options = {}) {
   uploadTimer = setTimeout(async () => {
     uploadTimer = null;
     const { onUploadStart, onUploadEnd } = options;
+    let ok = false;
     try {
       onUploadStart?.();
       const storeKey = import.meta.env.VITE_STORE_KEY;
       const d = getCurrentData();
-      await c.from(TABLE).upsert(
+      const { error } = await c.from(TABLE).upsert(
         {
           id: STORE_ID,
-          // 重要：啟用店鋪密鑰 RLS 時，INSERT/UPSERT 需要帶 store_key 才能通過 policy
           store_key: typeof storeKey === 'string' ? storeKey : '',
           products: d.products || [],
           orders: d.orders || [],
@@ -120,9 +120,36 @@ export function scheduleUpload(getCurrentData, options = {}) {
         },
         { onConflict: 'id' }
       );
-    } catch { /* upload failed, ignore */ }
-    onUploadEnd?.();
+      ok = !error;
+    } catch { /* upload failed */ }
+    onUploadEnd?.(ok);
   }, UPLOAD_DEBOUNCE_MS);
+}
+
+/**
+ * 立即上傳（不 debounce），回傳 boolean
+ */
+export async function uploadNow(getCurrentData) {
+  const c = getClient();
+  if (!c || typeof getCurrentData !== 'function') return false;
+  try {
+    const storeKey = import.meta.env.VITE_STORE_KEY;
+    const d = getCurrentData();
+    const { error } = await c.from(TABLE).upsert(
+      {
+        id: STORE_ID,
+        store_key: typeof storeKey === 'string' ? storeKey : '',
+        products: d.products || [],
+        orders: d.orders || [],
+        categories: d.categories || [],
+        store_settings: d.store || {},
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+    return !error;
+  } catch { /* empty */ }
+  return false;
 }
 
 /**

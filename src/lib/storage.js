@@ -38,7 +38,7 @@ export function getProducts() {
 }
 
 export function saveProducts(products) {
-  try { localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products)); } catch { /* empty */ }
+  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
 }
 
 export function getOrders() {
@@ -50,7 +50,7 @@ export function getOrders() {
 }
 
 export function saveOrders(orders) {
-  try { localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders)); } catch { /* empty */ }
+  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
 }
 
 const PAYMENT_IDS = ['line', 'cash', 'card'];

@@ -3,13 +3,79 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { StoreContext } from '../context/StoreContext';
 
+function SyncStatusBadge() {
+  const store = useContext(StoreContext);
+  const { t } = useLocale();
+  const isSyncEnabled = store?.isSyncEnabled ?? false;
+  const isSyncing = store?.isSyncing ?? false;
+  const isOnline = store?.isOnline ?? true;
+  const hasPendingSync = store?.hasPendingSync ?? false;
+  const lastSyncAt = store?.lastSyncAt ?? 0;
+  const manualSync = store?.manualSync;
+
+  if (!isSyncEnabled) return null;
+
+  // 離線狀態
+  if (!isOnline) {
+    return (
+      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/30 text-white text-xs font-medium">
+        <span className="w-2 h-2 rounded-full bg-red-400" />
+        {t('syncOffline')}
+      </span>
+    );
+  }
+
+  // 同步中
+  if (isSyncing) {
+    return (
+      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/25 text-white text-xs font-medium animate-pulse">
+        <span className="w-2 h-2 rounded-full bg-white border border-white/60" />
+        {t('syncSyncing')}
+      </span>
+    );
+  }
+
+  // 有待同步資料
+  if (hasPendingSync) {
+    return (
+      <button
+        type="button"
+        onClick={() => manualSync?.()}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/30 hover:bg-amber-500/50 text-white text-xs font-medium transition touch-manipulation min-h-[32px]"
+      >
+        <span className="w-2 h-2 rounded-full bg-amber-400" />
+        {t('syncPending')}
+      </button>
+    );
+  }
+
+  // 已同步 — 顯示上次同步時間，可點擊手動同步
+  const timeAgo = lastSyncAt > 0 ? formatTimeAgo(lastSyncAt, t) : '';
+  return (
+    <button
+      type="button"
+      onClick={() => manualSync?.()}
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/25 hover:bg-emerald-500/40 text-white text-xs font-medium transition touch-manipulation min-h-[32px]"
+      title={t('syncManualHint')}
+    >
+      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+      {timeAgo ? `${t('syncSynced')} ${timeAgo}` : t('syncSynced')}
+    </button>
+  );
+}
+
+function formatTimeAgo(ts, t) {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return t('syncJustNow');
+  if (diff < 3600) return `${Math.floor(diff / 60)}${t('syncMinAgo')}`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}${t('syncHrAgo')}`;
+  return `${Math.floor(diff / 86400)}${t('syncDayAgo')}`;
+}
+
 export default function Layout({ children }) {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const { t, lang, setLang, LANGS, langLabels } = useLocale();
-  const store = useContext(StoreContext);
-  const isSyncEnabled = store?.isSyncEnabled ?? false;
-  const isSyncing = store?.isSyncing ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -21,13 +87,7 @@ export default function Layout({ children }) {
             <span className="text-base sm:text-xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-cute)' }}>{t('appName')}</span>
           </Link>
 
-          {/* 同步中指示（有啟用 Supabase 時） */}
-          {isSyncEnabled && isSyncing && (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/25 text-white text-xs font-medium animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-white border border-white/60" />
-              {t('syncSyncing')}
-            </span>
-          )}
+          <SyncStatusBadge />
 
           {/* 桌面：語言 + 導覽 */}
           <div className="hidden md:flex items-center gap-3">
@@ -58,7 +118,7 @@ export default function Layout({ children }) {
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
             className="md:hidden p-2 rounded-xl text-white hover:bg-white/20 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label="選單"
+            aria-label={t('menu')}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {menuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
