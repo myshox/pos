@@ -4,7 +4,16 @@ import {
   getCategories, saveCategories, getStore, saveStore, hasPin, checkPin as checkPinStorage, setPin as setPinStorage,
   setUnlockSession, decrementProductStock, importAllData,
 } from '../lib/storage';
-import { fetchStoreData, scheduleUpload, subscribeToStore, isSyncEnabled, uploadNow } from '../lib/syncSupabase';
+import {
+  fetchStoreData,
+  scheduleUpload,
+  subscribeToStore,
+  isSyncEnabled,
+  uploadNow,
+  isRemoteAheadOfCursor,
+  setRemoteCursor,
+  POLL_INTERVAL_MS,
+} from '../lib/syncSupabase';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 
 function getCurrentDataForSync() {
@@ -52,21 +61,23 @@ export function StoreProvider({ children }) {
     if (!isSyncEnabled()) return;
     try {
       const data = await fetchStoreData();
-      if (data) {
+      if (!data) return;
+      const shouldApply = isRemoteAheadOfCursor(data);
+      if (shouldApply) {
         importAllData(data);
         setProducts(getProducts());
         setOrders(getOrders());
         setCategoriesState(getCategories());
         setStoreState(getStore());
       }
+      if (data.updatedAt) setRemoteCursor(data.updatedAt);
     } catch { /* network error, skip */ }
   }, []);
 
-  // 若有設定 Supabase 則從雲端訂閱即時更新 + polling 備援
+  // Supabase：即時訂閱 + 初次拉取 + HTTP 輪詢備援（游標避免誤覆寫）
   useEffect(() => {
-    if (!isSyncEnabled()) return;
+    if (!isSyncEnabled()) return undefined;
 
-    // WebSocket 即時同步（Android/Chrome 正常，iOS WebKit 可能失效）
     let unsub = () => {};
     try {
       unsub = subscribeToStore((remote) => {
@@ -78,13 +89,13 @@ export function StoreProvider({ children }) {
       });
     } catch { /* WebSocket subscription failed */ }
 
-    // 初始載入
     refreshFromCloud();
 
-    // HTTP polling 備援：iOS WebKit WebSocket 不穩定，每 10 秒拉一次確保同步
-    const pollId = setInterval(refreshFromCloud, 10000);
-
-    return () => { unsub(); clearInterval(pollId); };
+    const pollId = window.setInterval(refreshFromCloud, POLL_INTERVAL_MS);
+    return () => {
+      unsub();
+      window.clearInterval(pollId);
+    };
   }, [refreshFromCloud]);
 
   useEffect(() => {
