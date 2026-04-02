@@ -12,6 +12,7 @@ import {
   uploadNow,
   isRemoteAheadOfCursor,
   setRemoteCursor,
+  clearRemoteCursor,
   POLL_INTERVAL_MS,
 } from '../lib/syncSupabase';
 import useOnlineStatus from '../hooks/useOnlineStatus';
@@ -315,6 +316,36 @@ export function StoreProvider({ children }) {
     return ok;
   }, [markSynced, refreshFromCloud]);
 
+  /**
+   * 強制重新拉取：先上傳本機資料，然後清除游標並直接把雲端資料套用到本機。
+   * 解決「上傳後游標被設為最新時間，refreshFromCloud 認為不需要拉取」的問題。
+   */
+  const forceRePull = useCallback(async () => {
+    if (!isSyncEnabled()) return false;
+    setIsSyncing(true);
+    // 1. 先上傳本機（合併訂單後推上雲端）
+    await uploadNow(getCurrentDataForSync);
+    // 2. 清游標，確保下一步一定會拉
+    clearRemoteCursor();
+    // 3. 直接從雲端抓資料並強制套用（不判斷游標）
+    let ok = false;
+    try {
+      const data = await fetchStoreData();
+      if (data) {
+        importAllData(data);
+        setProducts(getProducts());
+        setOrders(getOrders());
+        setCategoriesState(getCategories());
+        setStoreState(getStore());
+        if (data.updatedAt) setRemoteCursor(data.updatedAt);
+        markSynced();
+        ok = true;
+      }
+    } catch { /* skip */ }
+    setIsSyncing(false);
+    return ok;
+  }, [markSynced]);
+
   const updateOrder = useCallback((orderId, updates) => {
     const updated = updateOrderStorage(orderId, updates);
     if (updated) setOrders(getOrders());
@@ -370,6 +401,7 @@ export function StoreProvider({ children }) {
     persistProducts,
     syncNow,
     manualSync,
+    forceRePull,
     isSyncEnabled: isSyncEnabled(),
     isSyncing,
     isOnline,

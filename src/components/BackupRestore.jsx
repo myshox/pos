@@ -7,7 +7,7 @@ import { checkConnection, testUpload, fetchCloudStats, clearRemoteCursor } from 
 import { getProducts, getOrders, getCategories } from '../lib/storage';
 
 export default function BackupRestore() {
-  const { refreshProducts, refreshOrders, refreshStore, syncNow, manualSync, isSyncEnabled } = useStore();
+  const { refreshProducts, refreshOrders, refreshStore, syncNow, manualSync, forceRePull, isSyncEnabled } = useStore();
   const { t } = useLocale();
   const { showToast } = useToast();
   const fileRef = useRef(null);
@@ -66,11 +66,7 @@ export default function BackupRestore() {
   const handleForceRePull = async () => {
     if (!isSyncEnabled || forceSyncing) return;
     setForceSyncing(true);
-    clearRemoteCursor();
-    const ok = await manualSync();
-    refreshProducts();
-    refreshOrders();
-    refreshStore();
+    const ok = await forceRePull();
     showToast(ok ? t('syncForceOk') : t('syncForceError'), ok ? 'success' : 'error');
     setForceSyncing(false);
     const stats = await fetchCloudStats();
