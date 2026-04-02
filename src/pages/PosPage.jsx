@@ -495,7 +495,7 @@ export default function PosPage() {
                 <div className="text-center min-w-0">
                   <div className="text-sm text-slate-500 mb-1">{t('total')}</div>
                   <div className="overflow-x-auto overflow-y-hidden text-center" style={{ WebkitOverflowScrolling: 'touch' }}>
-                    <span className="inline-block text-4xl sm:text-6xl font-bold text-slate-800 whitespace-nowrap">NT$ {total}</span>
+                    <span className="inline-block text-3xl sm:text-5xl font-bold text-slate-800 whitespace-nowrap">NT$ {total}</span>
                   </div>
                 </div>
               </div>
@@ -568,7 +568,7 @@ export default function PosPage() {
               </div>
               <div className="flex justify-between items-baseline gap-2 min-w-0">
                 <span className="text-slate-600 font-medium text-base shrink-0">{t('total')}</span>
-                <span className="text-4xl sm:text-6xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
+                <span className="text-3xl sm:text-5xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
               </div>
               <button
                 type="button"
