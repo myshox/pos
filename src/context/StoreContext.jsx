@@ -50,33 +50,39 @@ export function StoreProvider({ children }) {
 
   const refreshFromCloud = useCallback(async () => {
     if (!isSyncEnabled()) return;
-    const data = await fetchStoreData();
-    if (data && (data.products?.length > 0 || data.orders?.length > 0 || data.categories?.length > 0)) {
-      importAllData(data);
-      setProducts(getProducts());
-      setOrders(getOrders());
-      setCategoriesState(getCategories());
-      setStoreState(getStore());
-    }
+    try {
+      const data = await fetchStoreData();
+      if (data) {
+        importAllData(data);
+        setProducts(getProducts());
+        setOrders(getOrders());
+        setCategoriesState(getCategories());
+        setStoreState(getStore());
+      }
+    } catch { /* network error, skip */ }
   }, []);
 
-  // 若有設定 Supabase 則從雲端覆蓋並訂閱即時更新
+  // 若有設定 Supabase 則從雲端訂閱即時更新 + polling 備援
   useEffect(() => {
     if (!isSyncEnabled()) return;
 
-    const unsub = subscribeToStore((remote) => {
-      importAllData(remote);
-      setProducts(getProducts());
-      setOrders(getOrders());
-      setCategoriesState(getCategories());
-      setStoreState(getStore());
-    });
+    // WebSocket 即時同步（Android/Chrome 正常，iOS WebKit 可能失效）
+    let unsub = () => {};
+    try {
+      unsub = subscribeToStore((remote) => {
+        importAllData(remote);
+        setProducts(getProducts());
+        setOrders(getOrders());
+        setCategoriesState(getCategories());
+        setStoreState(getStore());
+      });
+    } catch { /* WebSocket subscription failed */ }
 
     // 初始載入
     refreshFromCloud();
 
-    // Safari/iOS WebSocket 不穩定，加入 polling 備援（每 30 秒拉一次）
-    const pollId = setInterval(refreshFromCloud, 30000);
+    // HTTP polling 備援：iOS WebKit WebSocket 不穩定，每 10 秒拉一次確保同步
+    const pollId = setInterval(refreshFromCloud, 10000);
 
     return () => { unsub(); clearInterval(pollId); };
   }, [refreshFromCloud]);
