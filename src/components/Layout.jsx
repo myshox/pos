@@ -21,12 +21,11 @@ function SyncStatusBadge() {
     return (
       <button
         type="button"
-        onClick={() => manualSync?.()}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition touch-manipulation min-h-[32px] max-w-[200px]"
-        title={syncError}
+        onClick={() => { alert(syncError); manualSync?.(); }}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition touch-manipulation min-h-[32px]"
       >
         <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-        <span className="truncate">{t('syncError')}: {syncError.slice(0, 30)}</span>
+        <span>{t('syncError')}</span>
       </button>
     );
   }
