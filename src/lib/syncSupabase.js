@@ -165,6 +165,17 @@ export async function testUpload() {
   }
 }
 
+/** 從雲端取得完整訂單（報表用，不受本機 localStorage 限制） */
+export async function fetchCloudOrders() {
+  const c = getClient();
+  if (!c) return null;
+  try {
+    const { data, error } = await c.from(TABLE).select('orders').eq('id', STORE_ID).maybeSingle();
+    if (error || !data) return null;
+    return Array.isArray(data.orders) ? data.orders : [];
+  } catch { return null; }
+}
+
 export async function fetchStoreData() {
   const c = getClient();
   if (!c) return null;

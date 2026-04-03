@@ -6,6 +6,7 @@ import {
 } from '../lib/storage';
 import {
   fetchStoreData,
+  fetchCloudOrders,
   scheduleUpload,
   subscribeToStore,
   isSyncEnabled,
@@ -377,6 +378,25 @@ export function StoreProvider({ children }) {
     return updated;
   }, [triggerSync]);
 
+  /** 取得完整訂單（本機 + 雲端合併），報表用 */
+  const fetchAllOrders = useCallback(async () => {
+    const local = getOrders();
+    if (!isSyncEnabled()) return local;
+    const cloud = await fetchCloudOrders();
+    if (!cloud) return local;
+    // 合併去重
+    const map = new Map();
+    for (const o of cloud) map.set(o.id, o);
+    for (const o of local) {
+      const existing = map.get(o.id);
+      if (!existing) map.set(o.id, o);
+      else if (o.voided && !existing.voided) map.set(o.id, o);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, []);
+
   const value = {
     products,
     activeProducts,
@@ -408,6 +428,7 @@ export function StoreProvider({ children }) {
     persistProducts,
     syncNow,
     manualSync,
+    fetchAllOrders,
     forceRePull,
     isSyncEnabled: isSyncEnabled(),
     isSyncing,

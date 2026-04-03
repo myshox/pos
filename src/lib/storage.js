@@ -49,21 +49,34 @@ export function getOrders() {
   return [];
 }
 
+const LOCAL_ORDER_DAYS = 7; // 本機只保留最近 N 天，全部訂單存雲端
+
+function trimOrdersForLocal(orders) {
+  if (!Array.isArray(orders)) return orders;
+  const cutoff = Date.now() - LOCAL_ORDER_DAYS * 24 * 60 * 60 * 1000;
+  return orders.filter((o) => {
+    try { return new Date(o.createdAt).getTime() > cutoff; } catch { return true; }
+  });
+}
+
 export function saveOrders(orders) {
   try {
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
   } catch {
-    // iOS Safari localStorage 5MB 限制，保留最近 200 筆訂單再重試
-    const trimmed = Array.isArray(orders) ? orders.slice(0, 200) : orders;
+    // iOS Safari localStorage 5MB 限制，只保留最近 7 天
+    const trimmed = trimOrdersForLocal(orders);
     try {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(trimmed));
     } catch {
-      // 再失敗就保留 50 筆
-      const minimal = Array.isArray(orders) ? orders.slice(0, 50) : orders;
+      // 還是太大就只留 30 筆
+      const minimal = Array.isArray(trimmed) ? trimmed.slice(0, 30) : trimmed;
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(minimal));
     }
   }
 }
+
+/** 取得所有訂單（含雲端），用於報表 */
+export function getAllOrdersKey() { return STORAGE_KEYS.ORDERS; }
 
 const PAYMENT_IDS = ['line', 'cash', 'card'];
 
