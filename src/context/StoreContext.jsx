@@ -306,13 +306,18 @@ export function StoreProvider({ children }) {
   const manualSync = useCallback(async () => {
     if (!isSyncEnabled()) return false;
     setIsSyncing(true);
-    const ok = await uploadNow(getCurrentDataForSync);
-    if (ok) {
+    setSyncError(null);
+    try {
+      await uploadNow(getCurrentDataForSync);
       await refreshFromCloud();
       markSynced();
+      setIsSyncing(false);
+      return true;
+    } catch (e) {
+      setSyncError(e?.message || String(e));
+      setIsSyncing(false);
+      return false;
     }
-    setIsSyncing(false);
-    return ok;
   }, [markSynced, refreshFromCloud]);
 
   /**
@@ -322,13 +327,13 @@ export function StoreProvider({ children }) {
   const forceRePull = useCallback(async () => {
     if (!isSyncEnabled()) return false;
     setIsSyncing(true);
-    // 1. 先上傳本機（合併訂單後推上雲端）
-    await uploadNow(getCurrentDataForSync);
-    // 2. 清游標，確保下一步一定會拉
-    clearRemoteCursor();
-    // 3. 直接從雲端抓資料並強制套用（不判斷游標）
-    let ok = false;
+    setSyncError(null);
     try {
+      // 1. 先上傳本機（合併訂單後推上雲端）
+      await uploadNow(getCurrentDataForSync);
+      // 2. 清游標，確保下一步一定會拉
+      clearRemoteCursor();
+      // 3. 直接從雲端抓資料並強制套用（不判斷游標）
       const data = await fetchStoreData();
       if (data) {
         importAllData(data);
@@ -338,11 +343,14 @@ export function StoreProvider({ children }) {
         setStoreState(getStore());
         if (data.updatedAt) setRemoteCursor(data.updatedAt);
         markSynced();
-        ok = true;
       }
-    } catch { /* skip */ }
-    setIsSyncing(false);
-    return ok;
+      setIsSyncing(false);
+      return true;
+    } catch (e) {
+      setSyncError(e?.message || String(e));
+      setIsSyncing(false);
+      return false;
+    }
   }, [markSynced]);
 
   const updateOrder = useCallback((orderId, updates) => {

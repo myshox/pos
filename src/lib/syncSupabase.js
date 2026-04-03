@@ -259,7 +259,10 @@ async function mergeAndUpload(c, getCurrentData) {
     .select('updated_at')
     .maybeSingle();
 
-  if (error) return false;
+  if (error) {
+    const msg = error.message || error.details || JSON.stringify(error);
+    throw new Error(`上傳失敗: ${msg}`);
+  }
   if (row?.updated_at) setRemoteCursor(row.updated_at);
   else setRemoteCursor(new Date().toISOString());
   return true;
@@ -293,12 +296,8 @@ export function scheduleUpload(getCurrentData, options = {}) {
  */
 export async function uploadNow(getCurrentData) {
   const c = getClient();
-  if (!c || typeof getCurrentData !== 'function') return false;
-  try {
-    return await mergeAndUpload(c, getCurrentData);
-  } catch {
-    return false;
-  }
+  if (!c || typeof getCurrentData !== 'function') throw new Error('Supabase 未設定');
+  return await mergeAndUpload(c, getCurrentData);
 }
 
 export function subscribeToStore(onData) {
