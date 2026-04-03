@@ -50,7 +50,19 @@ export function getOrders() {
 }
 
 export function saveOrders(orders) {
-  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  try {
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  } catch {
+    // iOS Safari localStorage 5MB 限制，保留最近 200 筆訂單再重試
+    const trimmed = Array.isArray(orders) ? orders.slice(0, 200) : orders;
+    try {
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(trimmed));
+    } catch {
+      // 再失敗就保留 50 筆
+      const minimal = Array.isArray(orders) ? orders.slice(0, 50) : orders;
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(minimal));
+    }
+  }
 }
 
 const PAYMENT_IDS = ['line', 'cash', 'card'];
