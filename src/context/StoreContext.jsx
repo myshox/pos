@@ -35,6 +35,7 @@ export function StoreProvider({ children }) {
   const [categories, setCategoriesState] = useState(() => getCategories());
   const [store, setStoreState] = useState(() => getStore());
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
   const { isOnline, hasPendingSync, lastSyncAt, markPending, markSynced } = useOnlineStatus();
   const [unlockUntil, setUnlockUntil] = useState(() => {
     try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch { return 0; }
@@ -82,19 +83,17 @@ export function StoreProvider({ children }) {
         setCategoriesState(getCategories());
         setStoreState(getStore());
         if (skippedEmptyRemote) triggerSync();
+        setSyncError(null);
       } else {
-        /**
-         * 游標已追上雲端（shouldApply=false），但仍需檢查「雲端商品是空的，本機卻有資料」。
-         * 常見原因：某次同步把 products:[] 寫進雲端，updated_at 更新後游標也跟上，
-         * 之後 shouldApply 永遠 false，本機好資料一直無法上傳給其他裝置（iOS 看起來永遠是 0）。
-         */
         const remoteEmpty = !data.products || data.products.length === 0;
         if (remoteEmpty && getProducts().length > 0) {
           triggerSync();
         }
       }
       if (data.updatedAt) setRemoteCursor(data.updatedAt);
-    } catch { /* network error, skip */ }
+    } catch (e) {
+      setSyncError(e?.message || String(e));
+    }
   }, [triggerSync]);
 
   /** iOS Safari：背景分頁會暫停 setInterval、Realtime WebSocket 也常斷線；切回前景須主動拉雲端並上傳 */
@@ -404,6 +403,7 @@ export function StoreProvider({ children }) {
     forceRePull,
     isSyncEnabled: isSyncEnabled(),
     isSyncing,
+    syncError,
     isOnline,
     hasPendingSync,
     lastSyncAt,

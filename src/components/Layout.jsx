@@ -8,12 +8,28 @@ function SyncStatusBadge() {
   const { t } = useLocale();
   const isSyncEnabled = store?.isSyncEnabled ?? false;
   const isSyncing = store?.isSyncing ?? false;
+  const syncError = store?.syncError ?? null;
   const isOnline = store?.isOnline ?? true;
   const hasPendingSync = store?.hasPendingSync ?? false;
   const lastSyncAt = store?.lastSyncAt ?? 0;
   const manualSync = store?.manualSync;
 
   if (!isSyncEnabled) return null;
+
+  // 同步錯誤
+  if (syncError) {
+    return (
+      <button
+        type="button"
+        onClick={() => manualSync?.()}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition touch-manipulation min-h-[32px] max-w-[200px]"
+        title={syncError}
+      >
+        <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+        <span className="truncate">{t('syncError')}: {syncError.slice(0, 30)}</span>
+      </button>
+    );
+  }
 
   // 離線狀態
   if (!isOnline) {
