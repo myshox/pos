@@ -231,6 +231,12 @@ async function mergeAndUpload(c, getCurrentData) {
 
   const mergedOrders = mergeOrderArrays(local.orders || [], remoteOrders);
 
+  // 只同步最近 90 天的訂單到雲端，避免超過 Supabase 免費配額
+  const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+  const recentOrders = mergedOrders.filter((o) => {
+    try { return new Date(o.createdAt).getTime() > ninetyDaysAgo; } catch { return true; }
+  });
+
   const lp = local.products || [];
   const rp = remoteProducts || [];
   /** 本機商品為空但雲端有資料時沿用雲端，避免空裝置上傳洗掉他台已同步的商品 */
@@ -249,7 +255,7 @@ async function mergeAndUpload(c, getCurrentData) {
         id: STORE_ID,
         store_key: typeof storeKey === 'string' ? storeKey : '',
         products: mergedProducts,
-        orders: mergedOrders,
+        orders: recentOrders,
         categories: mergedCategories,
         store_settings: mergedStore,
         updated_at: new Date().toISOString(),
