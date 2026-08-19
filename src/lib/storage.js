@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.2 seconds
-Output:
 import { PAYMENT_LINK_RECORDS } from '../data/paymentLinkRecords';
 
 const STORAGE_KEYS = {
@@ -14,14 +11,60 @@ const STORAGE_KEYS = {
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
 const PAYMENT_LINK_PRODUCTS = [100, 300, 500, 1000, 2000, 3000, 3500, 5100].map((price) => ({
   id: -price,
-  name: price === 100 ? '绮鹃伕灏忕墿' : price === 1000 ? '瀹㈣＝鍟嗗搧' : `浜ゆ槗鍟嗗搧 NT$${price}`,
+  name: price === 100 ? '精選小物' : price === 1000 ? '客製商品' : `交易商品 NT$${price}`,
   price,
-  category: '鍏朵粬',
-  description: '浠樻閫ｇ祼瑁滅櫥鍟嗗搧',
+  category: '其他',
+  description: '付款連結補登商品',
   isActive: true,
   useStock: false,
   stock: 0,
 }));
+
+/** 補登付款連結試算表中的成功交易；交易序號固定作為訂單 ID，避免跨裝置重複。 */
+export function migratePaymentLinkRecords() {
+  try {
+    if (localStorage.getItem(PAYMENT_LINK_MIGRATION_KEY) === 'done') return false;
+
+    const products = getProducts();
+    for (const product of PAYMENT_LINK_PRODUCTS) {
+      if (!products.some((item) => item.id === product.id)) products.push(product);
+    }
+
+    const orders = getOrders();
+    const existingIds = new Set(orders.map((order) => String(order.id)));
+    const importedOrders = PAYMENT_LINK_RECORDS
+      .filter((record) => !existingIds.has(`payment-link-${record.transactionId}`))
+      .map((record) => {
+        const product = PAYMENT_LINK_PRODUCTS.find((item) => item.price === record.amount);
+        const isCard = record.method === 'ApplePay' || record.method === '信用卡';
+        return {
+          id: `payment-link-${record.transactionId}`,
+          items: [{ ...product, qty: 1 }],
+          subtotal: record.amount,
+          total: record.amount,
+          note: `補登付款連結｜${record.method}｜${record.customer}｜${record.orderNo}`,
+          paymentMethod: isCard ? 'card' : 'line',
+          createdAt: record.paidAt,
+          voided: false,
+        };
+      });
+
+    saveProducts(products);
+    saveOrders([...importedOrders, ...orders].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ));
+    localStorage.setItem(PAYMENT_LINK_MIGRATION_KEY, 'done');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const MISSING_ORDERS_MIGRATION_KEY = 'pos_migration_missing_orders_20260819';
+const MIGRATION_PRODUCTS = [
+  { id: -1000, name: '客製商品', price: 1000, category: '其他', description: '補登訂單用商品', isActive: true, useStock: false, stock: 0 },
+  { id: -100, name: '精選小物', price: 100, category: '其他', description: '補登訂單用商品', isActive: true, useStock: false, stock: 0 },
+];
 
 /** 瑁滅櫥浠樻閫ｇ祼瑭︾畻琛ㄤ腑鐨勬垚鍔熶氦鏄擄紱浜ゆ槗搴忚櫉鍥哄畾浣滅偤瑷傚柈 ID锛岄伩鍏嶈法瑁濈疆閲嶈銆?*/
 export function migratePaymentLinkRecords() {

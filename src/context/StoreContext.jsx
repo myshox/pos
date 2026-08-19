@@ -51,6 +51,16 @@ export function StoreProvider({ children }) {
   const [unlockUntil, setUnlockUntil] = useState(() => {
     try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch { return 0; }
   });
+  const [products, setProducts] = useState(() => getProducts());
+  const [orders, setOrders] = useState(() => getOrders());
+  const [categories, setCategoriesState] = useState(() => getCategories());
+  const [store, setStoreState] = useState(() => getStore());
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
+  const { isOnline, hasPendingSync, lastSyncAt, markPending, markSynced } = useOnlineStatus();
+  const [unlockUntil, setUnlockUntil] = useState(() => {
+    try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch { return 0; }
+  });
 
   const triggerSync = useCallback(() => {
     if (!isSyncEnabled()) return;
