@@ -1,4 +1,4 @@
-import { PAYMENT_LINK_RECORDS } from '../data/paymentLinkRecords';
+import { PAYMENT_LINK_RECORDS } from '../data/paymentLinkRecords.js';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'pos_products',
@@ -9,12 +9,23 @@ const STORAGE_KEYS = {
 };
 
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
+const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v2';
+const PRODUCT_NAMES_BY_PRICE = {
+  100: '體驗小物',
+  300: '手作飾品',
+  500: '手作禮盒',
+  1000: '限量創作',
+  2000: '藝術收藏品',
+  3000: '典藏作品',
+  3500: '限量典藏作品',
+  5100: '客製藝術作品',
+};
 const PAYMENT_LINK_PRODUCTS = [100, 300, 500, 1000, 2000, 3000, 3500, 5100].map((price) => ({
   id: -price,
-  name: price === 100 ? '精選小物' : price === 1000 ? '客製商品' : `交易商品 NT$${price}`,
+  name: PRODUCT_NAMES_BY_PRICE[price],
   price,
   category: '其他',
-  description: '付款連結補登商品',
+  description: '訂單商品',
   isActive: true,
   useStock: false,
   stock: 0,
@@ -42,7 +53,7 @@ export function migratePaymentLinkRecords() {
           items: [{ ...product, qty: 1 }],
           subtotal: record.amount,
           total: record.amount,
-          note: `補登付款連結｜${record.method}｜${record.customer}｜${record.orderNo}`,
+          note: `${record.method}｜${record.customer}｜${record.orderNo}`,
           paymentMethod: isCard ? 'card' : 'line',
           createdAt: record.paidAt,
           voided: false,
@@ -60,46 +71,46 @@ export function migratePaymentLinkRecords() {
   }
 }
 
-const MISSING_ORDERS_MIGRATION_KEY = 'pos_migration_missing_orders_20260819';
-const MIGRATION_PRODUCTS = [
-  { id: -1000, name: '客製商品', price: 1000, category: '其他', description: '補登訂單用商品', isActive: true, useStock: false, stock: 0 },
-  { id: -100, name: '精選小物', price: 100, category: '其他', description: '補登訂單用商品', isActive: true, useStock: false, stock: 0 },
-];
-
-/** 瑁滅櫥浠樻閫ｇ祼瑭︾畻琛ㄤ腑鐨勬垚鍔熶氦鏄擄紱浜ゆ槗搴忚櫉鍥哄畾浣滅偤瑷傚柈 ID锛岄伩鍏嶈法瑁濈疆閲嶈銆?*/
-export function migratePaymentLinkRecords() {
+/** 修正已匯入訂單的商品名稱、備註與整數價格。 */
+export function repairImportedOrderLabels() {
   try {
-    if (localStorage.getItem(PAYMENT_LINK_MIGRATION_KEY) === 'done') return false;
+    if (localStorage.getItem(IMPORTED_LABEL_REPAIR_KEY) === 'done') return false;
 
-    const products = getProducts();
+    const productByPrice = new Map(PAYMENT_LINK_PRODUCTS.map((product) => [product.price, product]));
+    const products = getProducts().map((product) => {
+      const price = Math.round(Number(product.price) || 0);
+      const replacement = productByPrice.get(price);
+      return replacement && Number(product.id) === -price
+        ? { ...product, ...replacement }
+        : { ...product, price };
+    });
     for (const product of PAYMENT_LINK_PRODUCTS) {
       if (!products.some((item) => item.id === product.id)) products.push(product);
     }
 
-    const orders = getOrders();
-    const existingIds = new Set(orders.map((order) => String(order.id)));
-    const importedOrders = PAYMENT_LINK_RECORDS
-      .filter((record) => !existingIds.has(`payment-link-${record.transactionId}`))
-      .map((record) => {
-        const product = PAYMENT_LINK_PRODUCTS.find((item) => item.price === record.amount);
-        const isCard = record.method === 'ApplePay' || record.method === '淇＄敤鍗?;
-        return {
-          id: `payment-link-${record.transactionId}`,
-          items: [{ ...product, qty: 1 }],
-          subtotal: record.amount,
-          total: record.amount,
-          note: `瑁滅櫥浠樻閫ｇ祼锝?{record.method}锝?{record.customer}锝?{record.orderNo}`,
-          paymentMethod: isCard ? 'card' : 'line',
-          createdAt: record.paidAt,
-          voided: false,
-        };
-      });
+    const recordsById = new Map(PAYMENT_LINK_RECORDS.map((record) => [
+      `payment-link-${record.transactionId}`,
+      record,
+    ]));
+    const orders = getOrders().map((order) => {
+      const id = String(order.id);
+      if (!id.startsWith('missing-') && !id.startsWith('payment-link-')) return order;
+      const price = Math.round(Number(order.total) || 0);
+      const product = productByPrice.get(price);
+      if (!product) return order;
+      const record = recordsById.get(id);
+      return {
+        ...order,
+        items: [{ ...product, qty: 1 }],
+        subtotal: price,
+        total: price,
+        note: record ? `${record.method}｜${record.customer}｜${record.orderNo}` : '',
+      };
+    });
 
     saveProducts(products);
-    saveOrders([...importedOrders, ...orders].sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    ));
-    localStorage.setItem(PAYMENT_LINK_MIGRATION_KEY, 'done');
+    saveOrders(orders);
+    localStorage.setItem(IMPORTED_LABEL_REPAIR_KEY, 'done');
     return true;
   } catch {
     return false;
@@ -108,8 +119,8 @@ export function migratePaymentLinkRecords() {
 
 const MISSING_ORDERS_MIGRATION_KEY = 'pos_migration_missing_orders_20260819';
 const MIGRATION_PRODUCTS = [
-  { id: -1000, name: '瀹㈣＝鍟嗗搧', price: 1000, category: '鍏朵粬', description: '瑁滅櫥瑷傚柈鐢ㄥ晢鍝?, isActive: true, useStock: false, stock: 0 },
-  { id: -100, name: '绮鹃伕灏忕墿', price: 100, category: '鍏朵粬', description: '瑁滅櫥瑷傚柈鐢ㄥ晢鍝?, isActive: true, useStock: false, stock: 0 },
+  PAYMENT_LINK_PRODUCTS.find((product) => product.price === 1000),
+  PAYMENT_LINK_PRODUCTS.find((product) => product.price === 100),
 ];
 
 function makeMigratedOrder(id, product, createdAt) {
@@ -118,14 +129,14 @@ function makeMigratedOrder(id, product, createdAt) {
     items: [{ ...product, qty: 1 }],
     subtotal: product.price,
     total: product.price,
-    note: '瑁滅櫥瑷傚柈',
+    note: '',
     paymentMethod: 'cash',
     createdAt,
     voided: false,
   };
 }
 
-/** 涓€娆℃€ц鐧绘寚瀹氱殑 21 绛嗚▊鍠紝涓︽妸鏃㈡湁鍟嗗搧鍍规牸鍥涙崹浜斿叆鐐烘暣鏁搞€?*/
+/** 一次性補登指定的 21 筆訂單，並把既有商品價格四捨五入為整數。 */
 export function migrateMissingOrdersAndIntegerPrices() {
   try {
     if (localStorage.getItem(MISSING_ORDERS_MIGRATION_KEY) === 'done') return false;
@@ -175,7 +186,7 @@ export function migrateMissingOrdersAndIntegerPrices() {
   }
 }
 
-const DEFAULT_CATEGORIES = ['鎵嬩綔', '椋惧搧', '鏂囧叿', '绻斿搧', '闄惰棟', '鍏朵粬'];
+const DEFAULT_CATEGORIES = ['手作', '飾品', '文具', '織品', '陶藝', '其他'];
 
 export function getCategories() {
   try {
@@ -190,12 +201,12 @@ export function saveCategories(categories) {
 }
 
 const defaultProducts = [
-  { id: 1, name: '鎵嬬躬鏄庝俊鐗囩祫', price: 120, category: '鏂囧叿', description: '涓€绲勪簲寮碉紝鍙贩鎼?, isActive: true, useStock: false, stock: 0 },
-  { id: 2, name: '闄惰＝灏忕毧', price: 380, category: '闄惰棟', description: '鎵嬫崗闄讹紝姣忎欢鐣ユ湁涓嶅悓', isActive: true, useStock: false, stock: 0 },
-  { id: 3, name: '绶ㄧ箶鏉', price: 150, category: '绻斿搧', description: '妫夌窔鎵嬬法', isActive: true, useStock: false, stock: 0 },
-  { id: 4, name: '鑰崇挵銉婚湩閲?, price: 280, category: '椋惧搧', description: '榛冮妳閸嶉湩閲?, isActive: true, useStock: false, stock: 0 },
-  { id: 5, name: '鎵嬪伐鐨?, price: 200, category: '鎵嬩綔', description: '澶╃劧绮炬补', isActive: true, useStock: false, stock: 0 },
-  { id: 6, name: '甯嗗竷鎵樼壒鍖?, price: 650, category: '绻斿搧', description: '鍠壊鍙伕', isActive: true, useStock: false, stock: 0 },
+  { id: 1, name: '手繪明信片組', price: 120, category: '文具', description: '一組五張，可混搭', isActive: true, useStock: false, stock: 0 },
+  { id: 2, name: '陶製小皿', price: 380, category: '陶藝', description: '手捏陶，每件略有不同', isActive: true, useStock: false, stock: 0 },
+  { id: 3, name: '編織杯墊', price: 150, category: '織品', description: '棉線手編', isActive: true, useStock: false, stock: 0 },
+  { id: 4, name: '耳環・霧金', price: 280, category: '飾品', description: '黃銅鍍霧金', isActive: true, useStock: false, stock: 0 },
+  { id: 5, name: '手工皂', price: 200, category: '手作', description: '天然精油', isActive: true, useStock: false, stock: 0 },
+  { id: 6, name: '帆布托特包', price: 650, category: '織品', description: '單色可選', isActive: true, useStock: false, stock: 0 },
 ];
 
 export function getProducts() {
@@ -218,7 +229,7 @@ export function getOrders() {
   return [];
 }
 
-const LOCAL_ORDER_DAYS = 7; // 鏈鍙繚鐣欐渶杩?N 澶╋紝鍏ㄩ儴瑷傚柈瀛橀洸绔?
+const LOCAL_ORDER_DAYS = 7; // 本機只保留最近 N 天，全部訂單存雲端
 
 function trimOrdersForLocal(orders) {
   if (!Array.isArray(orders)) return orders;
@@ -232,19 +243,19 @@ export function saveOrders(orders) {
   try {
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
   } catch {
-    // iOS Safari localStorage 5MB 闄愬埗锛屽彧淇濈暀鏈€杩?7 澶?
+    // iOS Safari localStorage 5MB 限制，只保留最近 7 天
     const trimmed = trimOrdersForLocal(orders);
     try {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(trimmed));
     } catch {
-      // 閭勬槸澶ぇ灏卞彧鐣?30 绛?
+      // 還是太大就只留 30 筆
       const minimal = Array.isArray(trimmed) ? trimmed.slice(0, 30) : trimmed;
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(minimal));
     }
   }
 }
 
-/** 鍙栧緱鎵€鏈夎▊鍠紙鍚洸绔級锛岀敤鏂煎牨琛?*/
+/** 取得所有訂單（含雲端），用於報表 */
 export function getAllOrdersKey() { return STORAGE_KEYS.ORDERS; }
 
 const PAYMENT_IDS = ['line', 'cash', 'card'];
@@ -287,7 +298,7 @@ export function deleteOrder(orderId) {
   return true;
 }
 
-// 搴楅嫪瑷畾
+// 店鋪設定
 const DEFAULT_STORE = { name: '', phone: '', address: '', taxId: '', pinDisabled: false };
 
 export function getStore() {
@@ -302,7 +313,7 @@ export function saveStore(store) {
   try { localStorage.setItem(STORAGE_KEYS.STORE, JSON.stringify({ ...DEFAULT_STORE, ...store })); } catch { /* empty */ }
 }
 
-// 寰屽彴 PIN锛堝瓨闆滄箠杓冨畨鍏紝姝よ檿绨″寲瀛樻槑鏂囷紝鍍呴槻瑾よЦ锛?
+// 後台 PIN（存雜湊較安全，此處簡化存明文，僅防誤觸）
 const PIN_KEY = STORAGE_KEYS.PIN;
 const PIN_SESSION_KEY = 'pos_admin_unlock_until';
 
@@ -338,7 +349,7 @@ export function clearUnlockSession() {
   try { sessionStorage.removeItem(PIN_SESSION_KEY); } catch { /* empty */ }
 }
 
-// 搴瓨鎵ｆ笡
+// 庫存扣減
 export function decrementProductStock(productId, qty) {
   const products = getProducts();
   const next = products.map((p) => {
@@ -349,7 +360,7 @@ export function decrementProductStock(productId, qty) {
   return next;
 }
 
-// 鍖嚭鎵€鏈夎硣鏂欙紙鍌欎唤锛?
+// 匯出所有資料（備份）
 export function exportAllData() {
   return {
     version: 1,
@@ -361,7 +372,7 @@ export function exportAllData() {
   };
 }
 
-// 鍚堜降閬犵瑷傚柈锛氫互 id 鐐?key锛岄仩绔湁鑰屾湰鍦版矑鏈夌殑鍔犲叆锛屽叐閭婇兘鏈夌殑浠ヨ純鏂扮殑鐐烘簴
+// 合併遠端訂單：以 id 為 key，遠端有而本地沒有的加入，兩邊都有的以較新的為準
 function mergeOrders(localOrders, remoteOrders) {
   const map = new Map();
   for (const o of localOrders) map.set(o.id, o);
@@ -370,17 +381,17 @@ function mergeOrders(localOrders, remoteOrders) {
     if (!existing) {
       map.set(o.id, o);
     } else {
-      // 鍏╅倞閮芥湁锛氫互 voided/voidedAt 杓冩柊鐨勭偤婧栵紙鍏佽ū閬犵浣滃虎鍚屾閬庝締锛?
+      // 兩邊都有：以 voided/voidedAt 較新的為準（允許遠端作廢同步過來）
       if (o.voided && !existing.voided) map.set(o.id, o);
     }
   }
-  // 渚濆缓绔嬫檪闁撻檷搴忔帓鍒楋紙鏈€鏂板湪鍓嶏級
+  // 依建立時間降序排列（最新在前）
   return Array.from(map.values()).sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
-/** 鏈銆屾湁鏁堛€嶇瓎鏁革細鏈鍏ラ亷 key 鏅傛部鐢ㄩ爯瑷瘎鏈紝閬垮厤琚洸绔┖ [] 钃嬫帀 */
+/** 本機「有效」筆數：未寫入過 key 時沿用預設範本，避免被雲端空 [] 蓋掉 */
 function getEffectiveLocalProductCount() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
@@ -403,8 +414,8 @@ function getEffectiveLocalCategoryCount() {
   }
 }
 
-// 鍖叆涓﹀悎浣碉紙鍚屾鐢細瑷傚柈鍚堜降锛屽叾浠栬钃嬶級
-/** @returns {{ skippedEmptyRemote: boolean }} 鑻ョ暐閬庣┖闆茬瑕嗗锛屾噳涓婂偝鏈浠ヤ慨寰╅洸绔?*/
+// 匯入並合併（同步用：訂單合併，其他覆蓋）
+/** @returns {{ skippedEmptyRemote: boolean }} 若略過空雲端覆寫，應上傳本機以修復雲端 */
 export function importAllData(data) {
   if (!data || typeof data !== 'object') return { skippedEmptyRemote: false };
   let skippedEmptyRemote = false;
@@ -432,11 +443,10 @@ export function importAllData(data) {
   return { skippedEmptyRemote };
 }
 
-// 瀹屾暣瑕嗚搵鍖叆锛堝倷浠介倓鍘熺敤锛?
+// 完整覆蓋匯入（備份還原用）
 export function importAllDataOverwrite(data) {
   if (data.products && Array.isArray(data.products)) saveProducts(data.products);
   if (data.orders && Array.isArray(data.orders)) saveOrders(data.orders);
   if (data.categories && Array.isArray(data.categories)) saveCategories(data.categories);
   if (data.store && typeof data.store === 'object') saveStore(data.store);
 }
-
