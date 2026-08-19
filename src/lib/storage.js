@@ -1,4 +1,5 @@
 import { JULY_15_CARD_RECORDS, PAYMENT_LINK_RECORDS } from '../data/paymentLinkRecords.js';
+import { CONSOLIDATED_STATEMENT_RECORDS } from '../data/consolidatedStatementRecords.js';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'pos_products',
@@ -9,22 +10,30 @@ const STORAGE_KEYS = {
 };
 
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
+const CONSOLIDATED_STATEMENT_MIGRATION_KEY = 'pos_migration_consolidated_statements_202602_202607_v1';
 const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v3';
-const PRODUCT_NAMES_BY_PRICE = {
-  100: '體驗小物',
-  300: '手作飾品',
-  500: '手作禮盒',
-  1000: '限量創作',
-  2000: '藝術收藏品',
-  3000: '典藏作品',
-  3500: '限量典藏作品',
-  5100: '客製藝術作品',
+const PRODUCT_CONFIG_BY_PRICE = {
+  100: ['體驗小物', '其他'],
+  250: ['迷你手作飾品', '飾品'],
+  300: ['手作飾品', '飾品'],
+  500: ['手作禮盒', '手作'],
+  1000: ['限量創作', '手作'],
+  2000: ['藝術收藏品', '陶藝'],
+  2500: ['精選收藏品', '陶藝'],
+  3000: ['典藏作品', '陶藝'],
+  3500: ['限量典藏作品', '陶藝'],
+  5000: ['大型典藏作品', '陶藝'],
+  5100: ['客製藝術作品', '陶藝'],
+  6000: ['雙件典藏組', '陶藝'],
+  8000: ['高階典藏作品', '陶藝'],
+  9000: ['典藏套組', '陶藝'],
+  10000: ['頂級典藏作品', '陶藝'],
 };
-const PAYMENT_LINK_PRODUCTS = [100, 300, 500, 1000, 2000, 3000, 3500, 5100].map((price) => ({
-  id: -price,
-  name: PRODUCT_NAMES_BY_PRICE[price],
-  price,
-  category: '其他',
+const PAYMENT_LINK_PRODUCTS = Object.entries(PRODUCT_CONFIG_BY_PRICE).map(([rawPrice, [name, category]]) => ({
+  price: Number(rawPrice),
+  id: -Number(rawPrice),
+  name,
+  category,
   description: '訂單商品',
   isActive: true,
   useStock: false,
@@ -32,7 +41,96 @@ const PAYMENT_LINK_PRODUCTS = [100, 300, 500, 1000, 2000, 3000, 3500, 5100].map(
 }));
 
 function paymentMethodFromRecord(method) {
-  return method === 'ApplePay' || method === '信用卡' ? 'card' : 'line';
+  return method === 'ApplePay' || method === 'Apple Pay' || method === '信用卡' ? 'card' : 'line';
+}
+
+function getStatementManualMappings() {
+  const mappings = new Map();
+  const groups = [
+    { date: '2026-03-28', amount: 1000, limit: 7 },
+    { date: '2026-03-23', amount: 100, limit: 7 },
+    { date: '2026-07-15', amount: 100, limit: 7 },
+  ];
+  for (const { date, amount, limit } of groups) {
+    CONSOLIDATED_STATEMENT_RECORDS
+      .filter((record) => record.paidAt.startsWith(date) && record.amount === amount)
+      .sort((a, b) => a.paidAt.localeCompare(b.paidAt))
+      .slice(0, limit)
+      .forEach((record, index) => {
+        mappings.set(`missing-${date}-${amount}-${index + 1}`, record);
+      });
+  }
+  return mappings;
+}
+
+/** 匯入綜合對帳單中的唯一成功訂單，並將既有手動訂單對應到真實交易。 */
+export function migrateConsolidatedStatementRecords() {
+  try {
+    if (localStorage.getItem(CONSOLIDATED_STATEMENT_MIGRATION_KEY) === 'done') return false;
+
+    const productByPrice = new Map(PAYMENT_LINK_PRODUCTS.map((product) => [product.price, product]));
+    const products = getProducts().map((product) => {
+      const replacement = productByPrice.get(Math.round(Number(product.price) || 0));
+      return replacement && Number(product.id) === replacement.id
+        ? { ...product, ...replacement }
+        : { ...product, price: Math.round(Number(product.price) || 0) };
+    });
+    for (const product of PAYMENT_LINK_PRODUCTS) {
+      if (!products.some((item) => item.id === product.id)) products.push(product);
+    }
+
+    const manualMappings = getStatementManualMappings();
+    const mappedTransactionIds = new Set([...manualMappings.values()].map((record) => record.transactionId));
+    const currentOrders = getOrders();
+    const updatedOrders = currentOrders.map((order) => {
+      const record = manualMappings.get(String(order.id));
+      if (!record) return order;
+      const product = productByPrice.get(record.amount);
+      return {
+        ...order,
+        items: [{ ...product, qty: 1 }],
+        subtotal: record.amount,
+        total: record.amount,
+        note: `${record.method}｜${record.orderNo}`,
+        paymentMethod: paymentMethodFromRecord(record.method),
+        createdAt: record.paidAt,
+        externalTransactionId: record.transactionId,
+      };
+    });
+
+    const representedTransactionIds = new Set(mappedTransactionIds);
+    for (const order of updatedOrders) {
+      const id = String(order.id);
+      if (id.startsWith('payment-link-')) representedTransactionIds.add(id.slice('payment-link-'.length));
+      if (id.startsWith('statement-')) representedTransactionIds.add(id.slice('statement-'.length));
+      if (order.externalTransactionId) representedTransactionIds.add(String(order.externalTransactionId));
+    }
+    const newOrders = CONSOLIDATED_STATEMENT_RECORDS
+      .filter((record) => !representedTransactionIds.has(record.transactionId))
+      .map((record) => {
+        const product = productByPrice.get(record.amount);
+        return {
+          id: `statement-${record.transactionId}`,
+          items: [{ ...product, qty: 1 }],
+          subtotal: record.amount,
+          total: record.amount,
+          note: `${record.method}｜${record.orderNo}`,
+          paymentMethod: paymentMethodFromRecord(record.method),
+          createdAt: record.paidAt,
+          externalTransactionId: record.transactionId,
+          voided: false,
+        };
+      });
+
+    saveProducts(products);
+    saveOrders([...newOrders, ...updatedOrders].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ));
+    localStorage.setItem(CONSOLIDATED_STATEMENT_MIGRATION_KEY, 'done');
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** 補登付款連結試算表中的成功交易；交易序號固定作為訂單 ID，避免跨裝置重複。 */
