@@ -3,6 +3,7 @@ import {
   getProducts, saveProducts, getOrders, addOrder as saveOrder, updateOrder as updateOrderStorage, deleteOrder as deleteOrderStorage,
   getCategories, saveCategories, getStore, saveStore, hasPin, checkPin as checkPinStorage, setPin as setPinStorage,
   setUnlockSession, decrementProductStock, importAllData,
+  migrateMissingOrdersAndIntegerPrices,
 } from '../lib/storage';
 import {
   fetchStoreData,
@@ -31,6 +32,7 @@ export const StoreContext = createContext(null);
 const PIN_SESSION_KEY = 'pos_admin_unlock_until';
 
 export function StoreProvider({ children }) {
+  const [migrationApplied] = useState(() => migrateMissingOrdersAndIntegerPrices());
   const [products, setProducts] = useState(() => getProducts());
   const [orders, setOrders] = useState(() => getOrders());
   const [categories, setCategoriesState] = useState(() => getCategories());
@@ -49,6 +51,10 @@ export function StoreProvider({ children }) {
       onUploadEnd: (ok) => { setIsSyncing(false); if (ok) markSynced(); else markPending(); },
     });
   }, [markPending, markSynced]);
+
+  useEffect(() => {
+    if (migrationApplied) triggerSync();
+  }, [migrationApplied, triggerSync]);
 
   // 有待同步時立即重試，並定時再試（先前只跑一次：上傳失敗後 iOS 會永遠卡在「待同步」）
   useEffect(() => {

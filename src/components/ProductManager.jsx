@@ -97,7 +97,7 @@ export default function ProductManager() {
     e.preventDefault();
     const name = form.name.trim();
     const sku = form.sku?.trim() ?? '';
-    const price = Number(form.price);
+    const price = Math.round(Number(form.price));
     const category = form.category?.trim() || defaultCategory || '';
     const description = form.description.trim();
     const image = form.image || undefined;

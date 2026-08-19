@@ -6,6 +6,75 @@ const STORAGE_KEYS = {
   PIN: 'pos_pin',
 };
 
+const MISSING_ORDERS_MIGRATION_KEY = 'pos_migration_missing_orders_20260819';
+const MIGRATION_PRODUCTS = [
+  { id: -1000, name: '客製商品', price: 1000, category: '其他', description: '補登訂單用商品', isActive: true, useStock: false, stock: 0 },
+  { id: -100, name: '精選小物', price: 100, category: '其他', description: '補登訂單用商品', isActive: true, useStock: false, stock: 0 },
+];
+
+function makeMigratedOrder(id, product, createdAt) {
+  return {
+    id,
+    items: [{ ...product, qty: 1 }],
+    subtotal: product.price,
+    total: product.price,
+    note: '補登訂單',
+    paymentMethod: 'cash',
+    createdAt,
+    voided: false,
+  };
+}
+
+/** 一次性補登指定的 21 筆訂單，並把既有商品價格四捨五入為整數。 */
+export function migrateMissingOrdersAndIntegerPrices() {
+  try {
+    if (localStorage.getItem(MISSING_ORDERS_MIGRATION_KEY) === 'done') return false;
+
+    const rawProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    const currentProducts = rawProducts ? JSON.parse(rawProducts) : defaultProducts;
+    const products = currentProducts.map((product) => ({
+      ...product,
+      price: Math.round(Number(product.price) || 0),
+    }));
+    for (const product of MIGRATION_PRODUCTS) {
+      if (!products.some((item) => item.id === product.id)) products.push(product);
+    }
+
+    const rawOrders = localStorage.getItem(STORAGE_KEYS.ORDERS);
+    const orders = rawOrders ? JSON.parse(rawOrders) : [];
+    const batches = [
+      { count: 7, product: MIGRATION_PRODUCTS[0], date: '2026-03-28' },
+      { count: 7, product: MIGRATION_PRODUCTS[1], date: '2026-03-23' },
+      { count: 7, product: MIGRATION_PRODUCTS[1], date: '2026-07-15' },
+    ];
+    const migratedOrders = batches.flatMap(({ count, product, date }) =>
+      Array.from({ length: count }, (_, index) =>
+        makeMigratedOrder(
+          `missing-${date}-${product.price}-${index + 1}`,
+          product,
+          `${date}T12:${String(index).padStart(2, '0')}:00+08:00`,
+        )
+      )
+    );
+    const existingIds = new Set(orders.map((order) => order.id));
+    const mergedOrders = [...migratedOrders.filter((order) => !existingIds.has(order.id)), ...orders]
+      .map((order) => ({
+        ...order,
+        items: Array.isArray(order.items)
+          ? order.items.map((item) => ({ ...item, price: Math.round(Number(item.price) || 0) }))
+          : order.items,
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    saveProducts(products);
+    saveOrders(mergedOrders);
+    localStorage.setItem(MISSING_ORDERS_MIGRATION_KEY, 'done');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const DEFAULT_CATEGORIES = ['手作', '飾品', '文具', '織品', '陶藝', '其他'];
 
 export function getCategories() {
