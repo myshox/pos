@@ -3,7 +3,6 @@ export const translations = {
     appName: 'STUDIO MOGU',
     navCheckout: '櫃位結帳',
     navAdmin: '後台',
-    navShowcase: '商品實績',
     // Pos
     todaySales: '今日營業',
     ordersCount: '筆數',
@@ -289,7 +288,6 @@ export const translations = {
     appName: 'STUDIO MOGU',
     navCheckout: '매대 결제',
     navAdmin: '관리',
-    navShowcase: '상품 및 전시',
     todaySales: '오늘 매출',
     ordersCount: '건수',
     productArea: '상품',
@@ -566,7 +564,6 @@ export const translations = {
     appName: 'STUDIO MOGU',
     navCheckout: 'Checkout',
     navAdmin: 'Admin',
-    navShowcase: 'Products & Exhibitions',
     todaySales: "Today's Sales",
     ordersCount: 'Orders',
     productArea: 'Products',
