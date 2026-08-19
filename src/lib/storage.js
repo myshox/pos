@@ -11,7 +11,7 @@ const STORAGE_KEYS = {
 
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
 const CONSOLIDATED_STATEMENT_MIGRATION_KEY = 'pos_migration_consolidated_statements_202602_202607_v1';
-const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v4';
+const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v5';
 const PRODUCT_CONFIG_BY_PRICE = {
   100: ['舊款吊飾', '其他', '/products/old-charm.jpg'],
   250: ['迷你手作飾品', '飾品', '/products/handmade-jewelry.jpg'],
@@ -92,7 +92,7 @@ export function migrateConsolidatedStatementRecords() {
         items: [{ ...product, qty: 1 }],
         subtotal: record.amount,
         total: record.amount,
-        note: `${record.method}｜${record.orderNo}`,
+        note: '',
         paymentMethod: paymentMethodFromRecord(record.method),
         createdAt: record.paidAt,
         externalTransactionId: record.transactionId,
@@ -115,7 +115,7 @@ export function migrateConsolidatedStatementRecords() {
           items: [{ ...product, qty: 1 }],
           subtotal: record.amount,
           total: record.amount,
-          note: `${record.method}｜${record.orderNo}`,
+          note: '',
           paymentMethod: paymentMethodFromRecord(record.method),
           createdAt: record.paidAt,
           externalTransactionId: record.transactionId,
@@ -155,7 +155,7 @@ export function migratePaymentLinkRecords() {
           items: [{ ...product, qty: 1 }],
           subtotal: record.amount,
           total: record.amount,
-          note: `${record.method}｜${record.customer}｜${record.orderNo}`,
+          note: '',
           paymentMethod: paymentMethodFromRecord(record.method),
           createdAt: record.paidAt,
           voided: false,
@@ -173,7 +173,7 @@ export function migratePaymentLinkRecords() {
   }
 }
 
-/** 修正已匯入訂單的商品名稱、備註與整數價格。 */
+/** 修正已匯入訂單的商品名稱、照片與整數價格，並清除所有既有備註。 */
 export function repairImportedOrderLabels() {
   try {
     if (localStorage.getItem(IMPORTED_LABEL_REPAIR_KEY) === 'done') return false;
@@ -199,7 +199,9 @@ export function repairImportedOrderLabels() {
     });
     const orders = getOrders().map((order) => {
       const id = String(order.id);
-      if (!id.startsWith('missing-') && !id.startsWith('payment-link-') && !id.startsWith('statement-')) return order;
+      if (!id.startsWith('missing-') && !id.startsWith('payment-link-') && !id.startsWith('statement-')) {
+        return { ...order, note: '' };
+      }
       const price = Math.round(Number(order.total) || 0);
       const product = productByPrice.get(price);
       if (!product) return order;
@@ -209,7 +211,7 @@ export function repairImportedOrderLabels() {
         items: [{ ...product, qty: 1 }],
         subtotal: price,
         total: price,
-        note: record ? `${record.method}｜${record.customer}｜${record.orderNo}` : '',
+        note: '',
         paymentMethod: record ? paymentMethodFromRecord(record.method) : order.paymentMethod,
       };
     });
@@ -374,7 +376,7 @@ export function addOrder(order) {
     items: order.items,
     subtotal: order.subtotal != null ? order.subtotal : order.total,
     total: order.total,
-    note: order.note || '',
+    note: '',
     paymentMethod,
     ...(order.cashReceived != null ? { cashReceived: order.cashReceived, changeAmount: order.changeAmount } : {}),
     createdAt: new Date().toISOString(),

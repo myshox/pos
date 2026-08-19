@@ -21,7 +21,6 @@ export default function PosPage() {
   const { t } = useLocale();
   const { showToast } = useToast();
   const [cart, setCart] = useState([]);
-  const [orderNote, setOrderNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState(() => {
     try {
       const saved = localStorage.getItem(PAYMENT_STORAGE_KEY);
@@ -167,10 +166,9 @@ export default function PosPage() {
     setTimeout(() => {
       try {
         const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
-        const newOrder = submitOrder(cart, total, orderNote.trim(), paymentMethod, cashInfo);
+        const newOrder = submitOrder(cart, total, '', paymentMethod, cashInfo);
         setReceiptOrder(newOrder);
         setCart([]);
-        setOrderNote('');
         setCashReceived('');
         setShowCheckoutConfirm(false);
         setShowCartDrawer(false);
@@ -181,7 +179,7 @@ export default function PosPage() {
         setTimeout(() => { submittingRef.current = false; setIsSubmitting(false); }, 300);
       }
     }, 80);
-  }, [cart, total, orderNote, paymentMethod, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
+  }, [cart, total, paymentMethod, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -546,10 +544,6 @@ export default function PosPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-slate-600 mb-1">{t('orderNote')}</label>
-                <input type="text" value={orderNote} onChange={(e) => setOrderNote(e.target.value)} placeholder={t('orderNotePlaceholder')} className="input-pro w-full rounded-xl px-4 py-3 text-base min-h-[48px]" />
-              </div>
               <div className="flex justify-between items-baseline gap-2 min-w-0">
                 <span className="text-slate-600 font-medium text-base shrink-0">{t('total')}</span>
                 <span className="text-3xl sm:text-4xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
@@ -640,11 +634,6 @@ export default function PosPage() {
                   {cashReceivedNum > 0 && cashReceivedNum < total && (
                     <div className="text-sm text-red-500 font-medium">{t('cashNotEnough')}</div>
                   )}
-                </div>
-              )}
-              {orderNote.trim() && (
-                <div className="text-sm text-slate-600 break-words">
-                  <span className="text-slate-500">{t('note')}：</span>{orderNote.trim()}
                 </div>
               )}
             </div>

@@ -86,9 +86,6 @@ export default function ReceiptModal({ order, onClose }) {
               </div>
             );
           })}
-          {order.note && (
-            <div className="pt-2 text-slate-800/90 text-xs">{t('note')}：{order.note}</div>
-          )}
           {order.paymentMethod && (
             <div className="pt-1 text-slate-600 text-xs">
               {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}

@@ -45,7 +45,6 @@ export default function ReportSettlement() {
   const [rangeEnd, setRangeEnd] = useState(() => toDateStr(new Date()));
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [editOrder, setEditOrder] = useState(null);
-  const [editNote, setEditNote] = useState('');
   const [editTotal, setEditTotal] = useState('');
   const [editPayment, setEditPayment] = useState('cash');
 
@@ -83,14 +82,12 @@ export default function ReportSettlement() {
 
   const openEdit = (order) => {
     setEditOrder(order);
-    setEditNote(order.note || '');
     setEditTotal(String(order.total));
     setEditPayment(order.paymentMethod || 'cash');
   };
 
   const closeEdit = () => {
     setEditOrder(null);
-    setEditNote('');
     setEditTotal('');
     setEditPayment('cash');
   };
@@ -103,7 +100,6 @@ export default function ReportSettlement() {
       return;
     }
     updateOrder(editOrder.id, {
-      note: editNote.trim(),
       total: totalNum,
       paymentMethod: editPayment,
     });
@@ -121,7 +117,7 @@ export default function ReportSettlement() {
     const filename = `report-${period === 'day' ? selectedDate : period === 'range' ? `${rangeStart}-${rangeEnd}` : 'export'}.csv`;
 
     // === 第一區：訂單品項明細（每件商品一列）===
-    const detailHeader = ['時間', '訂單編號', '商品名稱', '數量', '單價', '小計', '付款方式', '訂單總計', '備註'];
+    const detailHeader = ['時間', '訂單編號', '商品名稱', '數量', '單價', '小計', '付款方式', '訂單總計'];
     const detailRows = [];
     for (const o of report.orders) {
       const items = Array.isArray(o.items) ? o.items : [];
@@ -132,7 +128,6 @@ export default function ReportSettlement() {
           '', '', '', '',
           paymentLabel(t, o.paymentMethod || 'cash'),
           o.total,
-          o.note || '',
         ]);
       } else {
         items.forEach((item, idx) => {
@@ -147,12 +142,11 @@ export default function ReportSettlement() {
             qty * price,
             idx === 0 ? paymentLabel(t, o.paymentMethod || 'cash') : '',
             idx === 0 ? o.total : '',
-            idx === 0 ? (o.note || '') : '',
           ]);
         });
       }
     }
-    const detailSummary = ['', `共 ${report.count} 筆`, '', '', '', '', '', `NT$ ${report.total}`, ''];
+    const detailSummary = ['', `共 ${report.count} 筆`, '', '', '', '', '', `NT$ ${report.total}`];
 
     // === 第二區：商品熱銷排行 ===
     const hotHeader = ['排名', '商品名稱', '分類', '售出數量', '營收', '佔比%'];
@@ -461,16 +455,6 @@ export default function ReportSettlement() {
           <div className="card-market rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-slate-800 mb-4">{t('edit')} #{editOrder.id.slice(0, 8)}</h3>
             <div className="space-y-4">
-              <label className="block">
-                <span className="text-sm text-slate-600">{t('note')}</span>
-                <input
-                  type="text"
-                  value={editNote}
-                  onChange={(e) => setEditNote(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 min-h-[44px]"
-                  placeholder={t('orderNotePlaceholder')}
-                />
-              </label>
               <label className="block">
                 <span className="text-sm text-slate-600">{t('amount')}</span>
                 <input

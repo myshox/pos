@@ -96,13 +96,12 @@ export default function OrderList() {
 
   const paymentLabel = (key) => t(key === 'line' ? 'payLine' : key === 'card' ? 'payCard' : 'payCash');
   const exportOrdersCSV = () => {
-    const header = [t('time'), t('orderId'), t('amount'), t('paymentMethod'), t('note'), t('orderStatus')];
+    const header = [t('time'), t('orderId'), t('amount'), t('paymentMethod'), t('orderStatus')];
     const rows = filteredOrders.map((o) => [
       formatDate(o.createdAt, lang),
       '#' + o.id.slice(0, 8),
       o.total,
       paymentLabel(o.paymentMethod || 'cash'),
-      (o.note || '').replace(/\r?\n/g, ' '),
       isOrderVoided(o) ? t('orderVoidedBadge') : t('orderStatusNormal'),
     ]);
     const filename = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -117,7 +116,7 @@ export default function OrderList() {
         const image = absoluteImageUrl(item.image);
         return `<div class="item">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(item.name)}">` : '<div class="image-placeholder">商品</div>'}<div class="item-name">${escapeHtml(item.sku ? `[${item.sku}] ${item.name}` : item.name)} × ${escapeHtml(item.qty)}</div><div class="item-price">NT$ ${Math.round(Number(item.price) * Number(item.qty))}</div></div>`;
       }).join('');
-      return `<section class="order ${isOrderVoided(order) ? 'voided' : ''}"><div class="order-head"><div><strong>#${escapeHtml(order.id.slice(0, 8))}</strong><br><span>${escapeHtml(formatDate(order.createdAt, lang))}</span></div><strong>NT$ ${Math.round(Number(order.total))}</strong></div>${items}<div class="meta">${escapeHtml(t('paymentMethod'))}：${escapeHtml(paymentLabel(order.paymentMethod || 'cash'))}${order.note ? `<br>${escapeHtml(t('note'))}：${escapeHtml(order.note)}` : ''}${isOrderVoided(order) ? `<br>${escapeHtml(t('orderVoidedBadge'))}` : ''}</div></section>`;
+      return `<section class="order ${isOrderVoided(order) ? 'voided' : ''}"><div class="order-head"><div><strong>#${escapeHtml(order.id.slice(0, 8))}</strong><br><span>${escapeHtml(formatDate(order.createdAt, lang))}</span></div><strong>NT$ ${Math.round(Number(order.total))}</strong></div>${items}<div class="meta">${escapeHtml(t('paymentMethod'))}：${escapeHtml(paymentLabel(order.paymentMethod || 'cash'))}${isOrderVoided(order) ? `<br>${escapeHtml(t('orderVoidedBadge'))}` : ''}</div></section>`;
     }).join('');
     printWindow.document.write(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${escapeHtml(t('orderPdfTitle'))}</title><style>@page{size:A4;margin:12mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;color:#263238;margin:0}h1{font-size:22px;margin:0 0 4px}.summary{color:#64748b;margin:0 0 18px}.order{border:1px solid #cbd5e1;border-radius:12px;padding:12px;margin:0 0 12px;break-inside:avoid}.order-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-bottom:8px}.order-head span,.meta{font-size:12px;color:#64748b}.item{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;margin:8px 0}.item img,.image-placeholder{width:54px;height:54px;border-radius:8px;object-fit:cover;background:#f1f5f9}.image-placeholder{display:grid;place-items:center;font-size:11px;color:#94a3b8}.item-name{font-weight:600}.item-price{font-variant-numeric:tabular-nums}.meta{border-top:1px solid #e2e8f0;padding-top:8px;margin-top:8px;line-height:1.6}.voided{opacity:.58}.voided .order-head>strong{text-decoration:line-through}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><h1>${escapeHtml(t('orderPdfTitle'))}</h1><p class="summary">${escapeHtml(t('pdfOrderCount'))}：${filteredOrders.length}</p>${orderCards}</body></html>`);
     printWindow.document.close();
@@ -234,9 +233,6 @@ export default function OrderList() {
                       </li>
                     ))}
                   </ul>
-                  {order.note && (
-                    <div className="mt-2 text-sm text-slate-800/90">{t('note')}：{order.note}</div>
-                  )}
                   {order.paymentMethod && (
                     <div className="mt-2 text-sm text-slate-600">
                       {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
