@@ -90,6 +90,7 @@ function formatTimeAgo(ts, t) {
 export default function Layout({ children }) {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const isShowcase = location.pathname.startsWith('/showcase');
   const { t, lang, setLang, LANGS, langLabels } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -119,8 +120,11 @@ export default function Layout({ children }) {
               ))}
             </div>
             <nav className="flex gap-2">
-              <Link to="/" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${!isAdmin ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+              <Link to="/" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${!isAdmin && !isShowcase ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
                 {t('navCheckout')}
+              </Link>
+              <Link to="/showcase" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${isShowcase ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+                {t('navShowcase')}
               </Link>
               <Link to="/admin" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${isAdmin ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
                 {t('navAdmin')}
@@ -158,6 +162,9 @@ export default function Layout({ children }) {
             </div>
             <Link to="/" className="py-3 px-4 rounded-xl font-medium text-center bg-white text-teal-700 shadow-sm" onClick={() => setMenuOpen(false)}>
               {t('navCheckout')}
+            </Link>
+            <Link to="/showcase" className="py-3 px-4 rounded-xl font-medium text-center text-white/95 bg-white/15" onClick={() => setMenuOpen(false)}>
+              {t('navShowcase')}
             </Link>
             <Link to="/admin" className="py-3 px-4 rounded-xl font-medium text-center text-white/95 bg-white/15" onClick={() => setMenuOpen(false)}>
               {t('navAdmin')}
