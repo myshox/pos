@@ -32,3 +32,14 @@ export const PAYMENT_LINK_RECORDS = [
 ].map(([transactionId, paidAt, method, amount, customer, orderNo]) => ({
   transactionId, paidAt, method, amount, customer, orderNo,
 }));
+
+// 這 5 筆已由先前的 2026-07-15 訂單匯入，僅用來修正付款方式與訂單備註。
+export const JULY_15_CARD_RECORDS = [
+  ['10012607157612759509513277627', '2026-07-15T10:52:21+08:00', 'ApplePay', 100, 'John', 'SL0126071500276127595090091973'],
+  ['10012607157612758550863155317', '2026-07-15T10:51:24+08:00', 'ApplePay', 100, 'John', 'SL0126071500276127585503265299'],
+  ['10012607157612757108089687102', '2026-07-15T10:49:58+08:00', 'ApplePay', 100, 'John', 'SL0126071500276127571069820805'],
+  ['10012607157612755652347433902', '2026-07-15T10:48:33+08:00', 'ApplePay', 100, 'John', 'SL0126071500276127556517434193'],
+  ['10012607157612735135691313638', '2026-07-15T10:28:10+08:00', 'ApplePay', 100, 'John', 'SL0126071500276127351350038302'],
+].map(([transactionId, paidAt, method, amount, customer, orderNo]) => ({
+  transactionId, paidAt, method, amount, customer, orderNo,
+}));

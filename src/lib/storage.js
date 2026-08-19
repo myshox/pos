@@ -1,4 +1,4 @@
-import { PAYMENT_LINK_RECORDS } from '../data/paymentLinkRecords.js';
+import { JULY_15_CARD_RECORDS, PAYMENT_LINK_RECORDS } from '../data/paymentLinkRecords.js';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'pos_products',
@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
 };
 
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
-const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v2';
+const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v3';
 const PRODUCT_NAMES_BY_PRICE = {
   100: '體驗小物',
   300: '手作飾品',
@@ -31,6 +31,10 @@ const PAYMENT_LINK_PRODUCTS = [100, 300, 500, 1000, 2000, 3000, 3500, 5100].map(
   stock: 0,
 }));
 
+function paymentMethodFromRecord(method) {
+  return method === 'ApplePay' || method === '信用卡' ? 'card' : 'line';
+}
+
 /** 補登付款連結試算表中的成功交易；交易序號固定作為訂單 ID，避免跨裝置重複。 */
 export function migratePaymentLinkRecords() {
   try {
@@ -47,14 +51,13 @@ export function migratePaymentLinkRecords() {
       .filter((record) => !existingIds.has(`payment-link-${record.transactionId}`))
       .map((record) => {
         const product = PAYMENT_LINK_PRODUCTS.find((item) => item.price === record.amount);
-        const isCard = record.method === 'ApplePay' || record.method === '信用卡';
         return {
           id: `payment-link-${record.transactionId}`,
           items: [{ ...product, qty: 1 }],
           subtotal: record.amount,
           total: record.amount,
           note: `${record.method}｜${record.customer}｜${record.orderNo}`,
-          paymentMethod: isCard ? 'card' : 'line',
+          paymentMethod: paymentMethodFromRecord(record.method),
           createdAt: record.paidAt,
           voided: false,
         };
@@ -92,6 +95,9 @@ export function repairImportedOrderLabels() {
       `payment-link-${record.transactionId}`,
       record,
     ]));
+    JULY_15_CARD_RECORDS.forEach((record, index) => {
+      recordsById.set(`missing-2026-07-15-100-${index + 1}`, record);
+    });
     const orders = getOrders().map((order) => {
       const id = String(order.id);
       if (!id.startsWith('missing-') && !id.startsWith('payment-link-')) return order;
@@ -105,6 +111,7 @@ export function repairImportedOrderLabels() {
         subtotal: price,
         total: price,
         note: record ? `${record.method}｜${record.customer}｜${record.orderNo}` : '',
+        paymentMethod: record ? paymentMethodFromRecord(record.method) : order.paymentMethod,
       };
     });
 
