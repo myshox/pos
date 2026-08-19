@@ -11,7 +11,7 @@ const STORAGE_KEYS = {
 
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
 const CONSOLIDATED_STATEMENT_MIGRATION_KEY = 'pos_migration_consolidated_statements_202602_202607_v1';
-const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v6';
+const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v5';
 const PRODUCT_CONFIG_BY_PRICE = {
   100: ['舊款吊飾', '其他', '/products/old-charm.jpg'],
   250: ['迷你手作飾品', '飾品', '/products/handmade-jewelry.jpg'],
@@ -40,23 +40,6 @@ const PAYMENT_LINK_PRODUCTS = Object.entries(PRODUCT_CONFIG_BY_PRICE).map(([rawP
   useStock: false,
   stock: 0,
 }));
-
-/** 將高額匯入交易拆成多件合理單價商品，避免顯示為一件數千元的 IP 創作。 */
-function importedItemsForAmount(amount) {
-  let remaining = Math.round(Number(amount) || 0);
-  const items = [];
-  for (const price of [1000, 500, 300, 250, 100]) {
-    const product = PAYMENT_LINK_PRODUCTS.find((item) => item.price === price);
-    const qty = product ? Math.floor(remaining / price) : 0;
-    if (qty > 0) {
-      items.push({ ...product, qty });
-      remaining -= qty * price;
-    }
-  }
-  return remaining === 0 && items.length > 0
-    ? items
-    : [{ ...PAYMENT_LINK_PRODUCTS.find((item) => item.price === amount), qty: 1 }];
-}
 
 function paymentMethodFromRecord(method) {
   return method === 'ApplePay' || method === 'Apple Pay' || method === '信用卡' ? 'card' : 'line';
@@ -103,9 +86,10 @@ export function migrateConsolidatedStatementRecords() {
     const updatedOrders = currentOrders.map((order) => {
       const record = manualMappings.get(String(order.id));
       if (!record) return order;
+      const product = productByPrice.get(record.amount);
       return {
         ...order,
-        items: importedItemsForAmount(record.amount),
+        items: [{ ...product, qty: 1 }],
         subtotal: record.amount,
         total: record.amount,
         note: '',
@@ -125,9 +109,10 @@ export function migrateConsolidatedStatementRecords() {
     const newOrders = CONSOLIDATED_STATEMENT_RECORDS
       .filter((record) => !representedTransactionIds.has(record.transactionId))
       .map((record) => {
+        const product = productByPrice.get(record.amount);
         return {
           id: `statement-${record.transactionId}`,
-          items: importedItemsForAmount(record.amount),
+          items: [{ ...product, qty: 1 }],
           subtotal: record.amount,
           total: record.amount,
           note: '',
@@ -164,9 +149,10 @@ export function migratePaymentLinkRecords() {
     const importedOrders = PAYMENT_LINK_RECORDS
       .filter((record) => !existingIds.has(`payment-link-${record.transactionId}`))
       .map((record) => {
+        const product = PAYMENT_LINK_PRODUCTS.find((item) => item.price === record.amount);
         return {
           id: `payment-link-${record.transactionId}`,
-          items: importedItemsForAmount(record.amount),
+          items: [{ ...product, qty: 1 }],
           subtotal: record.amount,
           total: record.amount,
           note: '',
@@ -222,7 +208,7 @@ export function repairImportedOrderLabels() {
       const record = recordsById.get(id);
       return {
         ...order,
-        items: importedItemsForAmount(price),
+        items: [{ ...product, qty: 1 }],
         subtotal: price,
         total: price,
         note: '',
@@ -248,7 +234,7 @@ const MIGRATION_PRODUCTS = [
 function makeMigratedOrder(id, product, createdAt) {
   return {
     id,
-    items: importedItemsForAmount(product.price),
+    items: [{ ...product, qty: 1 }],
     subtotal: product.price,
     total: product.price,
     note: '',
