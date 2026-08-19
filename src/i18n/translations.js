@@ -2,6 +2,7 @@ export const translations = {
   tw: {
     appName: 'STUDIO MOGU',
     navCheckout: '櫃位結帳',
+    navShowcase: '商品實績',
     navAdmin: '後台',
     // Pos
     todaySales: '今日營業',
@@ -287,6 +288,7 @@ export const translations = {
   kr: {
     appName: 'STUDIO MOGU',
     navCheckout: '매대 결제',
+    navShowcase: '상품 실적',
     navAdmin: '관리',
     todaySales: '오늘 매출',
     ordersCount: '건수',
@@ -563,6 +565,7 @@ export const translations = {
   en: {
     appName: 'STUDIO MOGU',
     navCheckout: 'Checkout',
+    navShowcase: 'Showcase',
     navAdmin: 'Admin',
     todaySales: "Today's Sales",
     ordersCount: 'Orders',
