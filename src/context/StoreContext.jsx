@@ -7,6 +7,7 @@ import {
   migratePaymentLinkRecords,
   repairImportedOrderLabels,
   migrateConsolidatedStatementRecords,
+  migrateCheckoutProducts,
 } from '../lib/storage';
 import {
   fetchStoreData,
@@ -40,7 +41,8 @@ export function StoreProvider({ children }) {
     const paymentLinkMigration = migratePaymentLinkRecords();
     const statementMigration = migrateConsolidatedStatementRecords();
     const labelRepair = repairImportedOrderLabels();
-    return previousMigration || paymentLinkMigration || statementMigration || labelRepair;
+    const checkoutProductMigration = migrateCheckoutProducts();
+    return previousMigration || paymentLinkMigration || statementMigration || labelRepair || checkoutProductMigration;
   });
   const [products, setProducts] = useState(() => getProducts());
   const [orders, setOrders] = useState(() => getOrders());

@@ -317,6 +317,40 @@ const defaultProducts = [
   { id: 6, name: '帆布托特包', price: 650, category: '織品', description: '單色可選', isActive: true, useStock: false, stock: 0 },
 ];
 
+const CHECKOUT_PRODUCT_MIGRATION_KEY = 'pos_checkout_products_20260819_v1';
+const CHECKOUT_PRODUCTS = [
+  { name: '原創明信片｜兔子與紅蘿蔔', price: 50, category: '明信片', image: '/showcase/postcard-1.jpg' },
+  { name: '原創明信片｜園藝角色', price: 50, category: '明信片', image: '/showcase/postcard-2.jpg' },
+  { name: '原創明信片｜大小角色', price: 50, category: '明信片', image: '/showcase/postcard-3.jpg' },
+  { name: '原創明信片｜冰淇淋倉鼠', price: 50, category: '明信片', image: '/showcase/postcard-4.jpg' },
+  { name: '原創貼紙 3 張', price: 100, category: '貼紙', image: '/showcase/stickers-postcards.jpg' },
+  { name: '糖果袋鑰匙圈', price: 160, category: '吊飾', image: '/showcase/packaged-charms.jpg' },
+  { name: '壓克力吊飾', price: 160, category: '吊飾', image: '/showcase/acrylic-charms.png' },
+];
+
+export function migrateCheckoutProducts() {
+  try {
+    if (localStorage.getItem(CHECKOUT_PRODUCT_MIGRATION_KEY) === 'done') return false;
+    const current = getProducts();
+    let nextId = Math.max(0, ...current.map((product) => Number(product.id) || 0)) + 1;
+    const next = [...current];
+    for (const seed of CHECKOUT_PRODUCTS) {
+      const index = next.findIndex((product) => product.name === seed.name);
+      const value = { ...seed, description: 'Studio Mogu 自有 IP 實體商品', isActive: true, useStock: false, stock: 0 };
+      if (index >= 0) next[index] = { ...next[index], ...value };
+      else next.push({ id: nextId++, ...value });
+    }
+    saveProducts(next);
+    const categories = getCategories();
+    const addedCategories = ['明信片', '貼紙', '吊飾'].filter((name) => !categories.includes(name));
+    if (addedCategories.length) saveCategories([...categories, ...addedCategories]);
+    localStorage.setItem(CHECKOUT_PRODUCT_MIGRATION_KEY, 'done');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function getProducts() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
