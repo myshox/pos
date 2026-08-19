@@ -18,6 +18,15 @@ function formatDate(iso, lang) {
   });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+
+function absoluteImageUrl(image) {
+  if (!image) return '';
+  try { return new URL(image, window.location.origin).href; } catch { return ''; }
+}
+
 function isToday(iso) {
   const d = new Date(iso);
   const t = new Date();
@@ -100,6 +109,22 @@ export default function OrderList() {
     downloadCSV(filename, [header, ...rows]);
   };
 
+  const exportOrdersPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return window.alert(t('pdfPopupBlocked'));
+    const orderCards = filteredOrders.map((order) => {
+      const items = order.items.map((item) => {
+        const image = absoluteImageUrl(item.image);
+        return `<div class="item">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(item.name)}">` : '<div class="image-placeholder">商品</div>'}<div class="item-name">${escapeHtml(item.sku ? `[${item.sku}] ${item.name}` : item.name)} × ${escapeHtml(item.qty)}</div><div class="item-price">NT$ ${Math.round(Number(item.price) * Number(item.qty))}</div></div>`;
+      }).join('');
+      return `<section class="order ${isOrderVoided(order) ? 'voided' : ''}"><div class="order-head"><div><strong>#${escapeHtml(order.id.slice(0, 8))}</strong><br><span>${escapeHtml(formatDate(order.createdAt, lang))}</span></div><strong>NT$ ${Math.round(Number(order.total))}</strong></div>${items}<div class="meta">${escapeHtml(t('paymentMethod'))}：${escapeHtml(paymentLabel(order.paymentMethod || 'cash'))}${order.note ? `<br>${escapeHtml(t('note'))}：${escapeHtml(order.note)}` : ''}${isOrderVoided(order) ? `<br>${escapeHtml(t('orderVoidedBadge'))}` : ''}</div></section>`;
+    }).join('');
+    printWindow.document.write(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${escapeHtml(t('orderPdfTitle'))}</title><style>@page{size:A4;margin:12mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;color:#263238;margin:0}h1{font-size:22px;margin:0 0 4px}.summary{color:#64748b;margin:0 0 18px}.order{border:1px solid #cbd5e1;border-radius:12px;padding:12px;margin:0 0 12px;break-inside:avoid}.order-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-bottom:8px}.order-head span,.meta{font-size:12px;color:#64748b}.item{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;margin:8px 0}.item img,.image-placeholder{width:54px;height:54px;border-radius:8px;object-fit:cover;background:#f1f5f9}.image-placeholder{display:grid;place-items:center;font-size:11px;color:#94a3b8}.item-name{font-weight:600}.item-price{font-variant-numeric:tabular-nums}.meta{border-top:1px solid #e2e8f0;padding-top:8px;margin-top:8px;line-height:1.6}.voided{opacity:.58}.voided .order-head>strong{text-decoration:line-through}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><h1>${escapeHtml(t('orderPdfTitle'))}</h1><p class="summary">${escapeHtml(t('pdfOrderCount'))}：${filteredOrders.length}</p>${orderCards}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => printWindow.print(), 700);
+  };
+
   return (
     <div>
       {/* 今日摘要 */}
@@ -119,6 +144,9 @@ export default function OrderList() {
         <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
           <button type="button" onClick={exportOrdersCSV} className="px-3 py-2 bg-teal-100 text-slate-800 hover:bg-teal-200 rounded-xl text-sm font-medium min-h-[44px]">
             {t('exportCSV')}
+          </button>
+          <button type="button" onClick={exportOrdersPDF} className="px-3 py-2 bg-teal-600 text-white hover:bg-teal-700 rounded-xl text-sm font-medium min-h-[44px]">
+            {t('exportPDF')}
           </button>
           <select
             value={dateFilter}
@@ -197,9 +225,12 @@ export default function OrderList() {
                 <div className="p-4 border-t border-slate-200 bg-white">
                   <ul className="space-y-2">
                     {order.items.map((item, i) => (
-                      <li key={i} className="flex justify-between text-slate-700">
-                        <span>{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
-                        <span>NT$ {item.price * item.qty}</span>
+                      <li key={i} className="flex justify-between items-center gap-3 text-slate-700">
+                        <span className="flex items-center gap-3 min-w-0">
+                          {item.image ? <img src={item.image} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-slate-200 shrink-0" /> : <span className="w-14 h-14 rounded-lg bg-slate-100 text-slate-400 text-xs grid place-items-center shrink-0">{t('image')}</span>}
+                          <span>{item.sku ? `[${item.sku}] ` : ''}{item.name} × {item.qty}</span>
+                        </span>
+                        <span className="shrink-0">NT$ {item.price * item.qty}</span>
                       </li>
                     ))}
                   </ul>

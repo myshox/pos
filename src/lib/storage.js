@@ -11,30 +11,31 @@ const STORAGE_KEYS = {
 
 const PAYMENT_LINK_MIGRATION_KEY = 'pos_migration_payment_link_20260520_20260819';
 const CONSOLIDATED_STATEMENT_MIGRATION_KEY = 'pos_migration_consolidated_statements_202602_202607_v1';
-const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v3';
+const IMPORTED_LABEL_REPAIR_KEY = 'pos_migration_imported_labels_20260819_v4';
 const PRODUCT_CONFIG_BY_PRICE = {
-  100: ['體驗小物', '其他'],
-  250: ['迷你手作飾品', '飾品'],
-  300: ['手作飾品', '飾品'],
-  500: ['手作禮盒', '手作'],
-  1000: ['限量創作', '手作'],
-  2000: ['藝術收藏品', '陶藝'],
-  2500: ['精選收藏品', '陶藝'],
-  3000: ['典藏作品', '陶藝'],
-  3500: ['限量典藏作品', '陶藝'],
-  5000: ['大型典藏作品', '陶藝'],
-  5100: ['客製藝術作品', '陶藝'],
-  6000: ['雙件典藏組', '陶藝'],
-  8000: ['高階典藏作品', '陶藝'],
-  9000: ['典藏套組', '陶藝'],
-  10000: ['頂級典藏作品', '陶藝'],
+  100: ['舊款吊飾', '其他', '/products/old-charm.jpg'],
+  250: ['迷你手作飾品', '飾品', '/products/handmade-jewelry.jpg'],
+  300: ['手作飾品', '飾品', '/products/handmade-jewelry.jpg'],
+  500: ['手作禮盒', '手作', '/products/handmade-gift.jpg'],
+  1000: ['設計師簽繪', '手作', '/products/designer-signed-art.jpg'],
+  2000: ['藝術收藏品', '陶藝', '/products/ceramic-collectible.jpg'],
+  2500: ['精選收藏品', '陶藝', '/products/ceramic-collectible.jpg'],
+  3000: ['典藏作品', '陶藝', '/products/ceramic-collectible.jpg'],
+  3500: ['限量典藏作品', '陶藝', '/products/ceramic-collectible.jpg'],
+  5000: ['大型典藏作品', '陶藝', '/products/ceramic-collectible.jpg'],
+  5100: ['客製藝術作品', '陶藝', '/products/ceramic-collectible.jpg'],
+  6000: ['雙件典藏組', '陶藝', '/products/ceramic-collectible.jpg'],
+  8000: ['高階典藏作品', '陶藝', '/products/ceramic-collectible.jpg'],
+  9000: ['典藏套組', '陶藝', '/products/ceramic-collectible.jpg'],
+  10000: ['頂級典藏作品', '陶藝', '/products/ceramic-collectible.jpg'],
 };
-const PAYMENT_LINK_PRODUCTS = Object.entries(PRODUCT_CONFIG_BY_PRICE).map(([rawPrice, [name, category]]) => ({
+const PAYMENT_LINK_PRODUCTS = Object.entries(PRODUCT_CONFIG_BY_PRICE).map(([rawPrice, [name, category, image]]) => ({
   price: Number(rawPrice),
   id: -Number(rawPrice),
   name,
   category,
   description: '訂單商品',
+  image,
   isActive: true,
   useStock: false,
   stock: 0,
@@ -198,7 +199,7 @@ export function repairImportedOrderLabels() {
     });
     const orders = getOrders().map((order) => {
       const id = String(order.id);
-      if (!id.startsWith('missing-') && !id.startsWith('payment-link-')) return order;
+      if (!id.startsWith('missing-') && !id.startsWith('payment-link-') && !id.startsWith('statement-')) return order;
       const price = Math.round(Number(order.total) || 0);
       const product = productByPrice.get(price);
       if (!product) return order;
