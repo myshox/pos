@@ -1,9 +1,13 @@
+Exit code: 0
+Wall time: 0.2 seconds
+Output:
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   getProducts, saveProducts, getOrders, addOrder as saveOrder, updateOrder as updateOrderStorage, deleteOrder as deleteOrderStorage,
   getCategories, saveCategories, getStore, saveStore, hasPin, checkPin as checkPinStorage, setPin as setPinStorage,
   setUnlockSession, decrementProductStock, importAllData,
   migrateMissingOrdersAndIntegerPrices,
+  migratePaymentLinkRecords,
 } from '../lib/storage';
 import {
   fetchStoreData,
@@ -32,7 +36,11 @@ export const StoreContext = createContext(null);
 const PIN_SESSION_KEY = 'pos_admin_unlock_until';
 
 export function StoreProvider({ children }) {
-  const [migrationApplied] = useState(() => migrateMissingOrdersAndIntegerPrices());
+  const [migrationApplied] = useState(() => {
+    const previousMigration = migrateMissingOrdersAndIntegerPrices();
+    const paymentLinkMigration = migratePaymentLinkRecords();
+    return previousMigration || paymentLinkMigration;
+  });
   const [products, setProducts] = useState(() => getProducts());
   const [orders, setOrders] = useState(() => getOrders());
   const [categories, setCategoriesState] = useState(() => getCategories());
@@ -56,7 +64,7 @@ export function StoreProvider({ children }) {
     if (migrationApplied) triggerSync();
   }, [migrationApplied, triggerSync]);
 
-  // 有待同步時立即重試，並定時再試（先前只跑一次：上傳失敗後 iOS 會永遠卡在「待同步」）
+  // 鏈夊緟鍚屾鏅傜珛鍗抽噸瑭︼紝涓﹀畾鏅傚啀瑭︼紙鍏堝墠鍙窇涓€娆★細涓婂偝澶辨晽寰?iOS 鏈冩案閬犲崱鍦ㄣ€屽緟鍚屾銆嶏級
   useEffect(() => {
     if (!hasPendingSync || !isSyncEnabled()) return undefined;
     let cancelled = false;
@@ -103,7 +111,7 @@ export function StoreProvider({ children }) {
     }
   }, [triggerSync]);
 
-  /** iOS Safari：背景分頁會暫停 setInterval、Realtime WebSocket 也常斷線；切回前景須主動拉雲端並上傳 */
+  /** iOS Safari锛氳儗鏅垎闋佹渻鏆仠 setInterval銆丷ealtime WebSocket 涔熷父鏂风窔锛涘垏鍥炲墠鏅爤涓诲嫊鎷夐洸绔甫涓婂偝 */
   const resumeSync = useCallback(() => {
     if (!isSyncEnabled()) return;
     void refreshFromCloud();
@@ -126,7 +134,7 @@ export function StoreProvider({ children }) {
     document.addEventListener('visibilitychange', schedule);
     window.addEventListener('pageshow', schedule);
     window.addEventListener('online', schedule);
-    // iOS WKWebView：從背景回前景時，有時不觸發 visibilitychange，focus 較可靠
+    // iOS WKWebView锛氬緸鑳屾櫙鍥炲墠鏅檪锛屾湁鏅備笉瑙哥櫦 visibilitychange锛宖ocus 杓冨彲闈?
     window.addEventListener('focus', schedule);
     return () => {
       if (debounceTimer) window.clearTimeout(debounceTimer);
@@ -137,7 +145,7 @@ export function StoreProvider({ children }) {
     };
   }, [resumeSync]);
 
-  // Supabase：即時訂閱 + 初次拉取 + HTTP 輪詢備援（游標避免誤覆寫）
+  // Supabase锛氬嵆鏅傝▊闁?+ 鍒濇鎷夊彇 + HTTP 杓鍌欐彺锛堟父妯欓伩鍏嶈瑕嗗锛?
   useEffect(() => {
     if (!isSyncEnabled()) return undefined;
 
@@ -328,19 +336,19 @@ export function StoreProvider({ children }) {
   }, [markSynced, refreshFromCloud]);
 
   /**
-   * 強制重新拉取：先上傳本機資料，然後清除游標並直接把雲端資料套用到本機。
-   * 解決「上傳後游標被設為最新時間，refreshFromCloud 認為不需要拉取」的問題。
+   * 寮峰埗閲嶆柊鎷夊彇锛氬厛涓婂偝鏈璩囨枡锛岀劧寰屾竻闄ゆ父妯欎甫鐩存帴鎶婇洸绔硣鏂欏鐢ㄥ埌鏈銆?
+   * 瑙ｆ焙銆屼笂鍌冲緦娓告琚ō鐐烘渶鏂版檪闁擄紝refreshFromCloud 瑾嶇偤涓嶉渶瑕佹媺鍙栥€嶇殑鍟忛銆?
    */
   const forceRePull = useCallback(async () => {
     if (!isSyncEnabled()) return false;
     setIsSyncing(true);
     setSyncError(null);
     try {
-      // 1. 先上傳本機（合併訂單後推上雲端）
+      // 1. 鍏堜笂鍌虫湰姗燂紙鍚堜降瑷傚柈寰屾帹涓婇洸绔級
       await uploadNow(getCurrentDataForSync);
-      // 2. 清游標，確保下一步一定會拉
+      // 2. 娓呮父妯欙紝纰轰繚涓嬩竴姝ヤ竴瀹氭渻鎷?
       clearRemoteCursor();
-      // 3. 直接從雲端抓資料並強制套用（不判斷游標）
+      // 3. 鐩存帴寰為洸绔姄璩囨枡涓﹀挤鍒跺鐢紙涓嶅垽鏂锋父妯欙級
       const data = await fetchStoreData();
       if (data) {
         importAllData(data);
@@ -384,13 +392,13 @@ export function StoreProvider({ children }) {
     return updated;
   }, [triggerSync]);
 
-  /** 取得完整訂單（本機 + 雲端合併），報表用 */
+  /** 鍙栧緱瀹屾暣瑷傚柈锛堟湰姗?+ 闆茬鍚堜降锛夛紝鍫辫〃鐢?*/
   const fetchAllOrders = useCallback(async () => {
     const local = getOrders();
     if (!isSyncEnabled()) return local;
     const cloud = await fetchCloudOrders();
     if (!cloud) return local;
-    // 合併去重
+    // 鍚堜降鍘婚噸
     const map = new Map();
     for (const o of cloud) map.set(o.id, o);
     for (const o of local) {
@@ -456,3 +464,4 @@ export function useStore() {
   if (!ctx) throw new Error('useStore must be used within StoreProvider');
   return ctx;
 }
+
