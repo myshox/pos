@@ -10,18 +10,41 @@
 html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
-  background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 40%, #eef2f7 100%);
+  background: #f6f3ee;
 }
 body {
   height: 100%;
   margin: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 40%, #eef2f7 100%);
+  background: linear-gradient(135deg, #f9f7f2 0%, #f2f7f5 55%, #f8f1e8 100%);
   font-family: var(--font-cute);
   overflow-x: hidden;
   color: #0f172a;
   letter-spacing: 0.01em;
 }
+
+.site-footer { background:#fff; border-top:1px solid #e2e8f0; color:#475569; font-size:.8125rem; }
+.site-footer strong { color:#0f172a; margin-right:.75rem; }
+.site-footer a { color:#0f766e; font-weight:600; text-underline-offset:3px; }
+.site-footer a:hover { text-decoration:underline; }
+.tappay-disclosure { display:flex; flex-wrap:wrap; align-items:center; gap:.65rem; padding:.75rem; border:1px solid #d9e4e0; border-radius:14px; background:#f7faf9; }
+.tappay-disclosure--compact { padding:.55rem .65rem; }
+.tappay-logo { width:72px; height:auto; object-fit:contain; flex:none; }
+.setup-badge { margin-left:auto; white-space:nowrap; border-radius:999px; background:#fff7ed; color:#9a3412; padding:.3rem .55rem; font-size:.7rem; font-weight:700; border:1px solid #fed7aa; }
+.legal-hero { padding:clamp(1.5rem,4vw,3rem); border-radius:24px; background:linear-gradient(135deg,#ecfeff,#fff7ed); border:1px solid #ccfbf1; }
+.legal-hero h1 { margin-top:.35rem; font-size:clamp(2rem,5vw,3.5rem); line-height:1.08; font-weight:800; letter-spacing:-.03em; color:#0f172a; }
+.legal-hero p:last-child { margin-top:1rem; max-width:62ch; color:#475569; line-height:1.8; }
+.legal-grid { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:1.25rem; margin-top:1.25rem; }
+.legal-grid section { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.5rem; box-shadow:0 8px 28px rgba(15,23,42,.06); }
+.legal-grid h2 { font-size:1.25rem; font-weight:800; color:#0f172a; margin-bottom:1rem; }
+.legal-grid dl div { padding:.75rem 0; border-bottom:1px solid #f1f5f9; }
+.legal-grid dt { font-size:.75rem; color:#64748b; }
+.legal-grid dd { margin-top:.2rem; color:#0f172a; font-weight:600; overflow-wrap:anywhere; }
+.legal-grid a { color:#0f766e; }
+.legal-grid ul { padding-left:1.2rem; list-style:disc; color:#475569; line-height:1.8; }
+.legal-grid li + li { margin-top:.65rem; }
+.legal-note { margin-top:1.25rem; padding:1rem; border-radius:12px; background:#f0fdfa; color:#115e59; font-size:.875rem; line-height:1.75; }
+@media (max-width:720px) { .legal-grid { grid-template-columns:1fr; } .tappay-logo { width:78px; } }
 #root {
   height: 100%;
   min-height: 100%;
@@ -64,20 +87,82 @@ button, a, [role="button"], input, select, textarea {
 
 /* 頂欄：專業深灰、底部分界 */
 .header-bar {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 24px rgba(15, 23, 42, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08), 0 8px 28px rgba(30, 55, 48, 0.08);
+  border-bottom: 1px solid rgba(15, 118, 110, 0.1);
+  backdrop-filter: blur(16px);
 }
+.brand-mascot { width:42px; height:42px; display:grid; place-items:center; overflow:hidden; border-radius:14px; background:#dff6ee; box-shadow:inset 0 0 0 1px #bce8d8; }
+.brand-mascot img { width:100%; height:100%; object-fit:cover; }
+.brand-lockup b { display:block; color:#102a25; font-size:1rem; line-height:1.05; letter-spacing:-.02em; }
+.brand-lockup small { display:block; margin-top:.2rem; color:#e07a5f; font-size:.58rem; font-weight:800; letter-spacing:.16em; }
+.language-switcher { padding:3px; gap:2px; background:#edf3f1; color:#52645f; }
+.language-switcher button { border-radius:9px; }
+.language-switcher .is-active { background:#fff; color:#0f766e; box-shadow:0 2px 8px rgba(15,23,42,.08); }
+.nav-pill { min-height:40px; display:flex; align-items:center; padding:.5rem 1rem; border-radius:12px; color:#52645f; font-weight:700; transition:.18s ease; }
+.nav-pill:hover { background:#edf7f3; color:#0f766e; }
+.nav-pill.is-active { background:#123c35; color:#fff; box-shadow:0 6px 18px rgba(18,60,53,.2); }
+
+.pos-shell { position:relative; }
+.pos-daily-strip { background:linear-gradient(110deg,#123c35 0%,#176b5d 65%,#258474 100%); border-radius:18px; box-shadow:0 14px 34px rgba(18,60,53,.2); }
+.pos-daily-label { color:#bdf3df; }
+.pos-daily-strip .bg-slate-100 { background:#eef8f5; color:#355b52; }
+.pos-daily-strip .text-slate-500 { color:#b9d8cf; }
+.desktop-checkout-rail { display:none; }
+@media (min-width:1024px) {
+  .desktop-checkout-rail { display:flex; position:absolute; z-index:15; right:1rem; top:5.8rem; bottom:.75rem; width:360px; flex-direction:column; overflow:hidden; border-radius:22px; background:#fffdfa; box-shadow:0 22px 55px rgba(34,61,53,.16); border:1px solid rgba(18,60,53,.1); }
+}
+.checkout-rail-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem; color:#fff; background:#173f38; }
+.checkout-rail-header div { display:flex; flex-direction:column; gap:.15rem; }
+.checkout-rail-header span { color:#bde9da; font-size:.75rem; font-weight:700; }
+.checkout-rail-header strong { font-size:1.25rem; }
+.checkout-order-dot { width:12px; height:12px; border-radius:999px; background:#f2bd6b; box-shadow:0 0 0 6px rgba(242,189,107,.13); }
+.checkout-rail-items { flex:1; min-height:0; overflow:auto; padding:.85rem 1rem; }
+.checkout-empty { height:100%; display:grid; align-content:center; justify-items:center; gap:.3rem; color:#6b7c77; }
+.checkout-empty::before { content:'＋'; width:54px; height:54px; display:grid; place-items:center; border-radius:18px; background:#e5f5ef; color:#16806f; font-size:1.75rem; font-weight:500; margin-bottom:.45rem; }
+.checkout-empty span { font-weight:800; color:#29433d; }
+.checkout-empty small { font-size:.75rem; }
+.checkout-line { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.85rem 0; border-bottom:1px dashed #dce7e3; }
+.checkout-line-copy { min-width:0; display:flex; flex-direction:column; gap:.25rem; }
+.checkout-line-copy strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1e342f; font-size:.875rem; }
+.checkout-line-copy span { color:#73817d; font-size:.75rem; }
+.checkout-line-actions { display:flex; align-items:center; gap:.35rem; }
+.checkout-line-actions button { width:32px; height:32px; border-radius:10px; background:#edf4f1; color:#174c42; font-weight:900; }
+.checkout-line-actions b { min-width:22px; text-align:center; font-size:.8rem; }
+.checkout-rail-bottom { padding:1rem; border-top:1px solid #e5ece9; background:#fbfaf6; display:flex; flex-direction:column; gap:.8rem; }
+.checkout-total { display:flex; align-items:flex-end; justify-content:space-between; color:#53645f; }
+.checkout-total strong { color:#122d27; font-size:1.75rem; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+.checkout-methods { display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem; }
+.checkout-methods button { min-height:42px; padding:.45rem; border-radius:11px; background:#edf1ef; color:#4e605b; font-size:.72rem; font-weight:800; }
+.checkout-methods button.is-active { background:#d9f3ea; color:#0b6b5b; box-shadow:inset 0 0 0 1px #8dd8c4; }
+.card-provider-picker { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.45rem; }
+.card-provider-picker button { min-width:0; padding:.65rem .7rem; border-radius:12px; background:#f3f6f5; color:#53645f; text-align:left; box-shadow:inset 0 0 0 1px #dfe8e5; }
+.card-provider-picker button strong,.card-provider-picker button span { display:block; }
+.card-provider-picker button strong { color:#23443c; font-size:.78rem; }
+.card-provider-picker button span { margin-top:.18rem; font-size:.66rem; line-height:1.35; }
+.card-provider-picker button.is-active { background:#e3f6f0; box-shadow:inset 0 0 0 1px #75cdb7; }
+.card-provider-picker button:disabled { opacity:.58; cursor:not-allowed; }
+.checkout-rail-submit { min-height:56px; border-radius:15px; color:#fff; background:linear-gradient(135deg,#17a78f,#0d7867); font-size:1rem; font-weight:900; box-shadow:0 10px 24px rgba(13,120,103,.24); }
+.checkout-rail-submit:disabled { background:#cbd5d1; color:#6b7975; box-shadow:none; cursor:not-allowed; }
+.admin-shell { border:1px solid rgba(18,60,53,.1); border-radius:22px; background:#fff; box-shadow:0 24px 60px rgba(34,61,53,.12); }
+.admin-sidebar { color:#dbece6; background:linear-gradient(180deg,#173f38,#102f2a); border-right:1px solid rgba(255,255,255,.08); }
+.admin-sidebar p { color:#8db2a7; }
+.admin-nav-button { color:#c7ddd6; }
+.admin-nav-button:hover { background:rgba(255,255,255,.08); color:#fff; }
+.admin-nav-button.is-active { background:#fff; color:#145b4e; box-shadow:0 8px 22px rgba(0,0,0,.18); }
+.admin-content { background:linear-gradient(135deg,#fff 0%,#fbfdfc 70%,#fffaf3 100%); }
 
 /* 商品／表單卡片 */
 .card-market {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border: 1px solid #dde8e4;
+  box-shadow: 0 5px 16px rgba(34, 61, 53, 0.07);
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 .card-market:hover {
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 14px 30px rgba(23, 107, 93, 0.14);
+  transform: translateY(-2px);
+  border-color:#7fcebb;
 }
 
 /* 主按鈕 */
@@ -145,11 +230,16 @@ button, a, [role="button"], input, select, textarea {
 
 /* 區塊標題（分類） */
 .pos-category-heading {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:0 .8rem;
+  border-radius:999px;
+  background:#e1f2ec;
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  color:#176b5d;
 }
 
 @keyframes toast-in {

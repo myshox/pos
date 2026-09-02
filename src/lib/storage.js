@@ -412,6 +412,7 @@ export function addOrder(order) {
     total: order.total,
     note: '',
     paymentMethod,
+    ...(order.cardProvider ? { cardProvider: order.cardProvider } : {}),
     ...(order.cashReceived != null ? { cashReceived: order.cashReceived, changeAmount: order.changeAmount } : {}),
     createdAt: new Date().toISOString(),
     voided: false,
@@ -426,7 +427,7 @@ export function updateOrder(orderId, updates) {
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return null;
   const next = [...orders];
-  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'items', 'voided', 'voidReason', 'voidedAt'];
+  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'cardProvider', 'items', 'voided', 'voidReason', 'voidedAt'];
   const patch = {};
   allowed.forEach((k) => { if (updates[k] !== undefined) patch[k] = updates[k]; });
   next[idx] = { ...next[idx], ...patch };

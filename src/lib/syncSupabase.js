@@ -54,7 +54,7 @@ function getClient() {
 export function getRemoteCursor() {
   try {
     return localStorage.getItem(REMOTE_TS_KEY);
-  } catch (_) {
+  } catch {
     return null;
   }
 }
@@ -63,7 +63,7 @@ export function setRemoteCursor(iso) {
   if (!iso || typeof iso !== 'string') return;
   try {
     localStorage.setItem(REMOTE_TS_KEY, iso);
-  } catch (_) {}
+  } catch { /* localStorage may be unavailable */ }
 }
 
 function cursorTimeMs(iso) {

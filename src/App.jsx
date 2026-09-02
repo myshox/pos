@@ -8,6 +8,7 @@ import AdminPage from './pages/AdminPage';
 import AdminGuard from './components/AdminGuard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ShowcasePage from './pages/ShowcasePage';
+import LegalPage from './pages/LegalPage';
 
 function App() {
   // 鎖定直向：PWA 時盡量不隨手機旋轉
@@ -30,6 +31,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<PosPage />} />
                 <Route path="/showcase" element={<ShowcasePage />} />
+                <Route path="/legal" element={<LegalPage />} />
                 <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
               </Routes>
             </Layout>

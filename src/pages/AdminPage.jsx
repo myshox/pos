@@ -63,8 +63,8 @@ export default function AdminPage() {
   };
 
   const navBtn = (id) =>
-    `w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium transition min-h-[48px] ${
-      tab === id ? 'bg-teal-600 text-white shadow-md ring-1 ring-teal-500/30' : 'text-slate-700 hover:bg-slate-100/90'
+    `admin-nav-button w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left text-sm font-medium transition min-h-[48px] ${
+      tab === id ? 'is-active' : ''
     }`;
 
   const navBtnMobile = (id) =>
@@ -73,7 +73,7 @@ export default function AdminPage() {
     }`;
 
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-md ring-1 ring-slate-200/50 overflow-hidden w-full flex flex-col min-h-[min(85vh,900px)]">
+    <div className="admin-shell overflow-hidden w-full flex flex-col min-h-[min(85vh,900px)]">
       {/* 手機：橫向分頁 */}
       <div className="md:hidden border-b border-slate-200 bg-slate-50/90">
         <div className="flex overflow-x-auto gap-2 p-3 snap-x scrollbar-thin">
@@ -91,7 +91,7 @@ export default function AdminPage() {
               onClick={handleLock}
               className="w-full py-2.5 rounded-xl text-slate-600 bg-white border border-slate-200 text-sm font-medium"
             >
-              🔒 {t('adminLock')}
+              {t('adminLock')}
             </button>
           </div>
         )}
@@ -99,7 +99,7 @@ export default function AdminPage() {
 
       <div className="flex flex-1 min-h-0 min-w-0">
         {/* 桌機：側欄 */}
-        <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-slate-200/80 bg-gradient-to-b from-slate-50 to-slate-100/90 p-3 gap-1">
+        <aside className="admin-sidebar hidden md:flex w-60 shrink-0 flex-col p-3 gap-1">
           <div className="px-2 py-2 mb-2">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('adminConsole')}</p>
           </div>
@@ -115,12 +115,12 @@ export default function AdminPage() {
               onClick={handleLock}
               className="mt-auto w-full flex items-center gap-2 px-3 py-3 rounded-xl text-sm text-slate-600 hover:bg-slate-200/80 border border-slate-200"
             >
-              <span>🔒</span> {t('adminLock')}
+              {t('adminLock')}
             </button>
           )}
         </aside>
 
-        <div className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 md:p-8 bg-white">
+        <div className="admin-content flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 md:p-8">
           {tab === 'dashboard' && <AdminDashboard onNavigateToTab={setTab} />}
           {tab === 'orders' && <OrderList />}
           {tab === 'products' && <ProductManager />}

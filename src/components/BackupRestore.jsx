@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { exportAllData, importAllDataOverwrite } from '../lib/storage';
-import { checkConnection, testUpload, fetchCloudStats, clearRemoteCursor } from '../lib/syncSupabase';
+import { checkConnection, testUpload, fetchCloudStats } from '../lib/syncSupabase';
 import { getProducts, getOrders, getCategories } from '../lib/storage';
 
 export default function BackupRestore() {

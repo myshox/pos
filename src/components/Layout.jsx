@@ -91,42 +91,43 @@ export default function Layout({ children }) {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const isShowcase = location.pathname.startsWith('/showcase');
+  const isLegal = location.pathname.startsWith('/legal');
   const { t, lang, setLang, LANGS, langLabels } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="header-bar text-white drop-shadow-sm sticky top-0 z-40">
+      <header className="header-bar sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900" onClick={() => setMenuOpen(false)}>
-            <img src="/logo.png" alt="" className="h-8 sm:h-10 w-auto object-contain hidden sm:block" onError={(e) => { e.target.style.display = 'none'; }} />
-            <span className="text-base sm:text-xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-cute)' }}>{t('appName')}</span>
+          <Link to="/" className="brand-lockup flex items-center gap-2 sm:gap-3 shrink-0 min-h-[44px] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50" onClick={() => setMenuOpen(false)}>
+            <span className="brand-mascot"><img src="/logo.png" alt="" onError={(e) => { e.target.style.display = 'none'; }} /></span>
+            <span><b>{t('appName')}</b><small>MARKET POS</small></span>
           </Link>
 
           <SyncStatusBadge />
 
           {/* 桌面：語言 + 導覽 */}
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex rounded-xl overflow-hidden bg-white/15">
+            <div className="language-switcher flex rounded-xl overflow-hidden">
               {LANGS.map((l) => (
                 <button
                   key={l}
                   type="button"
                   onClick={() => setLang(l)}
-                  className={`px-3 py-1.5 text-sm font-medium transition min-h-[40px] ${lang === l ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:bg-white/20'}`}
+                  className={`px-3 py-1.5 text-sm font-medium transition min-h-[40px] ${lang === l ? 'is-active' : ''}`}
                 >
                   {langLabels[l]}
                 </button>
               ))}
             </div>
             <nav className="flex gap-2">
-              <Link to="/" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${!isAdmin && !isShowcase ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+              <Link to="/" className={`nav-pill ${!isAdmin && !isShowcase && !isLegal ? 'is-active' : ''}`}>
                 {t('navCheckout')}
               </Link>
-              <Link to="/showcase" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${isShowcase ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+              <Link to="/showcase" className={`nav-pill ${isShowcase ? 'is-active' : ''}`}>
                 {t('navShowcase')}
               </Link>
-              <Link to="/admin" className={`px-4 py-2 rounded-xl font-medium transition min-h-[40px] flex items-center ${isAdmin ? 'bg-white text-teal-700 shadow-sm' : 'text-white/95 hover:text-white hover:bg-white/20'}`}>
+              <Link to="/admin" className={`nav-pill ${isAdmin ? 'is-active' : ''}`}>
                 {t('navAdmin')}
               </Link>
             </nav>
@@ -136,7 +137,7 @@ export default function Layout({ children }) {
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden p-2 rounded-xl text-white hover:bg-white/20 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="md:hidden p-2 rounded-xl text-slate-800 hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label={t('menu')}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,9 +174,15 @@ export default function Layout({ children }) {
         )}
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 min-w-0 text-slate-800 antialiased">
+      <main className="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-5 py-4 sm:py-5 min-w-0 text-slate-800 antialiased">
         {children}
       </main>
+      <footer className="site-footer">
+        <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div><strong>蘑菇宇宙工作室</strong><span>統一編號 95148616</span></div>
+          <div className="flex flex-wrap gap-x-4 gap-y-2"><a href="mailto:mogu5486047@gmail.com">公司信箱：mogu5486047@gmail.com</a><a href="mailto:myshoxisgood@gmail.com">客服信箱</a><a href="tel:+886908180610">0908-180-610</a><Link to="/legal">退換貨與商店資訊</Link></div>
+        </div>
+      </footer>
     </div>
   );
 }

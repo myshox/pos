@@ -164,11 +164,12 @@ export function StoreProvider({ children }) {
       });
     } catch { /* WebSocket subscription failed */ }
 
-    refreshFromCloud();
+    const initialRefreshId = window.setTimeout(refreshFromCloud, 0);
 
     const pollId = window.setInterval(refreshFromCloud, POLL_INTERVAL_MS);
     return () => {
       unsub();
+      window.clearTimeout(initialRefreshId);
       window.clearInterval(pollId);
     };
   }, [refreshFromCloud, triggerSync]);
@@ -271,9 +272,10 @@ export function StoreProvider({ children }) {
 
   const activeProducts = products.filter((p) => p.isActive);
 
-  const submitOrder = useCallback((items, total, note = '', paymentMethod = 'cash', cashInfo = null) => {
+  const submitOrder = useCallback((items, total, note = '', paymentMethod = 'cash', cashInfo = null, paymentDetails = null) => {
     const payload = { items: [...items], total, note, paymentMethod };
     if (cashInfo) { payload.cashReceived = cashInfo.cashReceived; payload.changeAmount = cashInfo.changeAmount; }
+    if (paymentDetails?.cardProvider) payload.cardProvider = paymentDetails.cardProvider;
     const newOrder = saveOrder(payload);
     setOrders(getOrders());
     const prods = getProducts();
