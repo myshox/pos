@@ -299,10 +299,10 @@ export default function PosPage() {
   }, [showCheckoutConfirm, showCartDrawer, activeProducts.length]);
 
   return (
-    <div className="pos-shell flex flex-col h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-5rem)] min-h-0">
+    <div className={`pos-shell pos-font-${fontSize} flex flex-col h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-5rem)] min-h-0`}>
       {/* 字型縮放改為 font-size（見 index.css），避免 iOS 上 transform: scale 造成金額數字不顯示。
           固定抽屜/彈窗維持在縮放區外，以免影響 fixed。 */}
-      <div className={`pos-font-scaler pos-font-${fontSize} flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
+      <div className={`pos-font-scaler flex flex-col flex-1 min-h-0 ${fontSize === 'large' ? 'overflow-auto' : 'overflow-hidden'}`}>
         {/* 今日營業摘要 + 字型大小：手機兩行、桌機一行 */}
         <div className="pos-daily-strip flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-3 shrink-0 mx-2 sm:mx-3 mt-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
@@ -317,6 +317,7 @@ export default function PosPage() {
                 key={size}
                 type="button"
                 onClick={() => setFontSize(size)}
+                aria-pressed={fontSize === size}
                 className={`min-w-[2.25rem] sm:min-w-[2.5rem] py-1.5 px-2 rounded-lg text-xs font-medium transition min-h-[36px] ${
                   fontSize === size ? 'btn-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}

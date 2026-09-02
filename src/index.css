@@ -321,15 +321,32 @@ button, a, [role="button"], input, select, textarea {
  * 字型縮放：勿用 transform: scale() — iOS WKWebView 常導致數字／金額文字被裁切或無法繪製；
  * 改以 font-size 調整，行為與 Android 一致。
  */
-.pos-font-scaler.pos-font-small {
-  font-size: 0.875rem;
-  line-height: 1.45;
-}
-.pos-font-scaler.pos-font-medium {
-  font-size: 1rem;
-  line-height: 1.5;
-}
-.pos-font-scaler.pos-font-large {
-  font-size: 1.125rem;
-  line-height: 1.45;
-}
+.pos-shell.pos-font-small { --pos-font-scale: .88; }
+.pos-shell.pos-font-medium { --pos-font-scale: 1; }
+.pos-shell.pos-font-large { --pos-font-scale: 1.18; }
+.pos-shell { --pos-font-scale: 1; }
+.pos-shell .text-\[10px\] { font-size:calc(.625rem * var(--pos-font-scale)); }
+.pos-shell .text-xs { font-size:calc(.75rem * var(--pos-font-scale)); }
+.pos-shell .text-sm { font-size:calc(.875rem * var(--pos-font-scale)); }
+.pos-shell .text-base { font-size:calc(1rem * var(--pos-font-scale)); }
+.pos-shell .text-lg { font-size:calc(1.125rem * var(--pos-font-scale)); }
+.pos-shell .text-xl { font-size:calc(1.25rem * var(--pos-font-scale)); }
+.pos-shell .text-2xl { font-size:calc(1.5rem * var(--pos-font-scale)); }
+.pos-shell .text-3xl { font-size:calc(1.875rem * var(--pos-font-scale)); }
+.pos-shell .text-4xl { font-size:calc(2.25rem * var(--pos-font-scale)); }
+.pos-shell .checkout-rail-header span,
+.pos-shell .checkout-empty small,
+.pos-shell .checkout-line-copy strong,
+.pos-shell .checkout-line-copy span,
+.pos-shell .checkout-line-actions b,
+.pos-shell .checkout-methods button,
+.pos-shell .card-provider-picker button strong,
+.pos-shell .card-provider-picker button span,
+.pos-shell .checkout-rail-submit { font-size:calc(var(--pos-base-size, .875rem) * var(--pos-font-scale)); }
+.pos-shell .checkout-total strong { font-size:calc(1.75rem * var(--pos-font-scale)); }
+.pos-shell .checkout-rail-header span,
+.pos-shell .checkout-empty small,
+.pos-shell .checkout-line-copy span,
+.pos-shell .checkout-methods button,
+.pos-shell .card-provider-picker button span { --pos-base-size:.75rem; }
+.pos-shell .checkout-rail-header strong { font-size:calc(1.25rem * var(--pos-font-scale)); }
