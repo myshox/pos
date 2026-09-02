@@ -15,6 +15,7 @@ const ORDER_TOMBSTONES_KEY = 'pos_sync_order_tombstones';
 let client = null;
 let uploadTimer = null;
 let uploadQueue = Promise.resolve();
+let pendingUploadScopes = new Set();
 const UPLOAD_DEBOUNCE_MS = 300;
 
 /** 輪詢拉取間隔（Realtime 在部分 WebView 不穩時補強） */
@@ -212,6 +213,24 @@ export function applyOrderSyncResult(orders) {
   return list.filter((item) => !item?._deleted);
 }
 
+/** 訂單只同步交易快照必要欄位，避免每筆訂單重複夾帶 Base64 商品圖片。 */
+function compactOrdersForCloud(orders) {
+  return (orders || []).map((order) => {
+    if (order?._deleted) return order;
+    return {
+      ...order,
+      items: (order.items || []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        sku: item.sku || '',
+        price: item.price,
+        qty: item.qty,
+        ...(item.image && !String(item.image).startsWith('data:') ? { image: item.image } : {}),
+      })),
+    };
+  });
+}
+
 export async function checkConnection() {
   const c = getClient();
   if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*，請重新部署）' };
@@ -313,7 +332,7 @@ export async function fetchStoreData() {
 /**
  * 先拉遠端訂單合併再上傳，降低覆蓋其他裝置訂單的風險
  */
-async function mergeAndUploadOnce(c, getCurrentData) {
+async function mergeAndUploadOnce(c, getCurrentData, scope) {
   const storeKey = getSyncEnv('VITE_STORE_KEY');
   const local = getCurrentData();
 
@@ -323,9 +342,14 @@ async function mergeAndUploadOnce(c, getCurrentData) {
   let remoteStore = {};
   let remoteUpdatedAt = '';
   try {
+    const selectColumns = scope === 'products'
+      ? 'products, updated_at'
+      : scope === 'orders'
+        ? 'orders, updated_at'
+        : 'categories, store_settings, updated_at';
     const { data } = await c
       .from(TABLE)
-      .select('orders, products, categories, store_settings, updated_at')
+      .select(selectColumns)
       .eq('id', STORE_ID)
       .maybeSingle();
     if (data) {
@@ -337,7 +361,9 @@ async function mergeAndUploadOnce(c, getCurrentData) {
     }
   } catch { /* 拉不到就用本地 */ }
 
-  const mergedOrders = mergeOrderArrays(getOrdersForSync(local.orders || []), remoteOrders, remoteUpdatedAt);
+  const mergedOrders = compactOrdersForCloud(mergeOrderArrays(
+    getOrdersForSync(local.orders || []), remoteOrders, remoteUpdatedAt
+  ));
 
   const lp = getProductsForSync(local.products || []);
   const rp = remoteProducts || [];
@@ -349,16 +375,18 @@ async function mergeAndUploadOnce(c, getCurrentData) {
 
   const mergedStore = { ...remoteStore, ...(local.store && typeof local.store === 'object' ? local.store : {}) };
 
+  const updatePayload = { updated_at: new Date().toISOString() };
+  if (scope === 'products') updatePayload.products = mergedProducts;
+  else if (scope === 'orders') updatePayload.orders = mergedOrders;
+  else {
+    updatePayload.store_key = typeof storeKey === 'string' ? storeKey : '';
+    updatePayload.categories = mergedCategories;
+    updatePayload.store_settings = mergedStore;
+  }
+
   let query = c
     .from(TABLE)
-    .update({
-      store_key: typeof storeKey === 'string' ? storeKey : '',
-      products: mergedProducts,
-      orders: mergedOrders,
-      categories: mergedCategories,
-      store_settings: mergedStore,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', STORE_ID);
   if (remoteUpdatedAt) query = query.eq('updated_at', remoteUpdatedAt);
   const { data: rows, error } = await query.select('updated_at');
@@ -369,17 +397,25 @@ async function mergeAndUploadOnce(c, getCurrentData) {
   }
   const row = Array.isArray(rows) ? rows[0] : rows;
   if (!row) return false;
-  applyProductSyncResult(mergedProducts);
-  applyOrderSyncResult(mergedOrders);
+  if (scope === 'products') applyProductSyncResult(mergedProducts);
+  if (scope === 'orders') applyOrderSyncResult(mergedOrders);
   if (row.updated_at) setRemoteCursor(row.updated_at);
   return true;
 }
 
-async function mergeAndUpload(c, getCurrentData) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    if (await mergeAndUploadOnce(c, getCurrentData)) return true;
+async function mergeAndUpload(c, getCurrentData, scopes = ['products', 'orders', 'settings']) {
+  const list = Array.isArray(scopes) ? scopes : [scopes];
+  for (const scope of list) {
+    let completed = false;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (await mergeAndUploadOnce(c, getCurrentData, scope)) {
+        completed = true;
+        break;
+      }
+    }
+    if (!completed) throw new Error('資料同時被其他裝置更新，已重試 3 次，請再按一次同步');
   }
-  throw new Error('商品資料同時被其他裝置更新，已重試 3 次，請再按一次同步');
+  return true;
 }
 
 function enqueueUpload(task) {
@@ -395,14 +431,18 @@ function enqueueUpload(task) {
 export function scheduleUpload(getCurrentData, options = {}) {
   const c = getClient();
   if (!c || typeof getCurrentData !== 'function') return;
+  const requested = options.scope || ['products', 'orders', 'settings'];
+  for (const scope of (Array.isArray(requested) ? requested : [requested])) pendingUploadScopes.add(scope);
   if (uploadTimer) clearTimeout(uploadTimer);
   uploadTimer = setTimeout(async () => {
     uploadTimer = null;
+    const scopes = Array.from(pendingUploadScopes);
+    pendingUploadScopes = new Set();
     const { onUploadStart, onUploadEnd, onUploadError } = options;
     let ok = false;
     try {
       onUploadStart?.();
-      ok = await enqueueUpload(() => mergeAndUpload(c, getCurrentData));
+      ok = await enqueueUpload(() => mergeAndUpload(c, getCurrentData, scopes));
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[sync] upload failed', err);
       onUploadError?.(err?.message || String(err));
@@ -414,10 +454,10 @@ export function scheduleUpload(getCurrentData, options = {}) {
 /**
  * 立即上傳（不 debounce，合併訂單後再上傳）
  */
-export async function uploadNow(getCurrentData) {
+export async function uploadNow(getCurrentData, scopes = ['products', 'orders', 'settings']) {
   const c = getClient();
   if (!c || typeof getCurrentData !== 'function') throw new Error('Supabase 未設定');
-  return await enqueueUpload(() => mergeAndUpload(c, getCurrentData));
+  return await enqueueUpload(() => mergeAndUpload(c, getCurrentData, scopes));
 }
 
 export function subscribeToStore(onData) {

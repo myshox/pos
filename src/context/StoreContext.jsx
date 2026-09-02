@@ -64,7 +64,7 @@ export function StoreProvider({ children }) {
     try { const u = sessionStorage.getItem(PIN_SESSION_KEY); return u ? Number(u) : 0; } catch { return 0; }
   });
 
-  const triggerSync = useCallback(() => {
+  const triggerSync = useCallback((scope) => {
     if (!isSyncEnabled()) return;
     scheduleUpload(getCurrentDataForSync, {
       onUploadStart: () => setIsSyncing(true),
@@ -73,11 +73,12 @@ export function StoreProvider({ children }) {
         if (ok) { setSyncError(null); markSynced(); } else markPending();
       },
       onUploadError: (message) => setSyncError(message),
+      scope,
     });
   }, [markPending, markSynced]);
 
   useEffect(() => {
-    if (migrationApplied) triggerSync();
+    if (migrationApplied) triggerSync(['products', 'orders', 'settings']);
   }, [migrationApplied, triggerSync]);
 
   // 有待同步時立即重試，並定時再試（先前只跑一次：上傳失敗後 iOS 會永遠卡在「待同步」）
@@ -126,12 +127,12 @@ export function StoreProvider({ children }) {
         setOrders(getOrders());
         setCategoriesState(getCategories());
         setStoreState(getStore());
-        if (skippedEmptyRemote) triggerSync();
+        if (skippedEmptyRemote) triggerSync('products');
         setSyncError(null);
       } else {
         const remoteEmpty = !data.products || data.products.length === 0;
         if (remoteEmpty && getProducts().length > 0) {
-          triggerSync();
+          triggerSync('products');
         }
       }
       if (data.updatedAt) setRemoteCursor(data.updatedAt);
@@ -144,13 +145,14 @@ export function StoreProvider({ children }) {
   const resumeSync = useCallback(async () => {
     if (!isSyncEnabled()) return;
     await refreshFromCloud();
+    if (!hasPendingSync) return;
     void uploadNow(getCurrentDataForSync).then((ok) => {
       if (ok) { setSyncError(null); markSynced(); }
     }).catch((e) => {
       setSyncError(e?.message || String(e));
       markPending();
     });
-  }, [refreshFromCloud, markPending, markSynced]);
+  }, [hasPendingSync, refreshFromCloud, markPending, markSynced]);
 
   useEffect(() => {
     if (!isSyncEnabled()) return undefined;
@@ -197,7 +199,7 @@ export function StoreProvider({ children }) {
         setOrders(getOrders());
         setCategoriesState(getCategories());
         setStoreState(getStore());
-        if (skippedEmptyRemote) triggerSync();
+        if (skippedEmptyRemote) triggerSync('products');
       });
     } catch { /* WebSocket subscription failed */ }
 
@@ -239,7 +241,7 @@ export function StoreProvider({ children }) {
   const persistCategories = useCallback((next) => {
     setCategoriesState(next);
     saveCategories(next);
-    triggerSync();
+    triggerSync(['products', 'settings']);
   }, [triggerSync]);
 
   const addCategory = useCallback((name) => {
@@ -272,7 +274,7 @@ export function StoreProvider({ children }) {
   const persistProducts = useCallback((nextProducts) => {
     setProducts(nextProducts);
     saveProducts(nextProducts);
-    triggerSync();
+    triggerSync('products');
   }, [triggerSync]);
 
   const addProduct = useCallback((product) => {
@@ -323,14 +325,14 @@ export function StoreProvider({ children }) {
       if (p && p.useStock && typeof p.stock === 'number' && item.qty > 0) decrementProductStock(p.id, item.qty);
     });
     setProducts(getProducts());
-    triggerSync();
+    triggerSync(['orders', 'products']);
     return newOrder;
   }, [triggerSync]);
 
   const updateStore = useCallback((next) => {
     saveStore({ ...getStore(), ...next });
     setStoreState(getStore());
-    triggerSync();
+    triggerSync('settings');
   }, [triggerSync]);
 
   const refreshStore = useCallback(() => {
@@ -359,7 +361,7 @@ export function StoreProvider({ children }) {
   }, []);
 
   const syncNow = useCallback(() => {
-    triggerSync();
+    triggerSync(['products', 'orders', 'settings']);
   }, [triggerSync]);
 
   const manualSync = useCallback(async () => {
@@ -422,7 +424,7 @@ export function StoreProvider({ children }) {
   const updateOrder = useCallback((orderId, updates) => {
     const updated = updateOrderStorage(orderId, updates);
     if (updated) setOrders(getOrders());
-    triggerSync();
+    triggerSync('orders');
     return updated;
   }, [triggerSync]);
 
@@ -430,7 +432,7 @@ export function StoreProvider({ children }) {
     rememberOrderDeletion(orderId);
     deleteOrderStorage(orderId);
     setOrders(getOrders());
-    triggerSync();
+    triggerSync('orders');
   }, [triggerSync]);
 
   const voidOrder = useCallback((orderId, reason = '') => {
@@ -440,7 +442,7 @@ export function StoreProvider({ children }) {
       voidReason: String(reason || '').trim(),
     });
     if (updated) setOrders(getOrders());
-    triggerSync();
+    triggerSync('orders');
     return updated;
   }, [triggerSync]);
 
