@@ -108,7 +108,7 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="header-bar sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
+        <div className="app-header-inner max-w-[1600px] mx-auto px-3 sm:px-5 py-2 sm:py-3 flex items-center justify-between gap-2">
           <Link to="/" className="brand-lockup flex items-center gap-2 sm:gap-3 shrink-0 min-h-[44px] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50" onClick={() => setMenuOpen(false)}>
             <span className="brand-mascot"><img src="/logo.png" alt="" onError={(e) => { e.target.style.display = 'none'; }} /></span>
             <span><b>{t('appName')}</b><small>MARKET POS</small></span>
@@ -184,7 +184,7 @@ export default function Layout({ children }) {
         )}
       </header>
 
-      <main className="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-5 py-4 sm:py-5 min-w-0 text-slate-800 antialiased">
+      <main className={`app-main flex-1 w-full mx-auto min-w-0 text-slate-800 antialiased ${isAdmin ? 'app-main--admin' : ''}`}>
         {children}
       </main>
       <footer className="site-footer">

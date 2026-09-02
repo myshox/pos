@@ -328,8 +328,8 @@ export default function PosPage() {
         </div>
 
         {/* 商品區 - 獨立一頁，全區塊捲動（底部留白避免被浮動結帳鈕遮字） */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 lg:pr-[390px] py-3 pos-product-scroll">
-        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 sm:px-4 lg:pr-[410px] py-3 pos-product-scroll">
+        <div className="pos-toolbar flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 shrink-0" style={{ fontFamily: 'var(--font-cute)' }}>
             今天想賣什麼？
           </h1>
@@ -380,7 +380,7 @@ export default function PosPage() {
           <p className="text-sm text-slate-500 mb-3 max-w-2xl leading-relaxed">{t('checkoutFlowHint')}</p>
         )}
         {activeProducts.length > 0 && (
-          <div className="relative w-full max-w-2xl mb-4">
+          <div className="pos-search relative w-full max-w-2xl mb-5">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -453,7 +453,7 @@ export default function PosPage() {
             ))}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="pos-product-stage space-y-7">
             {categories.length > 0 && categories.map((cat) => (
               <div key={cat}>
                 <h2 className="pos-category-heading mb-3">{cat}</h2>

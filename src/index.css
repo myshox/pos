@@ -22,6 +22,8 @@ body {
   color: #0f172a;
   letter-spacing: 0.01em;
 }
+.app-main { max-width:1600px; padding:1rem clamp(.75rem,2vw,1.5rem) 1.5rem; }
+.app-main--admin { max-width:1480px; }
 
 .site-footer { background:#fff; border-top:1px solid #e2e8f0; color:#475569; font-size:.8125rem; }
 .site-footer strong { color:#0f172a; margin-right:.75rem; }
@@ -92,6 +94,7 @@ button, a, [role="button"], input, select, textarea {
   border-bottom: 1px solid rgba(15, 118, 110, 0.1);
   backdrop-filter: blur(16px);
 }
+.app-header-inner { min-height:68px; }
 .brand-mascot { width:42px; height:42px; display:grid; place-items:center; overflow:hidden; border-radius:14px; background:#dff6ee; box-shadow:inset 0 0 0 1px #bce8d8; }
 .brand-mascot img { width:100%; height:100%; object-fit:cover; }
 .brand-lockup b { display:block; color:#102a25; font-size:1rem; line-height:1.05; letter-spacing:-.02em; }
@@ -103,15 +106,20 @@ button, a, [role="button"], input, select, textarea {
 .nav-pill:hover { background:#edf7f3; color:#0f766e; }
 .nav-pill.is-active { background:#123c35; color:#fff; box-shadow:0 6px 18px rgba(18,60,53,.2); }
 
-.pos-shell { position:relative; }
+.pos-shell { position:relative; border-radius:24px; background:rgba(255,255,255,.55); box-shadow:inset 0 0 0 1px rgba(18,60,53,.08); overflow:hidden; }
 .pos-daily-strip { background:linear-gradient(110deg,#123c35 0%,#176b5d 65%,#258474 100%); border-radius:18px; box-shadow:0 14px 34px rgba(18,60,53,.2); }
 .pos-daily-label { color:#bdf3df; }
 .pos-daily-strip .bg-slate-100 { background:#eef8f5; color:#355b52; }
 .pos-daily-strip .text-slate-500 { color:#b9d8cf; }
 .desktop-checkout-rail { display:none; }
 @media (min-width:1024px) {
-  .desktop-checkout-rail { display:flex; position:absolute; z-index:15; right:1rem; top:5.8rem; bottom:.75rem; width:360px; flex-direction:column; overflow:hidden; border-radius:22px; background:#fffdfa; box-shadow:0 22px 55px rgba(34,61,53,.16); border:1px solid rgba(18,60,53,.1); }
+  .desktop-checkout-rail { display:flex; position:absolute; z-index:15; right:1rem; top:5.8rem; bottom:.85rem; width:380px; flex-direction:column; overflow:hidden; border-radius:22px; background:#fffdfa; box-shadow:0 22px 55px rgba(34,61,53,.16); border:1px solid rgba(18,60,53,.1); }
 }
+.pos-toolbar { padding:.25rem .25rem 0; }
+.pos-search input { border-color:#d6e4df; box-shadow:0 8px 24px rgba(34,61,53,.07); }
+.pos-product-stage > div { padding:.25rem; }
+.pos-category-heading { display:flex; align-items:center; gap:.6rem; color:#23443c; font-weight:900; }
+.pos-category-heading::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,#cfe2dc,transparent); }
 .checkout-rail-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem; color:#fff; background:#173f38; }
 .checkout-rail-header div { display:flex; flex-direction:column; gap:.15rem; }
 .checkout-rail-header span { color:#bde9da; font-size:.75rem; font-weight:700; }
@@ -144,13 +152,20 @@ button, a, [role="button"], input, select, textarea {
 .card-provider-picker button:disabled { opacity:.58; cursor:not-allowed; }
 .checkout-rail-submit { min-height:56px; border-radius:15px; color:#fff; background:linear-gradient(135deg,#17a78f,#0d7867); font-size:1rem; font-weight:900; box-shadow:0 10px 24px rgba(13,120,103,.24); }
 .checkout-rail-submit:disabled { background:#cbd5d1; color:#6b7975; box-shadow:none; cursor:not-allowed; }
-.admin-shell { border:1px solid rgba(18,60,53,.1); border-radius:22px; background:#fff; box-shadow:0 24px 60px rgba(34,61,53,.12); }
+.admin-shell { border:1px solid rgba(18,60,53,.1); border-radius:24px; background:#fff; box-shadow:0 24px 60px rgba(34,61,53,.12); }
 .admin-sidebar { color:#dbece6; background:linear-gradient(180deg,#173f38,#102f2a); border-right:1px solid rgba(255,255,255,.08); }
+.admin-sidebar-head { display:flex; align-items:center; gap:.7rem; border-bottom:1px solid rgba(255,255,255,.1); }
+.admin-sidebar-head strong { display:block; color:#fff; font-size:.9rem; }
+.admin-sidebar-head p { margin-top:.15rem; font-size:.58rem; font-weight:800; letter-spacing:.15em; }
+.admin-sidebar-mark { width:36px; height:36px; display:grid; place-items:center; border-radius:12px; background:#f2bd6b; color:#173f38; font-weight:950; box-shadow:0 8px 18px rgba(0,0,0,.18); }
 .admin-sidebar p { color:#8db2a7; }
 .admin-nav-button { color:#c7ddd6; }
 .admin-nav-button:hover { background:rgba(255,255,255,.08); color:#fff; }
 .admin-nav-button.is-active { background:#fff; color:#145b4e; box-shadow:0 8px 22px rgba(0,0,0,.18); }
 .admin-content { background:linear-gradient(135deg,#fff 0%,#fbfdfc 70%,#fffaf3 100%); }
+.admin-page-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.75rem; padding-bottom:1rem; border-bottom:1px solid #e1ebe7; }
+.admin-page-heading span:first-child { color:#81928c; font-size:.7rem; font-weight:800; letter-spacing:.08em; }
+.admin-page-heading h1 { margin-top:.15rem; color:#173f38; font-size:clamp(1.5rem,2.4vw,2rem); font-weight:950; letter-spacing:-.035em; }
 .admin-view-switch { display:grid; grid-template-columns:repeat(2,1fr); padding:.2rem; border-radius:12px; background:#edf2f0; }
 .admin-view-switch button { min-height:38px; padding:.4rem .75rem; border-radius:9px; color:#62736e; font-size:.78rem; font-weight:800; }
 .admin-view-switch button.is-active { background:#fff; color:#0d7867; box-shadow:0 2px 8px rgba(34,61,53,.12); }
@@ -186,6 +201,13 @@ button, a, [role="button"], input, select, textarea {
 .product-admin-grid.is-list .product-admin-confirm { align-self:center; margin:1rem; }
 @media (max-width:480px) { .product-admin-grid { grid-template-columns:1fr; } .product-admin-media { aspect-ratio:3/2; } }
 @media (max-width:760px) { .product-admin-grid.is-list .product-admin-card { grid-template-columns:92px minmax(0,1fr); } .product-admin-grid.is-list .product-admin-media { min-height:116px; } .product-admin-grid.is-list .product-admin-actions,.product-admin-grid.is-list .product-admin-confirm { grid-column:1/-1; } }
+@media (max-width:767px) {
+  .app-main { padding:.65rem .5rem 1rem; }
+  .app-main--admin { padding:.65rem; }
+  .pos-shell { border-radius:18px; }
+  .admin-shell { border-radius:18px; }
+  .admin-page-heading { margin-bottom:1.15rem; }
+}
 
 /* 商品／表單卡片 */
 .card-market {

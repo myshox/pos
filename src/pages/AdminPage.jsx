@@ -100,8 +100,12 @@ export default function AdminPage() {
       <div className="flex flex-1 min-h-0 min-w-0">
         {/* 桌機：側欄 */}
         <aside className="admin-sidebar hidden md:flex w-60 shrink-0 flex-col p-3 gap-1">
-          <div className="px-2 py-2 mb-2">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('adminConsole')}</p>
+          <div className="admin-sidebar-head px-2 py-3 mb-2">
+            <span className="admin-sidebar-mark" aria-hidden="true">M</span>
+            <div>
+              <strong>{t('adminConsole')}</strong>
+              <p>STORE CONTROL</p>
+            </div>
           </div>
           {SECTION_IDS.map((id) => (
             <button key={id} type="button" onClick={() => setTab(id)} className={navBtn(id)}>
@@ -121,6 +125,9 @@ export default function AdminPage() {
         </aside>
 
         <div className="admin-content flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 md:p-8">
+          <div className="admin-page-heading">
+            <div><span>{t('adminConsole')}</span><h1>{t(TAB_KEYS[tab])}</h1></div>
+          </div>
           {tab === 'dashboard' && <AdminDashboard onNavigateToTab={setTab} />}
           {tab === 'orders' && <OrderList />}
           {tab === 'products' && <ProductManager />}
