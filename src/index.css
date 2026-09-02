@@ -151,6 +151,9 @@ button, a, [role="button"], input, select, textarea {
 .admin-nav-button:hover { background:rgba(255,255,255,.08); color:#fff; }
 .admin-nav-button.is-active { background:#fff; color:#145b4e; box-shadow:0 8px 22px rgba(0,0,0,.18); }
 .admin-content { background:linear-gradient(135deg,#fff 0%,#fbfdfc 70%,#fffaf3 100%); }
+.admin-view-switch { display:grid; grid-template-columns:repeat(2,1fr); padding:.2rem; border-radius:12px; background:#edf2f0; }
+.admin-view-switch button { min-height:38px; padding:.4rem .75rem; border-radius:9px; color:#62736e; font-size:.78rem; font-weight:800; }
+.admin-view-switch button.is-active { background:#fff; color:#0d7867; box-shadow:0 2px 8px rgba(34,61,53,.12); }
 .product-admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr)); gap:1rem; }
 .product-admin-card { min-width:0; overflow:hidden; border-radius:16px; background:#fff; box-shadow:0 10px 28px rgba(34,61,53,.09); transition:transform .18s ease,box-shadow .18s ease; }
 .product-admin-card:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(34,61,53,.14); }
@@ -176,7 +179,13 @@ button, a, [role="button"], input, select, textarea {
 .product-admin-confirm { margin:0 1rem 1rem; padding:.8rem; border-radius:12px; background:#fff4f2; }
 .product-admin-confirm p { color:#912018; font-size:.78rem; line-height:1.5; }
 .product-admin-confirm div { display:flex; justify-content:flex-end; gap:.5rem; margin-top:.65rem; }
+.product-admin-grid.is-list { grid-template-columns:1fr; }
+.product-admin-grid.is-list .product-admin-card { display:grid; grid-template-columns:160px minmax(0,1fr) minmax(190px,240px); align-items:stretch; }
+.product-admin-grid.is-list .product-admin-media { aspect-ratio:auto; min-height:132px; }
+.product-admin-grid.is-list .product-admin-actions { align-content:center; padding:1rem; }
+.product-admin-grid.is-list .product-admin-confirm { align-self:center; margin:1rem; }
 @media (max-width:480px) { .product-admin-grid { grid-template-columns:1fr; } .product-admin-media { aspect-ratio:3/2; } }
+@media (max-width:760px) { .product-admin-grid.is-list .product-admin-card { grid-template-columns:92px minmax(0,1fr); } .product-admin-grid.is-list .product-admin-media { min-height:116px; } .product-admin-grid.is-list .product-admin-actions,.product-admin-grid.is-list .product-admin-confirm { grid-column:1/-1; } }
 
 /* 商品／表單卡片 */
 .card-market {

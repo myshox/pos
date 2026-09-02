@@ -4,6 +4,7 @@ import { useLocale } from '../context/LocaleContext';
 import { startOfDay, endOfDay, isOrderVoided } from '../lib/reportUtils';
 import { downloadCSV } from '../lib/csvExport';
 import ReceiptModal from './ReceiptModal';
+import { useToast } from '../context/ToastContext';
 
 const LOCALE_MAP = { tw: 'zh-TW', kr: 'ko-KR', en: 'en-US' };
 
@@ -47,8 +48,9 @@ function isThisWeek(iso) {
 const FILTER_IDS = ['all', 'today', 'week', 'range'];
 
 export default function OrderList() {
-  const { orders, refreshOrders, deleteOrder, voidOrder } = useStore();
+  const { orders, refreshOrders, deleteOrder, voidOrder, updateOrder } = useStore();
   const { t, lang } = useLocale();
+  const { showToast } = useToast();
   const [expandedId, setExpandedId] = useState(null);
   const [dateFilter, setDateFilter] = useState('all');
   const [rangeStart, setRangeStart] = useState(() => {
@@ -61,6 +63,28 @@ export default function OrderList() {
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [voidTarget, setVoidTarget] = useState(null);
   const [voidReason, setVoidReason] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
+  const [editTotal, setEditTotal] = useState('');
+  const [editPayment, setEditPayment] = useState('cash');
+  const [editNote, setEditNote] = useState('');
+
+  const openEdit = (order) => {
+    setEditTarget(order);
+    setEditTotal(String(order.total ?? ''));
+    setEditPayment(order.paymentMethod || 'cash');
+    setEditNote(order.note || '');
+  };
+
+  const saveEdit = () => {
+    const total = Math.round(Number(editTotal));
+    if (!editTarget || !Number.isFinite(total) || total < 0) {
+      showToast(t('validationPrice'), 'error');
+      return;
+    }
+    updateOrder(editTarget.id, { total, subtotal: total, paymentMethod: editPayment, note: editNote.trim() });
+    setEditTarget(null);
+    showToast(t('toastOrderUpdated'));
+  };
 
   const filteredOrders = useMemo(() => {
     let list = orders;
@@ -246,6 +270,9 @@ export default function OrderList() {
                   <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2">
                     {!isOrderVoided(order) ? (
                       <>
+                        <button type="button" onClick={() => openEdit(order)} className="px-3 py-1.5 text-sm bg-teal-100 text-teal-800 rounded-lg hover:bg-teal-200 font-medium">
+                          {t('edit')}
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -293,6 +320,21 @@ export default function OrderList() {
 
       {receiptOrder && (
         <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
+      )}
+
+      {editTarget && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/45" onClick={() => setEditTarget(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="edit-order-title">
+            <h3 id="edit-order-title" className="text-lg font-semibold text-slate-800">{t('editOrderTitle')} #{editTarget.id.slice(0, 8)}</h3>
+            <p className="text-sm text-slate-500 mt-1">{t('editOrderHint')}</p>
+            <div className="space-y-4 mt-5">
+              <label className="block"><span className="text-sm font-medium text-slate-600">{t('amount')}</span><input type="number" min="0" step="1" value={editTotal} onChange={(e) => setEditTotal(e.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base" /></label>
+              <label className="block"><span className="text-sm font-medium text-slate-600">{t('paymentMethod')}</span><select value={editPayment} onChange={(e) => setEditPayment(e.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base"><option value="cash">{t('payCash')}</option><option value="line">{t('payLine')}</option><option value="card">{t('payCard')}</option></select></label>
+              <label className="block"><span className="text-sm font-medium text-slate-600">{t('orderNote')}</span><textarea rows="3" value={editNote} onChange={(e) => setEditNote(e.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base" /></label>
+            </div>
+            <div className="flex gap-3 mt-6"><button type="button" onClick={() => setEditTarget(null)} className="flex-1 min-h-[44px] rounded-xl bg-slate-100 text-slate-700 font-medium">{t('cancel')}</button><button type="button" onClick={saveEdit} className="btn-primary flex-1 min-h-[44px] rounded-xl font-semibold">{t('save')}</button></div>
+          </div>
+        </div>
       )}
 
       {voidTarget && (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
@@ -12,7 +12,18 @@ export default function StoreSettings() {
     phone: store.phone || '',
     address: store.address || '',
     taxId: store.taxId || '',
+    companyEmail: store.companyEmail || 'mogu5486047@gmail.com',
+    supportEmail: store.supportEmail || 'myshoxisgood@gmail.com',
+    returnPolicy: store.returnPolicy || '',
   }));
+
+  useEffect(() => {
+    const timer = setTimeout(() => setForm({
+        name: store.name || '', phone: store.phone || '', address: store.address || '', taxId: store.taxId || '',
+        companyEmail: store.companyEmail || 'mogu5486047@gmail.com', supportEmail: store.supportEmail || 'myshoxisgood@gmail.com', returnPolicy: store.returnPolicy || '',
+      }), 0);
+    return () => clearTimeout(timer);
+  }, [store]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,6 +32,9 @@ export default function StoreSettings() {
       phone: form.phone.trim(),
       address: form.address.trim(),
       taxId: form.taxId.trim(),
+      companyEmail: form.companyEmail.trim(),
+      supportEmail: form.supportEmail.trim(),
+      returnPolicy: form.returnPolicy.trim(),
     });
     showToast(t('save'));
   };
@@ -63,6 +77,9 @@ export default function StoreSettings() {
             className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 min-h-[44px]"
           />
         </label>
+        <label className="block"><span className="text-sm font-medium text-slate-600">{t('companyEmail')}</span><input type="email" value={form.companyEmail} onChange={(e) => setForm((f) => ({ ...f, companyEmail: e.target.value }))} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 min-h-[44px]" /></label>
+        <label className="block"><span className="text-sm font-medium text-slate-600">{t('supportEmail')}</span><input type="email" value={form.supportEmail} onChange={(e) => setForm((f) => ({ ...f, supportEmail: e.target.value }))} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 min-h-[44px]" /></label>
+        <label className="block"><span className="text-sm font-medium text-slate-600">{t('returnPolicyEditor')}</span><textarea rows="8" value={form.returnPolicy} onChange={(e) => setForm((f) => ({ ...f, returnPolicy: e.target.value }))} placeholder={t('returnPolicyEditorHint')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 min-h-[160px]" /><small className="text-slate-500">{t('returnPolicyEditorHint')}</small></label>
         <label className="block">
           <span className="text-sm font-medium text-slate-600">{t('storePhone')}</span>
           <input

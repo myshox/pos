@@ -93,7 +93,13 @@ export default function Layout({ children }) {
   const isShowcase = location.pathname.startsWith('/showcase');
   const isLegal = location.pathname.startsWith('/legal');
   const { t, lang, setLang, LANGS, langLabels } = useLocale();
+  const { store } = useContext(StoreContext);
   const [menuOpen, setMenuOpen] = useState(false);
+  const companyName = store?.name || '蘑菇宇宙工作室';
+  const taxId = store?.taxId || '95148616';
+  const phone = store?.phone || '0908-180-610';
+  const companyEmail = store?.companyEmail || 'mogu5486047@gmail.com';
+  const supportEmail = store?.supportEmail || 'myshoxisgood@gmail.com';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -179,8 +185,8 @@ export default function Layout({ children }) {
       </main>
       <footer className="site-footer">
         <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div><strong>蘑菇宇宙工作室</strong><span>統一編號 95148616</span></div>
-          <div className="flex flex-wrap gap-x-4 gap-y-2"><a href="mailto:mogu5486047@gmail.com">公司信箱：mogu5486047@gmail.com</a><a href="mailto:myshoxisgood@gmail.com">客服信箱</a><a href="tel:+886908180610">0908-180-610</a><Link to="/legal">退換貨與商店資訊</Link></div>
+          <div><strong>{companyName}</strong><span>統一編號 {taxId}</span></div>
+          <div className="flex flex-wrap gap-x-4 gap-y-2"><a href={`mailto:${companyEmail}`}>公司信箱：{companyEmail}</a><a href={`mailto:${supportEmail}`}>客服信箱</a><a href={`tel:${phone.replace(/[^\d+]/g, '')}`}>{phone}</a><Link to="/legal">退換貨與商店資訊</Link></div>
         </div>
       </footer>
     </div>

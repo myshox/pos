@@ -4,6 +4,8 @@ import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { fileToDataUrl } from '../lib/imageUtils';
 
+const PRODUCT_VIEW_KEY = 'admin_product_view';
+
 export default function ProductManager() {
   const { products, categories, addProduct, updateProduct, toggleProductActive, deleteProduct } = useStore();
   const { t } = useLocale();
@@ -17,6 +19,9 @@ export default function ProductManager() {
   const [imageError, setImageError] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [failedImages, setFailedImages] = useState(() => new Set());
+  const [viewMode, setViewMode] = useState(() => {
+    try { return localStorage.getItem(PRODUCT_VIEW_KEY) === 'list' ? 'list' : 'cards'; } catch { return 'cards'; }
+  });
   const formRef = useRef(null);
 
   const categoryOptions = useMemo(
@@ -140,11 +145,20 @@ export default function ProductManager() {
     });
   };
 
+  const changeViewMode = (mode) => {
+    setViewMode(mode);
+    try { localStorage.setItem(PRODUCT_VIEW_KEY, mode); } catch { /* empty */ }
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-3 mb-4 md:mb-6">
         <h2 className="text-xl font-semibold text-slate-800">{t('tabProducts')}</h2>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="admin-view-switch" aria-label={t('viewMode')}>
+            <button type="button" aria-pressed={viewMode === 'cards'} onClick={() => changeViewMode('cards')} className={viewMode === 'cards' ? 'is-active' : ''}>{t('cardView')}</button>
+            <button type="button" aria-pressed={viewMode === 'list'} onClick={() => changeViewMode('list')} className={viewMode === 'list' ? 'is-active' : ''}>{t('listView')}</button>
+          </div>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -300,7 +314,7 @@ export default function ProductManager() {
       )}
 
       {filteredProducts.length > 0 && (
-        <div className="product-admin-grid">
+        <div className={`product-admin-grid ${viewMode === 'list' ? 'is-list' : ''}`}>
           {filteredProducts.map((p) => {
             const showImage = p.image && !failedImages.has(p.id);
             const confirmingDelete = pendingDeleteId === p.id;

@@ -442,7 +442,7 @@ export function deleteOrder(orderId) {
 }
 
 // 店鋪設定
-const DEFAULT_STORE = { name: '', phone: '', address: '', taxId: '', pinDisabled: false };
+const DEFAULT_STORE = { name: '', phone: '', address: '', taxId: '', companyEmail: '', supportEmail: '', returnPolicy: '', pinDisabled: false };
 
 export function getStore() {
   try {
