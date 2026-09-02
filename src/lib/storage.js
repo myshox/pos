@@ -410,12 +410,13 @@ export function addOrder(order) {
     items: order.items,
     subtotal: order.subtotal != null ? order.subtotal : order.total,
     total: order.total,
-    note: '',
+    note: String(order.note || '').trim(),
     paymentMethod,
     ...(order.cardProvider ? { cardProvider: order.cardProvider } : {}),
     ...(order.cashReceived != null ? { cashReceived: order.cashReceived, changeAmount: order.changeAmount } : {}),
     createdAt: new Date().toISOString(),
     voided: false,
+    _syncUpdatedAt: new Date().toISOString(),
   };
   orders.unshift(newOrder);
   saveOrders(orders);
@@ -427,10 +428,10 @@ export function updateOrder(orderId, updates) {
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return null;
   const next = [...orders];
-  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'cardProvider', 'items', 'voided', 'voidReason', 'voidedAt'];
+  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'cardProvider', 'items', 'createdAt', 'cashReceived', 'changeAmount', 'voided', 'voidReason', 'voidedAt'];
   const patch = {};
   allowed.forEach((k) => { if (updates[k] !== undefined) patch[k] = updates[k]; });
-  next[idx] = { ...next[idx], ...patch };
+  next[idx] = { ...next[idx], ...patch, _syncUpdatedAt: new Date().toISOString() };
   saveOrders(next);
   return next[idx];
 }

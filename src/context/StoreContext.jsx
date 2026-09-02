@@ -25,13 +25,17 @@ import {
   getProductsForSync,
   mergeProductArrays,
   applyProductSyncResult,
+  rememberOrderDeletion,
+  getOrdersForSync,
+  mergeOrderArrays,
+  applyOrderSyncResult,
 } from '../lib/syncSupabase';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 
 function getCurrentDataForSync() {
   return {
     products: getProductsForSync(getProducts()),
-    orders: getOrders(),
+    orders: getOrdersForSync(getOrders()),
     categories: getCategories(),
     store: getStore(),
   };
@@ -64,7 +68,10 @@ export function StoreProvider({ children }) {
     if (!isSyncEnabled()) return;
     scheduleUpload(getCurrentDataForSync, {
       onUploadStart: () => setIsSyncing(true),
-      onUploadEnd: (ok) => { setIsSyncing(false); if (ok) markSynced(); else markPending(); },
+      onUploadEnd: (ok) => {
+        setIsSyncing(false);
+        if (ok) { setSyncError(null); markSynced(); } else markPending();
+      },
       onUploadError: (message) => setSyncError(message),
     });
   }, [markPending, markSynced]);
@@ -80,10 +87,13 @@ export function StoreProvider({ children }) {
     const tryUpload = async () => {
       if (cancelled) return;
       setIsSyncing(true);
-      const ok = await uploadNow(getCurrentDataForSync);
-      if (!cancelled) {
-        setIsSyncing(false);
-        if (ok) markSynced();
+      try {
+        const ok = await uploadNow(getCurrentDataForSync);
+        if (!cancelled && ok) { setSyncError(null); markSynced(); }
+      } catch (e) {
+        if (!cancelled) setSyncError(e?.message || String(e));
+      } finally {
+        if (!cancelled) setIsSyncing(false);
       }
     };
     void tryUpload();
@@ -104,6 +114,11 @@ export function StoreProvider({ children }) {
         data.products = applyProductSyncResult(mergeProductArrays(
           getProductsForSync(getProducts()),
           data.products,
+          data.updatedAt
+        ));
+        data.orders = applyOrderSyncResult(mergeOrderArrays(
+          getOrdersForSync(getOrders()),
+          data.orders,
           data.updatedAt
         ));
         const { skippedEmptyRemote } = importAllData(data);
@@ -130,9 +145,12 @@ export function StoreProvider({ children }) {
     if (!isSyncEnabled()) return;
     await refreshFromCloud();
     void uploadNow(getCurrentDataForSync).then((ok) => {
-      if (ok) markSynced();
+      if (ok) { setSyncError(null); markSynced(); }
+    }).catch((e) => {
+      setSyncError(e?.message || String(e));
+      markPending();
     });
-  }, [refreshFromCloud, markSynced]);
+  }, [refreshFromCloud, markPending, markSynced]);
 
   useEffect(() => {
     if (!isSyncEnabled()) return undefined;
@@ -169,6 +187,10 @@ export function StoreProvider({ children }) {
         remote.products = applyProductSyncResult(mergeProductArrays(
           getProductsForSync(getProducts()),
           remote.products
+        ));
+        remote.orders = applyOrderSyncResult(mergeOrderArrays(
+          getOrdersForSync(getOrders()),
+          remote.orders
         ));
         const { skippedEmptyRemote } = importAllData(remote);
         setProducts(getProducts());
@@ -374,6 +396,11 @@ export function StoreProvider({ children }) {
           data.products,
           data.updatedAt
         ));
+        data.orders = applyOrderSyncResult(mergeOrderArrays(
+          getOrdersForSync(getOrders()),
+          data.orders,
+          data.updatedAt
+        ));
         importAllData(data);
         setProducts(getProducts());
         setOrders(getOrders());
@@ -400,6 +427,7 @@ export function StoreProvider({ children }) {
   }, [triggerSync]);
 
   const deleteOrder = useCallback((orderId) => {
+    rememberOrderDeletion(orderId);
     deleteOrderStorage(orderId);
     setOrders(getOrders());
     triggerSync();

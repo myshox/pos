@@ -18,6 +18,7 @@ import {
 } from '../lib/reportUtils';
 import { downloadCSV } from '../lib/csvExport';
 import CategoryRevenueChart from './CategoryRevenueChart';
+import OrderEditorModal from './OrderEditorModal';
 
 const PERIOD_IDS = ['day', 'week', 'month', 'range'];
 
@@ -45,8 +46,6 @@ export default function ReportSettlement() {
   const [rangeEnd, setRangeEnd] = useState(() => toDateStr(new Date()));
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [editOrder, setEditOrder] = useState(null);
-  const [editTotal, setEditTotal] = useState('');
-  const [editPayment, setEditPayment] = useState('cash');
 
   const weekOptions = useMemo(() => getWeekOptions(16), []);
   const monthOptions = useMemo(() => getMonthOptions(16), []);
@@ -82,27 +81,15 @@ export default function ReportSettlement() {
 
   const openEdit = (order) => {
     setEditOrder(order);
-    setEditTotal(String(order.total));
-    setEditPayment(order.paymentMethod || 'cash');
   };
 
   const closeEdit = () => {
     setEditOrder(null);
-    setEditTotal('');
-    setEditPayment('cash');
   };
 
-  const saveEdit = () => {
+  const saveEdit = (updates) => {
     if (!editOrder) return;
-    const totalNum = Math.round(parseFloat(editTotal));
-    if (Number.isNaN(totalNum) || totalNum < 0) {
-      showToast(t('validationPrice'), 'error');
-      return;
-    }
-    updateOrder(editOrder.id, {
-      total: totalNum,
-      paymentMethod: editPayment,
-    });
+    updateOrder(editOrder.id, updates);
     showToast(t('save'));
     closeEdit();
   };
@@ -449,47 +436,7 @@ export default function ReportSettlement() {
         <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
       )}
 
-      {/* 編輯訂單彈窗 */}
-      {editOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={closeEdit}>
-          <div className="card-market rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">{t('edit')} #{editOrder.id.slice(0, 8)}</h3>
-            <div className="space-y-4">
-              <label className="block">
-                <span className="text-sm text-slate-600">{t('amount')}</span>
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={editTotal}
-                  onChange={(e) => setEditTotal(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 min-h-[44px]"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm text-slate-600">{t('paymentMethod')}</span>
-                <select
-                  value={editPayment}
-                  onChange={(e) => setEditPayment(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 min-h-[44px]"
-                >
-                  <option value="line">{t('payLine')}</option>
-                  <option value="cash">{t('payCash')}</option>
-                  <option value="card">{t('payCard')}</option>
-                </select>
-              </label>
-            </div>
-            <div className="flex gap-2 mt-6">
-              <button type="button" onClick={saveEdit} className="btn-primary text-white px-4 py-2.5 rounded-xl font-medium flex-1 min-h-[44px]">
-                {t('save')}
-              </button>
-              <button type="button" onClick={closeEdit} className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 rounded-xl font-medium min-h-[44px]">
-                {t('cancelEdit')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {editOrder && <OrderEditorModal order={editOrder} onClose={closeEdit} onSave={saveEdit} />}
     </div>
   );
 }

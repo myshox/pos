@@ -10,6 +10,7 @@ const TABLE = 'store_data';
 /** 與雲端 store_data.updated_at 對齊，避免輪詢／即時重複套用或誤覆寫 */
 const REMOTE_TS_KEY = 'pos_sync_remote_updated_at';
 const PRODUCT_TOMBSTONES_KEY = 'pos_sync_product_tombstones';
+const ORDER_TOMBSTONES_KEY = 'pos_sync_order_tombstones';
 
 let client = null;
 let uploadTimer = null;
@@ -161,6 +162,56 @@ export function applyProductSyncResult(products) {
   return list.filter((item) => !item?._deleted);
 }
 
+function getOrderTombstones() {
+  try {
+    const value = JSON.parse(localStorage.getItem(ORDER_TOMBSTONES_KEY) || '[]');
+    return Array.isArray(value) ? value.filter((item) => item?._deleted && item.id) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOrderTombstones(orders) {
+  try {
+    localStorage.setItem(ORDER_TOMBSTONES_KEY, JSON.stringify(
+      orders.filter((item) => item?._deleted && item.id)
+    ));
+  } catch { /* localStorage may be unavailable */ }
+}
+
+export function rememberOrderDeletion(id) {
+  const tombstones = getOrderTombstones().filter((item) => item.id !== id);
+  saveOrderTombstones([...tombstones, { id, _deleted: true, _syncUpdatedAt: new Date().toISOString() }]);
+}
+
+export function getOrdersForSync(orders) {
+  return [...(Array.isArray(orders) ? orders : []), ...getOrderTombstones()];
+}
+
+export function mergeOrderArrays(localOrders, remoteOrders, remoteUpdatedAt = '') {
+  const map = new Map();
+  for (const order of (remoteOrders || [])) {
+    if (!order?.id) continue;
+    map.set(order.id, order._syncUpdatedAt
+      ? order
+      : { ...order, _syncUpdatedAt: remoteUpdatedAt || new Date(0).toISOString() });
+  }
+  for (const order of (localOrders || [])) {
+    if (!order?.id) continue;
+    const existing = map.get(order.id);
+    if (!existing || productSyncTime(order) >= productSyncTime(existing)) map.set(order.id, order);
+  }
+  return Array.from(map.values()).sort((a, b) =>
+    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  );
+}
+
+export function applyOrderSyncResult(orders) {
+  const list = Array.isArray(orders) ? orders : [];
+  saveOrderTombstones(list);
+  return list.filter((item) => !item?._deleted);
+}
+
 export async function checkConnection() {
   const c = getClient();
   if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*，請重新部署）' };
@@ -235,7 +286,7 @@ export async function fetchCloudOrders() {
   try {
     const { data, error } = await c.from(TABLE).select('orders').eq('id', STORE_ID).maybeSingle();
     if (error || !data) return null;
-    return Array.isArray(data.orders) ? data.orders : [];
+    return applyOrderSyncResult(Array.isArray(data.orders) ? data.orders : []);
   } catch { return null; }
 }
 
@@ -257,25 +308,6 @@ export async function fetchStoreData() {
     if (import.meta.env.DEV) console.warn('[sync] fetchStoreData', err);
     return null;
   }
-}
-
-/**
- * 合併本地與遠端訂單（以 id 去重，保留兩邊所有訂單）
- */
-function mergeOrderArrays(localOrders, remoteOrders) {
-  const map = new Map();
-  for (const o of (remoteOrders || [])) map.set(o.id, o);
-  for (const o of (localOrders || [])) {
-    const existing = map.get(o.id);
-    if (!existing) {
-      map.set(o.id, o);
-    } else if (o.voided && !existing.voided) {
-      map.set(o.id, o);
-    }
-  }
-  return Array.from(map.values()).sort((a, b) =>
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
 }
 
 /**
@@ -305,7 +337,7 @@ async function mergeAndUploadOnce(c, getCurrentData) {
     }
   } catch { /* 拉不到就用本地 */ }
 
-  const mergedOrders = mergeOrderArrays(local.orders || [], remoteOrders);
+  const mergedOrders = mergeOrderArrays(getOrdersForSync(local.orders || []), remoteOrders, remoteUpdatedAt);
 
   const lp = getProductsForSync(local.products || []);
   const rp = remoteProducts || [];
@@ -338,6 +370,7 @@ async function mergeAndUploadOnce(c, getCurrentData) {
   const row = Array.isArray(rows) ? rows[0] : rows;
   if (!row) return false;
   applyProductSyncResult(mergedProducts);
+  applyOrderSyncResult(mergedOrders);
   if (row.updated_at) setRemoteCursor(row.updated_at);
   return true;
 }
@@ -401,7 +434,7 @@ export function subscribeToStore(onData) {
         if (row.updated_at) setRemoteCursor(row.updated_at);
         onData({
           products: applyProductSyncResult(Array.isArray(row.products) ? row.products : []),
-          orders: Array.isArray(row.orders) ? row.orders : [],
+          orders: applyOrderSyncResult(Array.isArray(row.orders) ? row.orders : []),
           categories: Array.isArray(row.categories) ? row.categories : [],
           store: row.store_settings && typeof row.store_settings === 'object' ? row.store_settings : {},
         });

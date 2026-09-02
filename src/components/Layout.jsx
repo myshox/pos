@@ -21,11 +21,15 @@ function SyncStatusBadge() {
     return (
       <button
         type="button"
-        onClick={() => { alert(syncError); manualSync?.(); }}
+        onClick={async () => {
+          const ok = await manualSync?.();
+          if (ok === false) window.alert(syncError);
+        }}
+        title={`${syncError}｜${t('syncManualHint')}`}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/40 hover:bg-red-500/60 text-white text-xs font-medium transition touch-manipulation min-h-[32px]"
       >
         <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-        <span>{t('syncError')}</span>
+        <span>{t('syncError')} · {t('syncManualHint')}</span>
       </button>
     );
   }
