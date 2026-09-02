@@ -6,7 +6,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 const STORE_ID = 'default';
-const TABLE = 'store_data';
+const PRODUCT_TABLE = 'pos_products';
+const ORDER_TABLE = 'pos_orders';
+const SETTINGS_TABLE = 'pos_settings';
 /** 與雲端 store_data.updated_at 對齊，避免輪詢／即時重複套用或誤覆寫 */
 const REMOTE_TS_KEY = 'pos_sync_remote_updated_at';
 const PRODUCT_TOMBSTONES_KEY = 'pos_sync_product_tombstones';
@@ -102,6 +104,20 @@ export function isSyncEnabled() {
   return !!getClient();
 }
 
+function rowToEntity(row) {
+  return {
+    ...(row?.data && typeof row.data === 'object' ? row.data : {}),
+    id: row.id,
+    _syncUpdatedAt: row.updated_at,
+    ...(row.deleted_at ? { _deleted: true } : {}),
+  };
+}
+
+function latestUpdatedAt(...rows) {
+  const timestamps = rows.flat().map((row) => row?.updated_at).filter(Boolean).sort();
+  return timestamps.at(-1) || null;
+}
+
 function productSyncTime(product, fallback = '') {
   const value = product?._syncUpdatedAt || fallback;
   const time = cursorTimeMs(value);
@@ -130,7 +146,7 @@ export function stampProductForSync(product) {
 
 export function rememberProductDeletion(id) {
   const now = new Date().toISOString();
-  const tombstones = getProductTombstones().filter((item) => item.id !== id);
+  const tombstones = getProductTombstones().filter((item) => String(item.id) !== String(id));
   saveProductTombstones([...tombstones, { id, _deleted: true, _syncUpdatedAt: now }]);
 }
 
@@ -146,12 +162,13 @@ export function mergeProductArrays(localProducts, remoteProducts, remoteUpdatedA
     const normalized = product._syncUpdatedAt
       ? product
       : { ...product, _syncUpdatedAt: remoteUpdatedAt || new Date(0).toISOString() };
-    map.set(product.id, normalized);
+    map.set(String(product.id), normalized);
   }
   for (const product of (localProducts || [])) {
     if (product?.id == null) continue;
-    const existing = map.get(product.id);
-    if (!existing || productSyncTime(product) >= productSyncTime(existing)) map.set(product.id, product);
+    const key = String(product.id);
+    const existing = map.get(key);
+    if (!existing || productSyncTime(product) >= productSyncTime(existing)) map.set(key, product);
   }
   return Array.from(map.values());
 }
@@ -181,7 +198,7 @@ function saveOrderTombstones(orders) {
 }
 
 export function rememberOrderDeletion(id) {
-  const tombstones = getOrderTombstones().filter((item) => item.id !== id);
+  const tombstones = getOrderTombstones().filter((item) => String(item.id) !== String(id));
   saveOrderTombstones([...tombstones, { id, _deleted: true, _syncUpdatedAt: new Date().toISOString() }]);
 }
 
@@ -193,14 +210,15 @@ export function mergeOrderArrays(localOrders, remoteOrders, remoteUpdatedAt = ''
   const map = new Map();
   for (const order of (remoteOrders || [])) {
     if (!order?.id) continue;
-    map.set(order.id, order._syncUpdatedAt
+    map.set(String(order.id), order._syncUpdatedAt
       ? order
       : { ...order, _syncUpdatedAt: remoteUpdatedAt || new Date(0).toISOString() });
   }
   for (const order of (localOrders || [])) {
     if (!order?.id) continue;
-    const existing = map.get(order.id);
-    if (!existing || productSyncTime(order) >= productSyncTime(existing)) map.set(order.id, order);
+    const key = String(order.id);
+    const existing = map.get(key);
+    if (!existing || productSyncTime(order) >= productSyncTime(existing)) map.set(key, order);
   }
   return Array.from(map.values()).sort((a, b) =>
     new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
@@ -235,12 +253,12 @@ export async function checkConnection() {
   const c = getClient();
   if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*，請重新部署）' };
   try {
-    const { data, error } = await c.from(TABLE).select('id').eq('id', STORE_ID).maybeSingle();
+    const { data, error } = await c.from(SETTINGS_TABLE).select('id').eq('id', STORE_ID).maybeSingle();
     if (error) return { ok: false, error: error.message || String(error) };
     if (!data) {
       return {
         ok: false,
-        error: '讀不到 id=default 這一筆：請在 Supabase 執行 sql/supabase_store_data.sql 或檢查 RLS',
+        error: '讀不到新版同步設定：請執行 sql/supabase_normalized_sync_v2.sql 或檢查 RLS',
       };
     }
     return { ok: true };
@@ -254,13 +272,17 @@ export async function fetchCloudStats() {
   const c = getClient();
   if (!c) return null;
   try {
-    const { data, error } = await c.from(TABLE).select('*').eq('id', STORE_ID).maybeSingle();
-    if (error || !data) return null;
+    const [products, orders, settings] = await Promise.all([
+      c.from(PRODUCT_TABLE).select('id,deleted_at,updated_at'),
+      c.from(ORDER_TABLE).select('id,deleted_at,updated_at'),
+      c.from(SETTINGS_TABLE).select('categories,updated_at').eq('id', STORE_ID).maybeSingle(),
+    ]);
+    if (products.error || orders.error || settings.error || !settings.data) return null;
     return {
-      products: Array.isArray(data.products) ? data.products.length : 0,
-      orders: Array.isArray(data.orders) ? data.orders.length : 0,
-      categories: Array.isArray(data.categories) ? data.categories.length : 0,
-      updatedAt: data.updated_at || null,
+      products: (products.data || []).filter((row) => !row.deleted_at).length,
+      orders: (orders.data || []).filter((row) => !row.deleted_at).length,
+      categories: Array.isArray(settings.data.categories) ? settings.data.categories.length : 0,
+      updatedAt: latestUpdatedAt(products.data || [], orders.data || [], [settings.data]),
     };
   } catch {
     return null;
@@ -277,7 +299,7 @@ export async function testUpload() {
   if (!c) return { ok: false, error: '未設定 Supabase（或建置時未帶入 VITE_*）' };
   try {
     const { data, error } = await c
-      .from(TABLE)
+      .from(SETTINGS_TABLE)
       .update({ updated_at: new Date().toISOString() })
       .eq('id', STORE_ID)
       .select('updated_at');
@@ -303,9 +325,9 @@ export async function fetchCloudOrders() {
   const c = getClient();
   if (!c) return null;
   try {
-    const { data, error } = await c.from(TABLE).select('orders').eq('id', STORE_ID).maybeSingle();
-    if (error || !data) return null;
-    return applyOrderSyncResult(Array.isArray(data.orders) ? data.orders : []);
+    const { data, error } = await c.from(ORDER_TABLE).select('id,data,updated_at,deleted_at');
+    if (error) return null;
+    return applyOrderSyncResult((data || []).map(rowToEntity));
   } catch { return null; }
 }
 
@@ -313,19 +335,24 @@ export async function fetchStoreData() {
   const c = getClient();
   if (!c) return null;
   try {
-    const { data, error } = await c.from(TABLE).select('*').eq('id', STORE_ID).maybeSingle();
-    if (error || !data) return null;
-    const updatedAt = data.updated_at || null;
+    const [products, orders, settings] = await Promise.all([
+      c.from(PRODUCT_TABLE).select('id,data,updated_at,deleted_at'),
+      c.from(ORDER_TABLE).select('id,data,updated_at,deleted_at'),
+      c.from(SETTINGS_TABLE).select('categories,store_settings,updated_at').eq('id', STORE_ID).maybeSingle(),
+    ]);
+    const error = products.error || orders.error || settings.error;
+    if (error || !settings.data) throw new Error(error?.message || '讀不到雲端設定');
+    const updatedAt = latestUpdatedAt(products.data || [], orders.data || [], [settings.data]);
     return {
-      products: Array.isArray(data.products) ? data.products : [],
-      orders: Array.isArray(data.orders) ? data.orders : [],
-      categories: Array.isArray(data.categories) ? data.categories : [],
-      store: data.store_settings && typeof data.store_settings === 'object' ? data.store_settings : {},
+      products: (products.data || []).map(rowToEntity),
+      orders: (orders.data || []).map(rowToEntity),
+      categories: Array.isArray(settings.data.categories) ? settings.data.categories : [],
+      store: settings.data.store_settings && typeof settings.data.store_settings === 'object' ? settings.data.store_settings : {},
       updatedAt,
     };
   } catch (err) {
     if (import.meta.env.DEV) console.warn('[sync] fetchStoreData', err);
-    return null;
+    throw err;
   }
 }
 
@@ -335,71 +362,42 @@ export async function fetchStoreData() {
 async function mergeAndUploadOnce(c, getCurrentData, scope) {
   const storeKey = getSyncEnv('VITE_STORE_KEY');
   const local = getCurrentData();
+  const now = new Date().toISOString();
 
-  let remoteOrders = [];
-  let remoteProducts = [];
-  let remoteCategories = [];
-  let remoteStore = {};
-  let remoteUpdatedAt = '';
-  try {
-    const selectColumns = scope === 'products'
-      ? 'products, updated_at'
-      : scope === 'orders'
-        ? 'orders, updated_at'
-        : 'categories, store_settings, updated_at';
-    const { data } = await c
-      .from(TABLE)
-      .select(selectColumns)
-      .eq('id', STORE_ID)
-      .maybeSingle();
-    if (data) {
-      if (Array.isArray(data.orders)) remoteOrders = data.orders;
-      if (Array.isArray(data.products)) remoteProducts = data.products;
-      if (Array.isArray(data.categories)) remoteCategories = data.categories;
-      if (data.store_settings && typeof data.store_settings === 'object') remoteStore = data.store_settings;
-      remoteUpdatedAt = data.updated_at || '';
-    }
-  } catch { /* 拉不到就用本地 */ }
-
-  const mergedOrders = compactOrdersForCloud(mergeOrderArrays(
-    getOrdersForSync(local.orders || []), remoteOrders, remoteUpdatedAt
-  ));
-
-  const lp = getProductsForSync(local.products || []);
-  const rp = remoteProducts || [];
-  const mergedProducts = mergeProductArrays(lp, rp, remoteUpdatedAt);
-
-  const lc = local.categories || [];
-  const rc = remoteCategories || [];
-  const mergedCategories = lc.length === 0 && rc.length > 0 ? rc : lc;
-
-  const mergedStore = { ...remoteStore, ...(local.store && typeof local.store === 'object' ? local.store : {}) };
-
-  const updatePayload = { updated_at: new Date().toISOString() };
-  if (scope === 'products') updatePayload.products = mergedProducts;
-  else if (scope === 'orders') updatePayload.orders = mergedOrders;
-  else {
-    updatePayload.store_key = typeof storeKey === 'string' ? storeKey : '';
-    updatePayload.categories = mergedCategories;
-    updatePayload.store_settings = mergedStore;
+  if (scope === 'products') {
+    const { data: rows, error: readError } = await c.from(PRODUCT_TABLE).select('id,data,updated_at,deleted_at');
+    if (readError) throw readError;
+    const merged = mergeProductArrays(getProductsForSync(local.products || []), (rows || []).map(rowToEntity));
+    const payload = merged.map((product) => {
+      const { _deleted, _syncUpdatedAt, ...data } = product;
+      const updatedAt = _syncUpdatedAt || now;
+      return { id: String(product.id), store_key: storeKey, data, updated_at: updatedAt, deleted_at: _deleted ? updatedAt : null };
+    });
+    const { error } = await c.from(PRODUCT_TABLE).upsert(payload, { onConflict: 'id' });
+    if (error) throw error;
+    applyProductSyncResult(merged);
+  } else if (scope === 'orders') {
+    const { data: rows, error: readError } = await c.from(ORDER_TABLE).select('id,data,updated_at,deleted_at');
+    if (readError) throw readError;
+    const merged = compactOrdersForCloud(mergeOrderArrays(getOrdersForSync(local.orders || []), (rows || []).map(rowToEntity)));
+    const payload = merged.map((order) => {
+      const { _deleted, _syncUpdatedAt, ...data } = order;
+      const updatedAt = _syncUpdatedAt || now;
+      return { id: String(order.id), store_key: storeKey, data, updated_at: updatedAt, deleted_at: _deleted ? updatedAt : null };
+    });
+    const { error } = await c.from(ORDER_TABLE).upsert(payload, { onConflict: 'id' });
+    if (error) throw error;
+    applyOrderSyncResult(merged);
+  } else {
+    const { data: remote, error: readError } = await c.from(SETTINGS_TABLE).select('categories,store_settings').eq('id', STORE_ID).maybeSingle();
+    if (readError) throw readError;
+    const categories = (local.categories || []).length > 0 ? local.categories : (remote?.categories || []);
+    const store = { ...(remote?.store_settings || {}), ...(local.store || {}) };
+    const { error } = await c.from(SETTINGS_TABLE).upsert({ id: STORE_ID, store_key: storeKey, categories, store_settings: store, updated_at: now }, { onConflict: 'id' });
+    if (error) throw error;
   }
 
-  let query = c
-    .from(TABLE)
-    .update(updatePayload)
-    .eq('id', STORE_ID);
-  if (remoteUpdatedAt) query = query.eq('updated_at', remoteUpdatedAt);
-  const { data: rows, error } = await query.select('updated_at');
-
-  if (error) {
-    const msg = error.message || error.details || JSON.stringify(error);
-    throw new Error(`上傳失敗: ${msg}`);
-  }
-  const row = Array.isArray(rows) ? rows[0] : rows;
-  if (!row) return false;
-  if (scope === 'products') applyProductSyncResult(mergedProducts);
-  if (scope === 'orders') applyOrderSyncResult(mergedOrders);
-  if (row.updated_at) setRemoteCursor(row.updated_at);
+  setRemoteCursor(now);
   return true;
 }
 
@@ -463,29 +461,32 @@ export async function uploadNow(getCurrentData, scopes = ['products', 'orders', 
 export function subscribeToStore(onData) {
   const c = getClient();
   if (!c || typeof onData !== 'function') return () => {};
+  let refreshTimer = null;
+  const refresh = () => {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(async () => {
+      refreshTimer = null;
+      try {
+        const data = await fetchStoreData();
+        if (data) onData(data);
+      } catch { /* HTTP polling remains as fallback */ }
+    }, 120);
+  };
   const channel = c
-    .channel('store_data_changes')
+    .channel('pos_v2_changes')
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: TABLE, filter: `id=eq.${STORE_ID}` },
-      (payload) => {
-        const row = payload.new;
-        if (!row) return;
-        if (row.updated_at) setRemoteCursor(row.updated_at);
-        onData({
-          products: applyProductSyncResult(Array.isArray(row.products) ? row.products : []),
-          orders: applyOrderSyncResult(Array.isArray(row.orders) ? row.orders : []),
-          categories: Array.isArray(row.categories) ? row.categories : [],
-          store: row.store_settings && typeof row.store_settings === 'object' ? row.store_settings : {},
-        });
-      }
+      { event: '*', schema: 'public', table: PRODUCT_TABLE }, refresh
     )
+    .on('postgres_changes', { event: '*', schema: 'public', table: ORDER_TABLE }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: SETTINGS_TABLE, filter: `id=eq.${STORE_ID}` }, refresh)
     .subscribe((status, err) => {
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         if (import.meta.env.DEV) console.warn('[sync] Realtime', status, err?.message || err);
       }
     });
   return () => {
+    if (refreshTimer) clearTimeout(refreshTimer);
     c.removeChannel(channel);
   };
 }
