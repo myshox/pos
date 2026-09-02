@@ -497,7 +497,7 @@ export function decrementProductStock(productId, qty) {
   const products = getProducts();
   const next = products.map((p) => {
     if (p.id !== productId || !p.useStock || typeof p.stock !== 'number') return p;
-    return { ...p, stock: Math.max(0, p.stock - qty) };
+    return { ...p, stock: Math.max(0, p.stock - qty), _syncUpdatedAt: new Date().toISOString() };
   });
   saveProducts(next);
   return next;

@@ -9,10 +9,12 @@ const STORE_ID = 'default';
 const TABLE = 'store_data';
 /** 與雲端 store_data.updated_at 對齊，避免輪詢／即時重複套用或誤覆寫 */
 const REMOTE_TS_KEY = 'pos_sync_remote_updated_at';
+const PRODUCT_TOMBSTONES_KEY = 'pos_sync_product_tombstones';
 
 let client = null;
 let uploadTimer = null;
-const UPLOAD_DEBOUNCE_MS = 1500;
+let uploadQueue = Promise.resolve();
+const UPLOAD_DEBOUNCE_MS = 300;
 
 /** 輪詢拉取間隔（Realtime 在部分 WebView 不穩時補強） */
 export const POLL_INTERVAL_MS = 30000;
@@ -96,6 +98,67 @@ export function isRemoteAheadOfCursor(remote) {
 
 export function isSyncEnabled() {
   return !!getClient();
+}
+
+function productSyncTime(product, fallback = '') {
+  const value = product?._syncUpdatedAt || fallback;
+  const time = cursorTimeMs(value);
+  return Number.isFinite(time) ? time : 0;
+}
+
+function getProductTombstones() {
+  try {
+    const value = JSON.parse(localStorage.getItem(PRODUCT_TOMBSTONES_KEY) || '[]');
+    return Array.isArray(value) ? value.filter((item) => item?._deleted && item.id != null) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveProductTombstones(products) {
+  try {
+    const tombstones = products.filter((item) => item?._deleted && item.id != null);
+    localStorage.setItem(PRODUCT_TOMBSTONES_KEY, JSON.stringify(tombstones));
+  } catch { /* localStorage may be unavailable */ }
+}
+
+export function stampProductForSync(product) {
+  return { ...product, _syncUpdatedAt: new Date().toISOString() };
+}
+
+export function rememberProductDeletion(id) {
+  const now = new Date().toISOString();
+  const tombstones = getProductTombstones().filter((item) => item.id !== id);
+  saveProductTombstones([...tombstones, { id, _deleted: true, _syncUpdatedAt: now }]);
+}
+
+export function getProductsForSync(products) {
+  return [...(Array.isArray(products) ? products : []), ...getProductTombstones()];
+}
+
+/** 逐筆合併商品；較新的修改或刪除記錄勝出，避免舊裝置復活已刪商品。 */
+export function mergeProductArrays(localProducts, remoteProducts, remoteUpdatedAt = '') {
+  const map = new Map();
+  for (const product of (remoteProducts || [])) {
+    if (product?.id == null) continue;
+    const normalized = product._syncUpdatedAt
+      ? product
+      : { ...product, _syncUpdatedAt: remoteUpdatedAt || new Date(0).toISOString() };
+    map.set(product.id, normalized);
+  }
+  for (const product of (localProducts || [])) {
+    if (product?.id == null) continue;
+    const existing = map.get(product.id);
+    if (!existing || productSyncTime(product) >= productSyncTime(existing)) map.set(product.id, product);
+  }
+  return Array.from(map.values());
+}
+
+/** 保存刪除記錄供下次上傳，回傳只供畫面使用的有效商品。 */
+export function applyProductSyncResult(products) {
+  const list = Array.isArray(products) ? products : [];
+  saveProductTombstones(list);
+  return list.filter((item) => !item?._deleted);
 }
 
 export async function checkConnection() {
@@ -218,7 +281,7 @@ function mergeOrderArrays(localOrders, remoteOrders) {
 /**
  * 先拉遠端訂單合併再上傳，降低覆蓋其他裝置訂單的風險
  */
-async function mergeAndUpload(c, getCurrentData) {
+async function mergeAndUploadOnce(c, getCurrentData) {
   const storeKey = getSyncEnv('VITE_STORE_KEY');
   const local = getCurrentData();
 
@@ -226,10 +289,11 @@ async function mergeAndUpload(c, getCurrentData) {
   let remoteProducts = [];
   let remoteCategories = [];
   let remoteStore = {};
+  let remoteUpdatedAt = '';
   try {
     const { data } = await c
       .from(TABLE)
-      .select('orders, products, categories, store_settings')
+      .select('orders, products, categories, store_settings, updated_at')
       .eq('id', STORE_ID)
       .maybeSingle();
     if (data) {
@@ -237,15 +301,15 @@ async function mergeAndUpload(c, getCurrentData) {
       if (Array.isArray(data.products)) remoteProducts = data.products;
       if (Array.isArray(data.categories)) remoteCategories = data.categories;
       if (data.store_settings && typeof data.store_settings === 'object') remoteStore = data.store_settings;
+      remoteUpdatedAt = data.updated_at || '';
     }
   } catch { /* 拉不到就用本地 */ }
 
   const mergedOrders = mergeOrderArrays(local.orders || [], remoteOrders);
 
-  const lp = local.products || [];
+  const lp = getProductsForSync(local.products || []);
   const rp = remoteProducts || [];
-  /** 本機商品為空但雲端有資料時沿用雲端，避免空裝置上傳洗掉他台已同步的商品 */
-  const mergedProducts = lp.length === 0 && rp.length > 0 ? rp : lp;
+  const mergedProducts = mergeProductArrays(lp, rp, remoteUpdatedAt);
 
   const lc = local.categories || [];
   const rc = remoteCategories || [];
@@ -253,30 +317,42 @@ async function mergeAndUpload(c, getCurrentData) {
 
   const mergedStore = { ...remoteStore, ...(local.store && typeof local.store === 'object' ? local.store : {}) };
 
-  const { data: row, error } = await c
+  let query = c
     .from(TABLE)
-    .upsert(
-      {
-        id: STORE_ID,
-        store_key: typeof storeKey === 'string' ? storeKey : '',
-        products: mergedProducts,
-        orders: mergedOrders,
-        categories: mergedCategories,
-        store_settings: mergedStore,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' }
-    )
-    .select('updated_at')
-    .maybeSingle();
+    .update({
+      store_key: typeof storeKey === 'string' ? storeKey : '',
+      products: mergedProducts,
+      orders: mergedOrders,
+      categories: mergedCategories,
+      store_settings: mergedStore,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', STORE_ID);
+  if (remoteUpdatedAt) query = query.eq('updated_at', remoteUpdatedAt);
+  const { data: rows, error } = await query.select('updated_at');
 
   if (error) {
     const msg = error.message || error.details || JSON.stringify(error);
     throw new Error(`上傳失敗: ${msg}`);
   }
-  if (row?.updated_at) setRemoteCursor(row.updated_at);
-  else setRemoteCursor(new Date().toISOString());
+  const row = Array.isArray(rows) ? rows[0] : rows;
+  if (!row) return false;
+  applyProductSyncResult(mergedProducts);
+  if (row.updated_at) setRemoteCursor(row.updated_at);
   return true;
+}
+
+async function mergeAndUpload(c, getCurrentData) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (await mergeAndUploadOnce(c, getCurrentData)) return true;
+  }
+  throw new Error('商品資料同時被其他裝置更新，已重試 3 次，請再按一次同步');
+}
+
+function enqueueUpload(task) {
+  const queued = uploadQueue.then(task, task);
+  uploadQueue = queued.catch(() => {});
+  return queued;
 }
 
 /**
@@ -293,7 +369,7 @@ export function scheduleUpload(getCurrentData, options = {}) {
     let ok = false;
     try {
       onUploadStart?.();
-      ok = await mergeAndUpload(c, getCurrentData);
+      ok = await enqueueUpload(() => mergeAndUpload(c, getCurrentData));
     } catch (err) {
       if (import.meta.env.DEV) console.warn('[sync] upload failed', err);
       onUploadError?.(err?.message || String(err));
@@ -308,7 +384,7 @@ export function scheduleUpload(getCurrentData, options = {}) {
 export async function uploadNow(getCurrentData) {
   const c = getClient();
   if (!c || typeof getCurrentData !== 'function') throw new Error('Supabase 未設定');
-  return await mergeAndUpload(c, getCurrentData);
+  return await enqueueUpload(() => mergeAndUpload(c, getCurrentData));
 }
 
 export function subscribeToStore(onData) {
@@ -324,7 +400,7 @@ export function subscribeToStore(onData) {
         if (!row) return;
         if (row.updated_at) setRemoteCursor(row.updated_at);
         onData({
-          products: Array.isArray(row.products) ? row.products : [],
+          products: applyProductSyncResult(Array.isArray(row.products) ? row.products : []),
           orders: Array.isArray(row.orders) ? row.orders : [],
           categories: Array.isArray(row.categories) ? row.categories : [],
           store: row.store_settings && typeof row.store_settings === 'object' ? row.store_settings : {},

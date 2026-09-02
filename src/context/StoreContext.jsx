@@ -20,12 +20,17 @@ import {
   setRemoteCursor,
   clearRemoteCursor,
   POLL_INTERVAL_MS,
+  stampProductForSync,
+  rememberProductDeletion,
+  getProductsForSync,
+  mergeProductArrays,
+  applyProductSyncResult,
 } from '../lib/syncSupabase';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 
 function getCurrentDataForSync() {
   return {
-    products: getProducts(),
+    products: getProductsForSync(getProducts()),
     orders: getOrders(),
     categories: getCategories(),
     store: getStore(),
@@ -60,6 +65,7 @@ export function StoreProvider({ children }) {
     scheduleUpload(getCurrentDataForSync, {
       onUploadStart: () => setIsSyncing(true),
       onUploadEnd: (ok) => { setIsSyncing(false); if (ok) markSynced(); else markPending(); },
+      onUploadError: (message) => setSyncError(message),
     });
   }, [markPending, markSynced]);
 
@@ -95,6 +101,11 @@ export function StoreProvider({ children }) {
       if (!data) return;
       const shouldApply = isRemoteAheadOfCursor(data);
       if (shouldApply) {
+        data.products = applyProductSyncResult(mergeProductArrays(
+          getProductsForSync(getProducts()),
+          data.products,
+          data.updatedAt
+        ));
         const { skippedEmptyRemote } = importAllData(data);
         setProducts(getProducts());
         setOrders(getOrders());
@@ -114,10 +125,10 @@ export function StoreProvider({ children }) {
     }
   }, [triggerSync]);
 
-  /** iOS Safari：背景分頁會暫停 setInterval、Realtime WebSocket 也常斷線；切回前景須主動拉雲端並上傳 */
-  const resumeSync = useCallback(() => {
+  /** iOS Safari：切回前景時必須依序先拉後推，避免舊本機資料覆蓋雲端。 */
+  const resumeSync = useCallback(async () => {
     if (!isSyncEnabled()) return;
-    void refreshFromCloud();
+    await refreshFromCloud();
     void uploadNow(getCurrentDataForSync).then((ok) => {
       if (ok) markSynced();
     });
@@ -155,6 +166,10 @@ export function StoreProvider({ children }) {
     let unsub = () => {};
     try {
       unsub = subscribeToStore((remote) => {
+        remote.products = applyProductSyncResult(mergeProductArrays(
+          getProductsForSync(getProducts()),
+          remote.products
+        ));
         const { skippedEmptyRemote } = importAllData(remote);
         setProducts(getProducts());
         setOrders(getOrders());
@@ -240,8 +255,9 @@ export function StoreProvider({ children }) {
 
   const addProduct = useCallback((product) => {
     const current = getProducts();
-    const id = Math.max(0, ...current.map((p) => p.id)) + 1;
-    const newProduct = { ...product, id, isActive: product.isActive !== false };
+    const numericIds = current.map((p) => Number(p.id)).filter(Number.isFinite);
+    const id = Math.max(Date.now(), Math.max(0, ...numericIds) + 1);
+    const newProduct = stampProductForSync({ ...product, id, isActive: product.isActive !== false });
     persistProducts([...current, newProduct]);
     return newProduct;
   }, [persistProducts]);
@@ -249,7 +265,7 @@ export function StoreProvider({ children }) {
   const updateProduct = useCallback((id, updates) => {
     const current = getProducts();
     persistProducts(
-      current.map((p) => (p.id === id ? { ...p, ...updates } : p))
+      current.map((p) => (p.id === id ? stampProductForSync({ ...p, ...updates }) : p))
     );
     setProducts(getProducts());
   }, [persistProducts]);
@@ -258,7 +274,7 @@ export function StoreProvider({ children }) {
     const current = getProducts();
     persistProducts(
       current.map((p) =>
-        p.id === id ? { ...p, isActive: !p.isActive } : p
+        p.id === id ? stampProductForSync({ ...p, isActive: !p.isActive }) : p
       )
     );
     setProducts(getProducts());
@@ -266,6 +282,7 @@ export function StoreProvider({ children }) {
 
   const deleteProduct = useCallback((id) => {
     const current = getProducts();
+    rememberProductDeletion(id);
     persistProducts(current.filter((p) => p.id !== id));
     setProducts(getProducts());
   }, [persistProducts]);
@@ -328,6 +345,7 @@ export function StoreProvider({ children }) {
     setIsSyncing(true);
     setSyncError(null);
     try {
+      await refreshFromCloud();
       await uploadNow(getCurrentDataForSync);
       await refreshFromCloud();
       markSynced();
@@ -341,27 +359,28 @@ export function StoreProvider({ children }) {
   }, [markSynced, refreshFromCloud]);
 
   /**
-   * 強制重新拉取：先上傳本機資料，然後清除游標並直接把雲端資料套用到本機。
-   * 解決「上傳後游標被設為最新時間，refreshFromCloud 認為不需要拉取」的問題。
+   * 強制重新拉取：清除游標並先套用雲端，再安全合併上傳。
    */
   const forceRePull = useCallback(async () => {
     if (!isSyncEnabled()) return false;
     setIsSyncing(true);
     setSyncError(null);
     try {
-      // 1. 先上傳本機（合併訂單後推上雲端）
-      await uploadNow(getCurrentDataForSync);
-      // 2. 清游標，確保下一步一定會拉
       clearRemoteCursor();
-      // 3. 直接從雲端抓資料並強制套用（不判斷游標）
       const data = await fetchStoreData();
       if (data) {
+        data.products = applyProductSyncResult(mergeProductArrays(
+          getProductsForSync(getProducts()),
+          data.products,
+          data.updatedAt
+        ));
         importAllData(data);
         setProducts(getProducts());
         setOrders(getOrders());
         setCategoriesState(getCategories());
         setStoreState(getStore());
         if (data.updatedAt) setRemoteCursor(data.updatedAt);
+        await uploadNow(getCurrentDataForSync);
         markSynced();
       }
       setIsSyncing(false);
