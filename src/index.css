@@ -151,6 +151,32 @@ button, a, [role="button"], input, select, textarea {
 .admin-nav-button:hover { background:rgba(255,255,255,.08); color:#fff; }
 .admin-nav-button.is-active { background:#fff; color:#145b4e; box-shadow:0 8px 22px rgba(0,0,0,.18); }
 .admin-content { background:linear-gradient(135deg,#fff 0%,#fbfdfc 70%,#fffaf3 100%); }
+.product-admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr)); gap:1rem; }
+.product-admin-card { min-width:0; overflow:hidden; border-radius:16px; background:#fff; box-shadow:0 10px 28px rgba(34,61,53,.09); transition:transform .18s ease,box-shadow .18s ease; }
+.product-admin-card:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(34,61,53,.14); }
+.product-admin-card.is-off-sale { background:#f8faf9; }
+.product-admin-media { position:relative; aspect-ratio:16/10; overflow:hidden; background:#edf3f1; }
+.product-admin-media img { width:100%; height:100%; object-fit:cover; }
+.product-admin-no-image { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; color:#789087; }
+.product-admin-no-image span { font-size:2rem; font-weight:800; }
+.product-admin-no-image small { font-size:.75rem; }
+.product-admin-status { position:absolute; inset-block-start:.65rem; inset-inline-end:.65rem; padding:.3rem .55rem; border-radius:999px; background:rgba(71,85,105,.9); color:#fff; font-size:.7rem; font-weight:800; backdrop-filter:blur(8px); }
+.product-admin-status.is-live { background:rgba(13,120,103,.92); }
+.product-admin-body { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:.5rem .75rem; padding:1rem; }
+.product-admin-body h3 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#193c34; font-size:1rem; font-weight:800; }
+.product-admin-body p { color:#70817c; font-size:.75rem; }
+.product-admin-body > strong { color:#0d7867; font-size:1rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.product-admin-description,.product-admin-stock { grid-column:1/-1; overflow-wrap:anywhere; }
+.product-admin-stock.is-low { color:#b42318; font-weight:700; }
+.product-admin-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; padding:0 1rem 1rem; }
+.product-admin-actions button,.product-admin-confirm button { min-height:42px; padding:.55rem .7rem; border-radius:11px; background:#edf2f0; color:#334a43; font-size:.78rem; font-weight:800; }
+.product-admin-actions button:hover,.product-admin-confirm button:hover { background:#dfe9e5; }
+.product-admin-actions button.is-primary { background:#d9f3ea; color:#086b59; }
+.product-admin-actions button.is-danger,.product-admin-confirm button.is-danger { background:#fee4e2; color:#b42318; }
+.product-admin-confirm { margin:0 1rem 1rem; padding:.8rem; border-radius:12px; background:#fff4f2; }
+.product-admin-confirm p { color:#912018; font-size:.78rem; line-height:1.5; }
+.product-admin-confirm div { display:flex; justify-content:flex-end; gap:.5rem; margin-top:.65rem; }
+@media (max-width:480px) { .product-admin-grid { grid-template-columns:1fr; } .product-admin-media { aspect-ratio:3/2; } }
 
 /* 商品／表單卡片 */
 .card-market {

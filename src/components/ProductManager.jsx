@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
@@ -15,6 +15,9 @@ export default function ProductManager() {
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [imageError, setImageError] = useState('');
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [failedImages, setFailedImages] = useState(() => new Set());
+  const formRef = useRef(null);
 
   const categoryOptions = useMemo(
     () => [...new Set(products.map((p) => p.category).filter(Boolean))].sort(),
@@ -68,6 +71,8 @@ export default function ProductManager() {
     setIsAdding(false);
     setIsDuplicate(false);
     setImageError('');
+    setPendingDeleteId(null);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const closeForm = () => {
@@ -111,8 +116,28 @@ export default function ProductManager() {
       closeForm();
     } else if (editing) {
       updateProduct(editing, { name, sku, price, category, description, image: image ?? '', useStock, stock });
+      showToast(t('toastProductUpdated'));
       closeForm();
     }
+  };
+
+  const handleToggle = (product) => {
+    toggleProductActive(product.id);
+    showToast(t(product.isActive ? 'toastProductUnlisted' : 'toastProductListed'));
+  };
+
+  const handleDelete = (product) => {
+    deleteProduct(product.id);
+    setPendingDeleteId(null);
+    showToast(t('toastProductDeleted'));
+  };
+
+  const markImageFailed = (id) => {
+    setFailedImages((current) => {
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
   };
 
   return (
@@ -141,7 +166,7 @@ export default function ProductManager() {
       </div>
 
       {(isAdding || editing) && (
-        <form onSubmit={handleSubmit} className="mb-6 p-5 card-market rounded-2xl space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="mb-6 p-5 card-market rounded-2xl space-y-4 scroll-mt-28">
           <h3 className="font-semibold text-slate-700">
             {editing ? t('editProductTitle') : isDuplicate ? t('duplicateProductTitle') : t('addProductTitle')}
           </h3>
@@ -274,168 +299,50 @@ export default function ProductManager() {
         </div>
       )}
 
-      {/* 手機／平板：卡片列表 */}
       {filteredProducts.length > 0 && (
-      <div className="lg:hidden space-y-3">
-        {filteredProducts.map((p) => (
-          <article
-            key={p.id}
-            className="card-market rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
-          >
-            <div className="flex gap-3 min-w-0 flex-1">
-              {p.image ? (
-                <img src={p.image} alt="" className="w-16 h-16 sm:w-14 sm:h-14 object-cover rounded-lg flex-shrink-0" />
-              ) : (
-                <div className="w-16 h-16 sm:w-14 sm:h-14 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400 text-sm flex-shrink-0">{t('noImage')}</div>
-              )}
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-slate-800 truncate">{p.name}</h3>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <span className="category-badge px-2 py-0.5 rounded-lg text-xs">{p.category || '—'}</span>
-                  <span className="text-teal-700 font-semibold text-sm">NT$ {p.price}</span>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-1.5">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      p.isActive ? 'bg-teal-100 text-slate-800' : 'bg-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {p.isActive ? t('onSale') : t('offSale')}
-                  </span>
-                  {p.useStock && (
-                    <span className={`text-xs ${p.stock < 5 ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
-                      {t('productColStock')} {p.stock}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2 sm:flex-shrink-0 border-t border-slate-100 pt-3 sm:pt-0 sm:border-t-0">
-              <button
-                type="button"
-                onClick={() => toggleProductActive(p.id)}
-                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-slate-200 hover:bg-slate-300"
-              >
-                {p.isActive ? t('setOffSale') : t('setOnSale')}
-              </button>
-              <button
-                type="button"
-                onClick={() => openEdit(p)}
-                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-teal-100 hover:bg-teal-200 text-slate-800"
-              >
-                {t('edit')}
-              </button>
-              <button
-                type="button"
-                onClick={() => openDuplicate(p)}
-                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
-                aria-label={t('duplicateProduct')}
-              >
-                {t('duplicateProduct')}
-              </button>
-              <button
-                type="button"
-                onClick={() => window.confirm(t('confirmDeleteProduct')) && deleteProduct(p.id)}
-                className="flex-1 sm:flex-none min-h-[44px] px-3 py-2 rounded-xl text-sm bg-red-100 hover:bg-red-200 text-red-700"
-              >
-                {t('delete')}
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
-      )}
-
-      {/* 桌機：表格 */}
-      {filteredProducts.length > 0 && (
-      <div className="hidden lg:block overflow-x-auto -mx-1">
-        <table className="w-full text-left min-w-[880px]">
-          <thead>
-            <tr className="border-b-2 border-slate-200 bg-slate-50/80">
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-14" title={t('image')}>{t('image')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-12" title={t('id')}>{t('id')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-16" title={t('sku')}>{t('sku')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap min-w-[72px]" title={t('productName')}>{t('productName')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap min-w-[56px]" title={t('category')}>{t('category')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap min-w-[52px]" title={t('description')}>{t('productColDesc')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-20" title={t('price')}>{t('price')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-16" title={t('status')}>{t('status')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-14" title={t('productStock')}>{t('productColStock')}</th>
-              <th className="py-3 px-2 text-slate-600 font-medium text-sm whitespace-nowrap w-[180px]" title={t('actions')}>{t('actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((p) => (
-              <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                <td className="py-2.5 px-2 align-middle">
-                  {p.image ? (
-                    <img src={p.image} alt="" className="w-11 h-11 object-cover rounded-lg flex-shrink-0" />
+        <div className="product-admin-grid">
+          {filteredProducts.map((p) => {
+            const showImage = p.image && !failedImages.has(p.id);
+            const confirmingDelete = pendingDeleteId === p.id;
+            return (
+              <article key={p.id} className={`product-admin-card ${p.isActive ? '' : 'is-off-sale'}`}>
+                <div className="product-admin-media">
+                  {showImage ? (
+                    <img src={p.image} alt={p.name} loading="lazy" onError={() => markImageFailed(p.id)} />
                   ) : (
-                    <div className="w-11 h-11 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400 text-xs">{t('noImage')}</div>
+                    <div className="product-admin-no-image"><span>{p.name?.charAt(0) || '—'}</span><small>{t('noImage')}</small></div>
                   )}
-                </td>
-                <td className="py-2.5 px-2 text-slate-500 text-xs truncate align-middle" title={String(p.id)}>{String(p.id).slice(0, 6)}</td>
-                <td className="py-2.5 px-2 text-slate-600 text-sm font-mono truncate align-middle">{p.sku || '—'}</td>
-                <td className="py-2.5 px-2 font-medium text-slate-800 text-sm truncate align-middle" title={p.name}>{p.name}</td>
-                <td className="py-2.5 px-2 align-middle">
-                  <span className="category-badge px-2 py-0.5 rounded-lg text-xs whitespace-nowrap inline-block max-w-full truncate" title={p.category}>{p.category || '—'}</span>
-                </td>
-                <td className="py-2.5 px-2 text-slate-600 text-xs truncate align-middle" title={p.description || ''}>{p.description || '—'}</td>
-                <td className="py-2.5 px-2 text-slate-700 text-sm whitespace-nowrap align-middle">NT$ {p.price}</td>
-                <td className="py-2.5 px-2 align-middle">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      p.isActive ? 'bg-teal-100 text-slate-800' : 'bg-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {p.isActive ? t('onSale') : t('offSale')}
-                  </span>
-                </td>
-                <td className="py-2.5 px-2 text-sm align-middle">
-                  {p.useStock ? (
-                    <span className={`whitespace-nowrap ${p.stock < 5 ? 'text-red-600 font-medium' : 'text-slate-700'}`}>{p.stock}</span>
-                  ) : (
-                    <span className="text-slate-400">—</span>
-                  )}
-                </td>
-                <td className="py-2.5 px-2 align-middle">
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => toggleProductActive(p.id)}
-                      className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 whitespace-nowrap"
-                    >
-                      {p.isActive ? t('setOffSale') : t('setOnSale')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(p)}
-                      className="text-xs px-2.5 py-1.5 rounded-lg bg-teal-100 hover:bg-teal-200 text-slate-800 whitespace-nowrap"
-                    >
-                      {t('edit')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openDuplicate(p)}
-                      className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 whitespace-nowrap"
-                      title={t('duplicateProduct')}
-                    >
-                      {t('duplicateProduct')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => window.confirm(t('confirmDeleteProduct')) && deleteProduct(p.id)}
-                      className="text-xs px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 whitespace-nowrap"
-                    >
-                      {t('delete')}
-                    </button>
+                  <span className={`product-admin-status ${p.isActive ? 'is-live' : ''}`}>{p.isActive ? t('onSale') : t('offSale')}</span>
+                </div>
+                <div className="product-admin-body">
+                  <div className="min-w-0">
+                    <h3 title={p.name}>{p.name}</h3>
+                    <p>{p.category || '—'}{p.sku ? ` · ${p.sku}` : ''}</p>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  <strong>NT$ {p.price}</strong>
+                  {p.description && <p className="product-admin-description">{p.description}</p>}
+                  {p.useStock && <p className={p.stock < 5 ? 'product-admin-stock is-low' : 'product-admin-stock'}>{t('productColStock')} {p.stock}</p>}
+                </div>
+                {confirmingDelete ? (
+                  <div className="product-admin-confirm" role="alert">
+                    <p>{t('confirmDeleteProduct')}</p>
+                    <div>
+                      <button type="button" onClick={() => setPendingDeleteId(null)}>{t('cancel')}</button>
+                      <button type="button" className="is-danger" onClick={() => handleDelete(p)}>{t('confirmDelete')}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="product-admin-actions" aria-label={`${p.name} ${t('actions')}`}>
+                    <button type="button" onClick={() => handleToggle(p)}>{p.isActive ? t('setOffSale') : t('setOnSale')}</button>
+                    <button type="button" className="is-primary" onClick={() => openEdit(p)}>{t('edit')}</button>
+                    <button type="button" onClick={() => openDuplicate(p)}>{t('duplicateProduct')}</button>
+                    <button type="button" className="is-danger" onClick={() => setPendingDeleteId(p.id)}>{t('delete')}</button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
       )}
       {products.length === 0 && (
         <div className="py-12 text-center">
