@@ -120,7 +120,7 @@ export default function PosPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const recTradeId = params.get('rec_trade_id');
-    if (params.get('aftee_return') !== '1' || !recTradeId) return;
+    if (window.location.pathname !== '/aftee-return' || !recTradeId) return;
     let active = true;
     queryTapPayTransaction(recTradeId).then((record) => {
       if (!active) return;
@@ -131,7 +131,7 @@ export default function PosPage() {
       setReceiptOrder(updated || matched);
       showToast(paid ? 'AFTEE 付款完成' : 'AFTEE 付款狀態待確認', paid ? 'success' : 'error');
     }).catch((error) => showToast(error?.message || 'AFTEE 交易查詢失敗', 'error'))
-      .finally(() => window.history.replaceState({}, '', window.location.pathname));
+      .finally(() => window.history.replaceState({}, '', '/'));
     return () => { active = false; };
   }, [orders, updateOrder, showToast]);
 

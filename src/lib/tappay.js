@@ -17,7 +17,7 @@ export function loadTapPaySdk() {
       return;
     }
     const script = document.createElement('script');
-    script.src = 'https://js.tappaysdk.com/sdk/tpdirect/v5.18.0';
+    script.src = 'https://js.tappaysdk.com/sdk/tpdirect/v5.22.0';
     script.async = true;
     script.dataset.tappaySdk = 'true';
     script.onload = () => resolve(window.TPDirect);

@@ -30,6 +30,7 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<PosPage />} />
+                <Route path="/aftee-return" element={<PosPage />} />
                 <Route path="/showcase" element={<ShowcasePage />} />
                 <Route path="/legal" element={<LegalPage />} />
                 <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />

@@ -21,6 +21,8 @@ export async function onRequest({ request, env }) {
     return json({ error: 'AFTEE 付款資料不完整' }, 400, origin);
   }
   const id = `AF${Date.now().toString(36).toUpperCase()}${crypto.randomUUID().slice(0, 6).replaceAll('-', '').toUpperCase()}`;
+  const rawPhone = cardholder.phone_number.trim().replaceAll(' ', '').replaceAll('-', '');
+  const phoneNumber = /^09\d{8}$/.test(rawPhone) ? `+886${rawPhone.slice(1)}` : rawPhone;
   const serverType = env.TAPPAY_SERVER_TYPE === 'production' ? 'production' : 'sandbox';
   try {
     const response = await fetch(ENDPOINTS[serverType], {
@@ -29,9 +31,9 @@ export async function onRequest({ request, env }) {
       body: JSON.stringify({
         prime, partner_key: partnerKey, merchant_id: merchantId, amount, currency: 'TWD',
         order_number: id, bank_transaction_id: id, details: typeof details === 'string' ? details.slice(0, 100) : 'Studio Mogu POS',
-        cardholder: { phone_number: cardholder.phone_number.trim(), name: cardholder.name.trim(), email: cardholder.email.trim() },
+        cardholder: { phone_number: phoneNumber, name: cardholder.name.trim(), email: cardholder.email.trim() },
         result_url: {
-          frontend_redirect_url: 'https://mogupos.org/?aftee_return=1',
+          frontend_redirect_url: 'https://mogupos.org/aftee-return',
           backend_notify_url: 'https://pos-6q7.pages.dev/api/tappay/aftee-notify',
         },
       }),
