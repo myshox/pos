@@ -12,7 +12,8 @@ export default function TapPayCardForm({ cardholder, onCardholderChange, onReady
       onReadyChange(Boolean(update.canGetPrime));
       setMessage(update.canGetPrime ? '卡片資料正確，可以進行測試付款。' : '請完整輸入卡號、有效期限與安全碼。');
     }).then((result) => {
-      if (active && !result.ready) setMessage('TapPay 尚未完成設定。');
+      if (!active) return;
+      setMessage(result.ready ? '請完整輸入卡號、有效期限與安全碼。' : 'TapPay 尚未完成設定。');
     }).catch(() => {
       if (active) setMessage('TapPay 欄位載入失敗，請檢查網路後重試。');
     });
