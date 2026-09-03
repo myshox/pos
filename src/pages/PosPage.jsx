@@ -23,6 +23,27 @@ const PAYMENT_OPTIONS = [
   { id: 'aftee', labelKey: 'payAftee', activeClass: 'bg-fuchsia-500 hover:bg-fuchsia-600 text-white', inactiveClass: 'bg-fuchsia-50 text-fuchsia-800 border border-fuchsia-200 hover:bg-fuchsia-100' },
 ];
 
+const PAYMENT_DESCRIPTIONS = {
+  cash: '現場收款・找零',
+  line: '人工核對入帳',
+  card: 'TapPay 線上刷卡',
+  atm: '產生虛擬帳號',
+  aftee: '先享後付',
+};
+
+const PAYMENT_DISPLAY_LABELS = {
+  cash: '現金',
+  line: 'LINE 收款',
+  card: '信用卡',
+  atm: 'ATM',
+  aftee: 'AFTEE',
+};
+
+const PAYMENT_GROUPS = [
+  { id: 'onsite', label: '現場收款', hint: '立即完成，不需跳轉', methods: ['cash', 'line'] },
+  { id: 'online', label: 'TapPay 線上金流', hint: '安全加密・自動建立交易', methods: ['card', 'atm', 'aftee'] },
+];
+
 function CardProviderPicker({ value, onChange, t }) {
   return (
     <div className="card-provider-picker" aria-label={t('cardProvider')}>
@@ -769,89 +790,84 @@ export default function PosPage() {
 
       {/* 結帳確認防呆彈窗 */}
       {showCheckoutConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" onClick={() => setShowCheckoutConfirm(false)}>
-          <div ref={confirmPanelRef} className="modal-panel bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[85dvh] flex flex-col min-h-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-checkout-title">
-            <div className="p-5 border-b border-slate-200 shrink-0">
-              <h3 id="confirm-checkout-title" className="text-lg font-semibold text-slate-800">{t('confirmCheckoutTitle')}</h3>
-              <p className="text-sm text-slate-500 mt-1">{t('confirmCheckoutHint')}</p>
+        <div className="checkout-confirm-overlay" onClick={() => setShowCheckoutConfirm(false)}>
+          <div ref={confirmPanelRef} className="modal-panel checkout-confirm-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-checkout-title">
+            <div className="checkout-confirm-header">
+              <h3 id="confirm-checkout-title">{t('confirmCheckoutTitle')}</h3>
+              <span>步驟 2 / 2</span>
             </div>
-            <div className="p-5 space-y-3 flex-1 min-h-0 overflow-y-auto overscroll-contain">
-              <div className="text-sm text-slate-600">
-                {t('confirmCheckoutItems')}：{cart.length} {t('confirmCheckoutItemCount')}，{cart.reduce((s, i) => s + i.qty, 0)} {t('confirmCheckoutQty')}
-              </div>
-              <div className="flex justify-between font-semibold text-lg pt-2 border-t border-slate-100">
-                <span className="text-slate-700">{t('total')}</span>
-                <span className="text-xl font-bold text-slate-800">NT$ {total}</span>
-              </div>
-              <div className={`flex justify-between text-sm rounded-xl px-3 py-2 ${paymentMethod === 'atm' ? 'border-2 border-violet-300 bg-violet-50 text-violet-900 font-bold' : 'text-slate-600'}`}>
-                <span>{t('paymentMethod')}</span>
-                <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : paymentMethod === 'atm' ? 'payAtm' : paymentMethod === 'aftee' ? 'payAftee' : 'payCash')}</span>
-              </div>
-              {paymentMethod === 'card' && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-slate-600"><span>{t('cardProvider')}</span><strong className="text-slate-800">{t(cardProvider === 'tappay' ? 'cardTapPay' : 'cardTerminal')}</strong></div>
-                  {cardProvider === 'tappay' && <><TapPayDisclosure compact /><TapPayCardForm cardholder={cardholder} onCardholderChange={setCardholder} onReadyChange={setTapPayFieldsReady} /></>}
+
+            <div className="checkout-confirm-scroll">
+              <section className="checkout-total-card" aria-label={t('total')}>
+                <span>{t('total')}</span>
+                <strong>NT$ {total}</strong>
+                <small>{cart.map((item) => `${item.name} × ${item.qty}`).join('、')}</small>
+              </section>
+
+              <section className="checkout-payment-section" aria-labelledby="payment-method-heading">
+                <div className="checkout-section-heading">
+                  <h4 id="payment-method-heading">{t('paymentMethod')}</h4>
+                  <span>TapPay 安全金流</span>
                 </div>
-              )}
-              {paymentMethod === 'cash' && (
-                <div className="pt-2 space-y-2">
-                  <label className="text-sm font-medium text-slate-600">{t('cashReceived')}</label>
-                  <div className="flex flex-wrap gap-2">
-                    {quickCashAmounts.map((amt) => (
-                      <button key={amt} type="button" onClick={() => setCashReceived(String(amt))} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${String(amt) === cashReceived ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'}`}>
-                        NT${amt}
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={cashReceived}
-                    onChange={(e) => setCashReceived(e.target.value)}
-                    placeholder={t('cashReceivedPlaceholder')}
-                    className="input-pro w-full rounded-xl px-4 py-3 text-base min-h-[48px]"
-                  />
-                  {cashReceivedNum > 0 && cashReceivedNum >= total && (
-                    <div className="flex justify-between items-center bg-emerald-50 rounded-xl px-4 py-3 border border-emerald-200">
-                      <span className="text-emerald-700 font-medium">{t('changeAmount')}</span>
-                      <span className="text-2xl font-bold text-emerald-700">NT$ {changeAmount}</span>
+                {PAYMENT_GROUPS.map((group) => (
+                  <div key={group.id} className={`checkout-payment-group checkout-payment-group--${group.id}`}>
+                    <div className="checkout-payment-group-heading">
+                      <strong>{group.label}</strong>
+                      <span>{group.hint}</span>
                     </div>
-                  )}
-                  {cashReceivedNum > 0 && cashReceivedNum < total && (
-                    <div className="text-sm text-red-500 font-medium">{t('cashNotEnough')}</div>
-                  )}
-                </div>
-              )}
-              {paymentMethod === 'atm' && <TapPayAtmForm customer={atmCustomer} onChange={setAtmCustomer} total={total} />}
-              {paymentMethod === 'aftee' && <TapPayAfteeForm customer={afteeCustomer} onChange={setAfteeCustomer} />}
+                    <div className="checkout-payment-grid" data-count={group.methods.length}>
+                      {group.methods.map((methodId) => {
+                        const option = PAYMENT_OPTIONS.find((item) => item.id === methodId);
+                        const selected = paymentMethod === methodId;
+                        return (
+                          <button key={methodId} type="button" onClick={() => selectPaymentMethod(methodId)} aria-pressed={selected} className={`checkout-payment-option checkout-payment-option--${methodId}${selected ? ' is-active' : ''}`}>
+                            <strong>{PAYMENT_DISPLAY_LABELS[methodId] || t(option.labelKey)}</strong>
+                            <span>{PAYMENT_DESCRIPTIONS[methodId]}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </section>
+
+              <section className="checkout-payment-details">
+                {paymentMethod === 'card' && (
+                  <div className="space-y-3">
+                    <CardProviderPicker value={cardProvider} onChange={setCardProvider} t={t} />
+                    {cardProvider === 'tappay' && <><TapPayDisclosure compact /><TapPayCardForm cardholder={cardholder} onCardholderChange={setCardholder} onReadyChange={setTapPayFieldsReady} /></>}
+                  </div>
+                )}
+                {paymentMethod === 'cash' && (
+                  <div className="checkout-cash-panel">
+                    <label>{t('cashReceived')}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {quickCashAmounts.map((amt) => (
+                        <button key={amt} type="button" onClick={() => setCashReceived(String(amt))} className={String(amt) === cashReceived ? 'is-selected' : ''}>NT$ {amt}</button>
+                      ))}
+                    </div>
+                    <input type="number" inputMode="numeric" value={cashReceived} onChange={(e) => setCashReceived(e.target.value)} placeholder={t('cashReceivedPlaceholder')} className="input-pro w-full rounded-xl px-4 py-3 text-base min-h-[48px]" />
+                    {cashReceivedNum > 0 && cashReceivedNum >= total && <div className="checkout-change"><span>{t('changeAmount')}</span><strong>NT$ {changeAmount}</strong></div>}
+                    {cashReceivedNum > 0 && cashReceivedNum < total && <div className="text-sm text-red-500 font-medium">{t('cashNotEnough')}</div>}
+                  </div>
+                )}
+                {paymentMethod === 'line' && <div className="checkout-method-note">LINE 收款將由現場人員確認入帳後完成結帳。</div>}
+                {paymentMethod === 'atm' && <TapPayAtmForm customer={atmCustomer} onChange={setAtmCustomer} total={total} />}
+                {paymentMethod === 'aftee' && <TapPayAfteeForm customer={afteeCustomer} onChange={setAfteeCustomer} />}
+              </section>
             </div>
-            <div className="p-4 flex gap-3 border-t border-slate-200 bg-slate-50/50 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
-              <button
-                ref={confirmBackRef}
-                type="button"
-                onClick={() => setShowCheckoutConfirm(false)}
-                className="flex-1 py-3 rounded-xl font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 min-h-[48px]"
-                aria-label={t('confirmCheckoutBack')}
-              >
-                {t('confirmCheckoutBack')}
-              </button>
+
+            <div className="checkout-confirm-actions">
               <button
                 type="button"
                 onClick={handleConfirmCheckout}
                 disabled={isSubmitting || (paymentMethod === 'cash' && cashReceivedNum > 0 && cashReceivedNum < total) || (paymentMethod === 'card' && cardProvider === 'tappay' && !tapPayFieldsReady) || (paymentMethod === 'atm' && (total < 16 || total > 49999))}
-                className="flex-1 py-3 rounded-xl font-semibold btn-primary text-white min-h-[48px] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
+                className="checkout-confirm-primary"
               >
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>{t('checkoutProcessing')}</span>
-                  </>
-                ) : (
-                  paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : paymentMethod === 'aftee' ? '前往 AFTEE 付款' : t('confirmCheckoutBtn')
-                )}
+                {isSubmitting ? t('checkoutProcessing') : `${paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : paymentMethod === 'aftee' ? '前往 AFTEE 認證' : t('confirmCheckoutBtn')} · NT$ ${total}`}
+              </button>
+              <button ref={confirmBackRef} type="button" onClick={() => setShowCheckoutConfirm(false)} className="checkout-confirm-back" aria-label={t('confirmCheckoutBack')}>
+                {t('confirmCheckoutBack')}
               </button>
             </div>
           </div>
