@@ -3,6 +3,23 @@ const allowed = (origin) => origin === 'https://mogupos.org' || origin === 'http
 const cors = (origin) => allowed(origin) ? { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', Vary: 'Origin' } : {};
 const json = (body, status, origin) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store', ...cors(origin) } });
 
+function normalizeDetails(details, amount) {
+  try {
+    const items = JSON.parse(details);
+    if (!Array.isArray(items) || items.length === 0) throw new Error('invalid details');
+    const normalized = items.map((item, index) => ({
+      item_id: String(item?.item_id || `ITEM${index + 1}`).slice(0, 100),
+      item_name: String(item?.item_name || 'Studio Mogu 商品').slice(0, 100),
+      item_category: String(item?.item_category || 'IP文創商品').slice(0, 100),
+      item_price: Number.isInteger(item?.item_price) && item.item_price >= 0 ? item.item_price : amount,
+      item_quantity: Number.isInteger(item?.item_quantity) && item.item_quantity > 0 ? item.item_quantity : 1,
+    }));
+    const serialized = JSON.stringify(normalized);
+    if (serialized.length <= 1000) return serialized;
+  } catch { /* 使用安全的單品明細 */ }
+  return JSON.stringify([{ item_id: 'ORDER', item_name: 'Studio Mogu POS 商品', item_category: 'IP文創商品', item_price: amount, item_quantity: 1 }]);
+}
+
 export async function onRequest({ request, env }) {
   const origin = request.headers.get('origin') || '';
   if (origin && !allowed(origin)) return json({ error: 'Origin not allowed' }, 403, origin);
@@ -23,6 +40,7 @@ export async function onRequest({ request, env }) {
   const id = `AF${Date.now().toString(36).toUpperCase()}${crypto.randomUUID().slice(0, 6).replaceAll('-', '').toUpperCase()}`;
   const rawPhone = cardholder.phone_number.trim().replaceAll(' ', '').replaceAll('-', '');
   const phoneNumber = /^09\d{8}$/.test(rawPhone) ? `+886${rawPhone.slice(1)}` : rawPhone;
+  const afteeDetails = normalizeDetails(details, amount);
   const serverType = env.TAPPAY_SERVER_TYPE === 'production' ? 'production' : 'sandbox';
   try {
     const response = await fetch(ENDPOINTS[serverType], {
@@ -30,7 +48,7 @@ export async function onRequest({ request, env }) {
       headers: { 'Content-Type': 'application/json', 'x-api-key': partnerKey },
       body: JSON.stringify({
         prime, partner_key: partnerKey, merchant_id: merchantId, amount, currency: 'TWD',
-        order_number: id, bank_transaction_id: id, details: typeof details === 'string' ? details.slice(0, 100) : 'Studio Mogu POS',
+        order_number: id, bank_transaction_id: id, details: afteeDetails,
         cardholder: { phone_number: phoneNumber, name: cardholder.name.trim(), email: cardholder.email.trim() },
         result_url: {
           frontend_redirect_url: 'https://mogupos.org/aftee-return',

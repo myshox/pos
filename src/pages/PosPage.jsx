@@ -290,7 +290,13 @@ export default function PosPage() {
         const prime = await getTapPayAfteePrime();
         const paymentResult = await createTapPayAfteePayment({
           prime, amount: Math.round(total),
-          details: JSON.stringify([{ item_id: 'M', item_name: 'Studio Mogu POS', item_price: Math.round(total), item_quantity: 1 }]),
+          details: JSON.stringify(cart.map((item) => ({
+            item_id: String(item.sku || item.id || 'M'),
+            item_name: item.name || 'Studio Mogu 商品',
+            item_category: item.category || 'IP文創商品',
+            item_price: Math.round(Number(item.price) || 0),
+            item_quantity: item.qty,
+          }))),
           cardholder: afteeCustomer,
         });
         redirectUrl = paymentResult.payment_url;
