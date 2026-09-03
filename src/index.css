@@ -31,6 +31,16 @@ body {
 .site-footer a:hover { text-decoration:underline; }
 .tappay-disclosure { display:flex; flex-wrap:wrap; align-items:center; gap:.65rem; padding:.75rem; border:1px solid #d9e4e0; border-radius:14px; background:#f7faf9; }
 .tappay-disclosure--compact { padding:.55rem .65rem; }
+.tappay-card-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; padding:.85rem; border:1px solid #bfe5da; border-radius:16px; background:#f5fbf9; }
+.tappay-field-group,.tappay-contact-field { display:flex; flex-direction:column; gap:.3rem; min-width:0; }
+.tappay-field-group--wide,.tappay-field-status { grid-column:1/-1; }
+.tappay-field-group label,.tappay-contact-field span { color:#365b52; font-size:.72rem; font-weight:700; }
+.tappay-field,.tappay-contact-field input { height:46px; padding:.7rem .8rem; border:1px solid #cbded8; border-radius:10px; background:#fff; box-sizing:border-box; }
+.tappay-field iframe { width:100%; height:100%; }
+.tappay-contact-field input { width:100%; color:#173f38; font-size:16px; outline:none; }
+.tappay-contact-field input:focus { border-color:#28a98e; box-shadow:0 0 0 3px rgba(40,169,142,.14); }
+.tappay-field-status { margin:0; color:#527168; font-size:.72rem; line-height:1.45; }
+@media (max-width:420px) { .tappay-card-form { grid-template-columns:1fr; } .tappay-field-group--wide,.tappay-field-status { grid-column:auto; } }
 .tappay-logo { width:72px; height:auto; object-fit:contain; flex:none; }
 .setup-badge { margin-left:auto; white-space:nowrap; border-radius:999px; background:#fff7ed; color:#9a3412; padding:.3rem .55rem; font-size:.7rem; font-weight:700; border:1px solid #fed7aa; }
 .legal-hero { padding:clamp(1.5rem,4vw,3rem); border-radius:24px; background:linear-gradient(135deg,#ecfeff,#fff7ed); border:1px solid #ccfbf1; }

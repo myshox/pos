@@ -36,3 +36,55 @@ export async function initializeTapPay() {
   );
   return { ready: true };
 }
+
+export async function setupTapPayFields(onUpdate) {
+  const initialized = await initializeTapPay();
+  if (!initialized.ready) return initialized;
+
+  window.TPDirect.card.setup({
+    fields: {
+      number: { element: '#tappay-card-number', placeholder: '**** **** **** ****' },
+      expirationDate: { element: '#tappay-card-expiry', placeholder: 'MM / YY' },
+      ccv: { element: '#tappay-card-ccv', placeholder: '後三碼' },
+    },
+    styles: {
+      input: { color: '#173f38', 'font-size': '16px' },
+      ':focus': { color: '#0f766e' },
+      '.valid': { color: '#047857' },
+      '.invalid': { color: '#dc2626' },
+    },
+    isMaskCreditCardNumber: true,
+    maskCreditCardNumberRange: { beginIndex: 6, endIndex: 11 },
+  });
+  window.TPDirect.card.onUpdate(onUpdate);
+  return { ready: true };
+}
+
+export function getTapPayPrime() {
+  return new Promise((resolve, reject) => {
+    if (!window.TPDirect?.card) {
+      reject(new Error('TapPay 尚未初始化'));
+      return;
+    }
+    window.TPDirect.card.getPrime((result) => {
+      if (result.status !== 0 || !result.card?.prime) {
+        reject(new Error(result.msg || '信用卡資料驗證失敗'));
+        return;
+      }
+      resolve(result);
+    });
+  });
+}
+
+export async function payWithTapPay({ prime, amount, details, cardholder }) {
+  const response = await fetch('/api/tappay/pay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prime, amount, details, cardholder }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.status !== 0) {
+    throw new Error(result.error || result.msg || 'TapPay 付款失敗');
+  }
+  return result;
+}

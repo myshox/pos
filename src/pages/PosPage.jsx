@@ -5,7 +5,8 @@ import { useToast } from '../context/ToastContext';
 import ReceiptModal from '../components/ReceiptModal';
 import { getDailyReport } from '../lib/reportUtils';
 import TapPayDisclosure from '../components/TapPayDisclosure';
-import { isTapPayCheckoutReady } from '../lib/tappay';
+import TapPayCardForm from '../components/TapPayCardForm';
+import { getTapPayPrime, isTapPayCheckoutReady, payWithTapPay } from '../lib/tappay';
 
 const PAYMENT_STORAGE_KEY = 'pos_last_payment';
 const CARD_PROVIDER_STORAGE_KEY = 'pos_last_card_provider';
@@ -55,6 +56,8 @@ export default function PosPage() {
   });
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tapPayFieldsReady, setTapPayFieldsReady] = useState(false);
+  const [cardholder, setCardholder] = useState({ name: '', phone_number: '', email: '' });
   const submittingRef = useRef(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState('');
@@ -202,7 +205,7 @@ export default function PosPage() {
     setShowCheckoutConfirm(true);
   }, [cart, products, total, paymentMethod, cardProvider, showToast, t]);
 
-  const handleConfirmCheckout = useCallback(() => {
+  const handleConfirmCheckout = useCallback(async () => {
     if (cart.length === 0 || submittingRef.current) return;
     if (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady) {
       showToast('TapPay 尚未啟用，無法建立刷卡訂單', 'error');
@@ -214,10 +217,27 @@ export default function PosPage() {
     }
     submittingRef.current = true;
     setIsSubmitting(true);
-    setTimeout(() => {
-      try {
+    try {
+      let paymentDetails = paymentMethod === 'card' ? { cardProvider } : null;
+      if (paymentMethod === 'card' && cardProvider === 'tappay') {
+        if (!tapPayFieldsReady || !cardholder.name.trim() || !cardholder.phone_number.trim() || !cardholder.email.trim()) {
+          throw new Error('請完整填寫卡片與持卡人資料');
+        }
+        const primeResult = await getTapPayPrime();
+        const paymentResult = await payWithTapPay({
+          prime: primeResult.card.prime,
+          amount: Math.round(total),
+          details: `Studio Mogu POS · ${cartTotalQty} 件商品`,
+          cardholder,
+        });
+        paymentDetails = {
+          cardProvider,
+          recTradeId: paymentResult.rec_trade_id,
+          authCode: paymentResult.auth_code,
+          cardLastFour: paymentResult.card_info?.last_four,
+        };
+      }
         const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
-        const paymentDetails = paymentMethod === 'card' ? { cardProvider } : null;
         const newOrder = submitOrder(cart, total, '', paymentMethod, cashInfo, paymentDetails);
         setReceiptOrder(newOrder);
         setCart([]);
@@ -225,13 +245,13 @@ export default function PosPage() {
         setShowCheckoutConfirm(false);
         setShowCartDrawer(false);
         showToast(t('toastCheckoutSuccess'));
-      } catch {
-        showToast(t('checkoutError') || '結帳失敗，請重試', 'error');
+      } catch (error) {
+        showToast(error?.message || t('checkoutError') || '結帳失敗，請重試', 'error');
       } finally {
-        setTimeout(() => { submittingRef.current = false; setIsSubmitting(false); }, 300);
+        submittingRef.current = false;
+        setIsSubmitting(false);
       }
-    }, 80);
-  }, [cart, total, paymentMethod, cardProvider, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
+  }, [cart, total, cartTotalQty, paymentMethod, cardProvider, tapPayFieldsReady, cardholder, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -701,7 +721,7 @@ export default function PosPage() {
               {paymentMethod === 'card' && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-slate-600"><span>{t('cardProvider')}</span><strong className="text-slate-800">{t(cardProvider === 'tappay' ? 'cardTapPay' : 'cardTerminal')}</strong></div>
-                  {cardProvider === 'tappay' && <TapPayDisclosure compact />}
+                  {cardProvider === 'tappay' && <><TapPayDisclosure compact /><TapPayCardForm cardholder={cardholder} onCardholderChange={setCardholder} onReadyChange={setTapPayFieldsReady} /></>}
                 </div>
               )}
               {paymentMethod === 'cash' && (
@@ -747,7 +767,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={handleConfirmCheckout}
-                disabled={isSubmitting || (paymentMethod === 'cash' && cashReceivedNum > 0 && cashReceivedNum < total)}
+                disabled={isSubmitting || (paymentMethod === 'cash' && cashReceivedNum > 0 && cashReceivedNum < total) || (paymentMethod === 'card' && cardProvider === 'tappay' && !tapPayFieldsReady)}
                 className="flex-1 py-3 rounded-xl font-semibold btn-primary text-white min-h-[48px] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
               >
                 {isSubmitting ? (
