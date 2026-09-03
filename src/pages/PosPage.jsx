@@ -9,7 +9,6 @@ import TapPayCardForm from '../components/TapPayCardForm';
 import TapPayAtmForm from '../components/TapPayAtmForm';
 import { createTapPayAtmTransfer, getTapPayAtmPrime, getTapPayPrime, isTapPayCheckoutReady, payWithTapPay } from '../lib/tappay';
 
-const PAYMENT_STORAGE_KEY = 'pos_last_payment';
 const CARD_PROVIDER_STORAGE_KEY = 'pos_last_card_provider';
 const FONT_SIZE_STORAGE_KEY = 'pos_font_size';
 const PRODUCT_VIEW_STORAGE_KEY = 'pos_product_view';
@@ -42,13 +41,7 @@ export default function PosPage() {
   const { t } = useLocale();
   const { showToast } = useToast();
   const [cart, setCart] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState(() => {
-    try {
-      const saved = localStorage.getItem(PAYMENT_STORAGE_KEY);
-      if (['line', 'cash', 'card', 'atm'].includes(saved)) return saved;
-    } catch { /* empty */ }
-    return 'line';
-  });
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [cardProvider, setCardProvider] = useState(() => {
     try {
       const saved = localStorage.getItem(CARD_PROVIDER_STORAGE_KEY);
@@ -100,10 +93,6 @@ export default function PosPage() {
     setPaymentMethod(method);
     if (method === 'atm') showToast('已選擇 ATM 轉帳，結帳後將建立虛擬帳號');
   }, [showToast]);
-
-  useEffect(() => {
-    try { localStorage.setItem(PAYMENT_STORAGE_KEY, paymentMethod); } catch { /* empty */ }
-  }, [paymentMethod]);
 
   useEffect(() => {
     try { localStorage.setItem(CARD_PROVIDER_STORAGE_KEY, cardProvider); } catch { /* empty */ }
@@ -205,6 +194,10 @@ export default function PosPage() {
       showToast(t('checkoutTotalZeroWarning'), 'error');
       return;
     }
+    if (!paymentMethod) {
+      showToast('請先選擇付款方式', 'error');
+      return;
+    }
     if (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady) {
       showToast('TapPay 尚未啟用，請先完成商店金流設定', 'error');
       return;
@@ -274,6 +267,7 @@ export default function PosPage() {
         const newOrder = submitOrder(cart, total, '', paymentMethod, cashInfo, paymentDetails);
         setReceiptOrder(newOrder);
         setCart([]);
+        setPaymentMethod('');
         setCashReceived('');
         setShowCheckoutConfirm(false);
         setShowCartDrawer(false);
@@ -569,7 +563,7 @@ export default function PosPage() {
             {PAYMENT_OPTIONS.map((opt) => <button key={opt.id} type="button" onClick={() => selectPaymentMethod(opt.id)} aria-pressed={paymentMethod === opt.id} className={paymentMethod === opt.id ? 'is-active' : ''}>{t(opt.labelKey)}{paymentMethod === opt.id ? ' ✓' : ''}</button>)}
           </div>
           {paymentMethod === 'card' && <><CardProviderPicker value={cardProvider} onChange={setCardProvider} t={t} /><TapPayDisclosure compact /></>}
-          <button type="button" onClick={openCheckoutConfirm} disabled={cart.length === 0 || total === 0 || isSubmitting || (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady)} className="checkout-rail-submit">{`${paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : '確認結帳'} · NT$ ${total}`}</button>
+          <button type="button" onClick={openCheckoutConfirm} disabled={cart.length === 0 || total === 0 || !paymentMethod || isSubmitting || (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady)} className="checkout-rail-submit">{`${!paymentMethod ? '請先選付款方式' : paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : '確認結帳'} · NT$ ${total}`}</button>
         </div>
       </aside>
 
@@ -695,7 +689,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={openCheckoutConfirm}
-                disabled={cart.length === 0 || total === 0 || isSubmitting || (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady)}
+                disabled={cart.length === 0 || total === 0 || !paymentMethod || isSubmitting || (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady)}
                 aria-describedby={paymentMethod === 'card' && cardProvider === 'tappay' ? 'tappay-setup-status' : undefined}
                 className={`btn-primary w-full py-4 rounded-2xl text-xl font-extrabold min-h-[64px] disabled:opacity-45 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg touch-manipulation ${
                   cart.length > 0 && total > 0 && !isSubmitting ? 'ring-2 ring-teal-200/80' : 'ring-0'
@@ -714,7 +708,7 @@ export default function PosPage() {
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span>{t('checkout')}</span>
+                    <span>{paymentMethod ? t('checkout') : '請先選付款方式'}</span>
                   </>
                 )}
               </button>
