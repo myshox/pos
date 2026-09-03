@@ -400,7 +400,12 @@ export function saveOrders(orders) {
 /** 取得所有訂單（含雲端），用於報表 */
 export function getAllOrdersKey() { return STORAGE_KEYS.ORDERS; }
 
-const PAYMENT_IDS = ['line', 'cash', 'card'];
+const PAYMENT_IDS = ['line', 'cash', 'card', 'atm'];
+const PAYMENT_DETAIL_FIELDS = [
+  'paymentStatus', 'recTradeId', 'bankTransactionId',
+  'atmBankCode', 'atmAccount', 'atmExpireTime',
+  'authCode', 'cardLastFour',
+];
 
 export function addOrder(order) {
   const orders = getOrders();
@@ -413,6 +418,9 @@ export function addOrder(order) {
     note: String(order.note || '').trim(),
     paymentMethod,
     ...(order.cardProvider ? { cardProvider: order.cardProvider } : {}),
+    ...Object.fromEntries(PAYMENT_DETAIL_FIELDS
+      .filter((key) => order[key] != null)
+      .map((key) => [key, order[key]])),
     ...(order.cashReceived != null ? { cashReceived: order.cashReceived, changeAmount: order.changeAmount } : {}),
     createdAt: new Date().toISOString(),
     voided: false,
@@ -428,7 +436,7 @@ export function updateOrder(orderId, updates) {
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return null;
   const next = [...orders];
-  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'cardProvider', 'items', 'createdAt', 'cashReceived', 'changeAmount', 'voided', 'voidReason', 'voidedAt'];
+  const allowed = ['note', 'total', 'subtotal', 'paymentMethod', 'cardProvider', 'items', 'createdAt', 'cashReceived', 'changeAmount', 'voided', 'voidReason', 'voidedAt', ...PAYMENT_DETAIL_FIELDS];
   const patch = {};
   allowed.forEach((k) => { if (updates[k] !== undefined) patch[k] = updates[k]; });
   next[idx] = { ...next[idx], ...patch, _syncUpdatedAt: new Date().toISOString() };
