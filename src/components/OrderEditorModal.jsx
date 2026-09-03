@@ -22,6 +22,7 @@ export default function OrderEditorModal({ order, onClose, onSave }) {
   const [items, setItems] = useState(() => (order.items || []).map((item) => ({ ...item })));
   const [total, setTotal] = useState(String(order.total ?? 0));
   const [paymentMethod, setPaymentMethod] = useState(order.paymentMethod || 'cash');
+  const [paymentStatus, setPaymentStatus] = useState(order.paymentStatus || 'paid');
   const [cardProvider, setCardProvider] = useState(order.cardProvider || 'terminal');
   const [note, setNote] = useState(order.note || '');
 
@@ -64,6 +65,7 @@ export default function OrderEditorModal({ order, onClose, onSave }) {
       subtotal: normalizedTotal,
       total: normalizedTotal,
       paymentMethod,
+      paymentStatus: paymentMethod === 'atm' ? paymentStatus : 'paid',
       cardProvider: paymentMethod === 'card' ? cardProvider : '',
       note: note.trim(),
     });
@@ -81,6 +83,7 @@ export default function OrderEditorModal({ order, onClose, onSave }) {
           <label className="block"><span className="text-sm font-medium text-slate-600">{copy.time}</span><input type="datetime-local" value={createdAt} onChange={(event) => setCreatedAt(event.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base" required /></label>
           <label className="block"><span className="text-sm font-medium text-slate-600">{t('paymentMethod')}</span><select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base"><option value="cash">{t('payCash')}</option><option value="line">{t('payLine')}</option><option value="card">{t('payCard')}</option><option value="atm">{t('payAtm')}</option></select></label>
           {paymentMethod === 'card' && <label className="block"><span className="text-sm font-medium text-slate-600">{copy.provider}</span><select value={cardProvider} onChange={(event) => setCardProvider(event.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base"><option value="terminal">{lang === 'en' ? 'Card terminal' : lang === 'kr' ? '카드 단말기' : '現場刷卡機'}</option><option value="tappay">TapPay</option></select></label>}
+          {paymentMethod === 'atm' && <label className="block"><span className="text-sm font-medium text-slate-600">ATM 入帳狀態</span><select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base"><option value="pending">待轉帳</option><option value="paid">已入帳</option></select></label>}
           <label className="block"><span className="text-sm font-medium text-slate-600">{t('amount')}</span><input type="number" min="0" step="1" value={total} onChange={(event) => setTotal(event.target.value)} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2.5 text-base tabular-nums" required /><small className="text-slate-500">{copy.items}: NT$ {calculatedTotal}</small></label>
         </div>
 
