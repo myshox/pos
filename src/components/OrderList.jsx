@@ -109,7 +109,7 @@ export default function OrderList() {
   const todayTotal = useMemo(() => todayOrders.reduce((s, o) => s + o.total, 0), [todayOrders]);
   const todayCount = todayOrders.length;
 
-  const paymentLabel = (key) => t(key === 'line' ? 'payLine' : key === 'card' ? 'payCard' : key === 'atm' ? 'payAtm' : 'payCash');
+  const paymentLabel = (key) => t(key === 'line' ? 'payLine' : key === 'card' ? 'payCard' : key === 'atm' ? 'payAtm' : key === 'aftee' ? 'payAftee' : 'payCash');
   const exportOrdersCSV = () => {
     const header = [t('time'), t('orderId'), t('amount'), t('paymentMethod'), t('orderStatus')];
     const rows = filteredOrders.map((o) => [

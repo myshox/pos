@@ -400,11 +400,11 @@ export function saveOrders(orders) {
 /** 取得所有訂單（含雲端），用於報表 */
 export function getAllOrdersKey() { return STORAGE_KEYS.ORDERS; }
 
-const PAYMENT_IDS = ['line', 'cash', 'card', 'atm'];
+const PAYMENT_IDS = ['line', 'cash', 'card', 'atm', 'aftee'];
 const PAYMENT_DETAIL_FIELDS = [
   'paymentStatus', 'recTradeId', 'bankTransactionId',
   'atmBankCode', 'atmAccount', 'atmExpireTime',
-  'authCode', 'cardLastFour',
+  'authCode', 'cardLastFour', 'bankOrderNumber',
 ];
 
 export function addOrder(order) {

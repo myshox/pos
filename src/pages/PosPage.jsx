@@ -7,7 +7,8 @@ import { getDailyReport } from '../lib/reportUtils';
 import TapPayDisclosure from '../components/TapPayDisclosure';
 import TapPayCardForm from '../components/TapPayCardForm';
 import TapPayAtmForm from '../components/TapPayAtmForm';
-import { createTapPayAtmTransfer, getTapPayAtmPrime, getTapPayPrime, isTapPayCheckoutReady, payWithTapPay } from '../lib/tappay';
+import TapPayAfteeForm from '../components/TapPayAfteeForm';
+import { createTapPayAfteePayment, createTapPayAtmTransfer, getTapPayAfteePrime, getTapPayAtmPrime, getTapPayPrime, isTapPayCheckoutReady, payWithTapPay, queryTapPayTransaction } from '../lib/tappay';
 
 const CARD_PROVIDER_STORAGE_KEY = 'pos_last_card_provider';
 const FONT_SIZE_STORAGE_KEY = 'pos_font_size';
@@ -19,6 +20,7 @@ const PAYMENT_OPTIONS = [
   { id: 'cash', labelKey: 'payCash', activeClass: 'bg-amber-500 hover:bg-amber-600 text-white', inactiveClass: 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100' },
   { id: 'card', labelKey: 'payCard', activeClass: 'bg-sky-500 hover:bg-sky-600 text-white', inactiveClass: 'bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100' },
   { id: 'atm', labelKey: 'payAtm', activeClass: 'bg-violet-500 hover:bg-violet-600 text-white', inactiveClass: 'bg-violet-50 text-violet-800 border border-violet-200 hover:bg-violet-100' },
+  { id: 'aftee', labelKey: 'payAftee', activeClass: 'bg-fuchsia-500 hover:bg-fuchsia-600 text-white', inactiveClass: 'bg-fuchsia-50 text-fuchsia-800 border border-fuchsia-200 hover:bg-fuchsia-100' },
 ];
 
 function CardProviderPicker({ value, onChange, t }) {
@@ -37,7 +39,7 @@ function CardProviderPicker({ value, onChange, t }) {
 }
 
 export default function PosPage() {
-  const { activeProducts, products, orders, submitOrder, refreshProducts } = useStore();
+  const { activeProducts, products, orders, submitOrder, updateOrder, refreshProducts } = useStore();
   const { t } = useLocale();
   const { showToast } = useToast();
   const [cart, setCart] = useState([]);
@@ -54,6 +56,7 @@ export default function PosPage() {
   const [tapPayFieldsReady, setTapPayFieldsReady] = useState(false);
   const [cardholder, setCardholder] = useState({ name: '', phone_number: '', email: '' });
   const [atmCustomer, setAtmCustomer] = useState({ name: '', phone_number: '', email: '' });
+  const [afteeCustomer, setAfteeCustomer] = useState({ name: '', phone_number: '', email: '' });
   const submittingRef = useRef(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState('');
@@ -113,6 +116,24 @@ export default function PosPage() {
   useEffect(() => {
     refreshProducts();
   }, [refreshProducts]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const recTradeId = params.get('rec_trade_id');
+    if (params.get('aftee_return') !== '1' || !recTradeId) return;
+    let active = true;
+    queryTapPayTransaction(recTradeId).then((record) => {
+      if (!active) return;
+      const matched = orders.find((order) => order.recTradeId === recTradeId);
+      if (!matched) throw new Error('找不到返回的 AFTEE 訂單');
+      const paid = record && [0, 1].includes(record.record_status);
+      const updated = updateOrder(matched.id, { paymentStatus: paid ? 'paid' : 'pending', bankOrderNumber: record?.bank_order_number || '' });
+      setReceiptOrder(updated || matched);
+      showToast(paid ? 'AFTEE 付款完成' : 'AFTEE 付款狀態待確認', paid ? 'success' : 'error');
+    }).catch((error) => showToast(error?.message || 'AFTEE 交易查詢失敗', 'error'))
+      .finally(() => window.history.replaceState({}, '', window.location.pathname));
+    return () => { active = false; };
+  }, [orders, updateOrder, showToast]);
 
   const todayReport = useMemo(
     () => getDailyReport(orders, new Date()),
@@ -224,6 +245,7 @@ export default function PosPage() {
     setIsSubmitting(true);
     try {
       let paymentDetails = paymentMethod === 'card' ? { cardProvider } : null;
+      let redirectUrl = '';
       if (paymentMethod === 'card' && cardProvider === 'tappay') {
         if (!tapPayFieldsReady || !cardholder.name.trim() || !cardholder.phone_number.trim() || !cardholder.email.trim()) {
           throw new Error('請完整填寫卡片與持卡人資料');
@@ -263,6 +285,17 @@ export default function PosPage() {
           atmExpireTime: paymentResult.payee_info.expire_time,
         };
       }
+      if (paymentMethod === 'aftee') {
+        if (!afteeCustomer.name.trim() || !afteeCustomer.phone_number.trim() || !afteeCustomer.email.trim()) throw new Error('請完整填寫 AFTEE 購買人資料');
+        const prime = await getTapPayAfteePrime();
+        const paymentResult = await createTapPayAfteePayment({
+          prime, amount: Math.round(total),
+          details: JSON.stringify([{ item_id: 'M', item_name: 'Studio Mogu POS', item_price: Math.round(total), item_quantity: 1 }]),
+          cardholder: afteeCustomer,
+        });
+        redirectUrl = paymentResult.payment_url;
+        paymentDetails = { paymentStatus: 'pending', recTradeId: paymentResult.rec_trade_id, bankTransactionId: paymentResult.bank_transaction_id };
+      }
         const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
         const newOrder = submitOrder(cart, total, '', paymentMethod, cashInfo, paymentDetails);
         setReceiptOrder(newOrder);
@@ -272,13 +305,14 @@ export default function PosPage() {
         setShowCheckoutConfirm(false);
         setShowCartDrawer(false);
         showToast(t('toastCheckoutSuccess'));
+        if (redirectUrl) window.location.assign(redirectUrl);
       } catch (error) {
         showToast(error?.message || t('checkoutError') || '結帳失敗，請重試', 'error');
       } finally {
         submittingRef.current = false;
         setIsSubmitting(false);
       }
-  }, [cart, total, cartTotalQty, paymentMethod, cardProvider, tapPayFieldsReady, cardholder, atmCustomer, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
+  }, [cart, total, cartTotalQty, paymentMethod, cardProvider, tapPayFieldsReady, cardholder, atmCustomer, afteeCustomer, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -686,6 +720,7 @@ export default function PosPage() {
               </div>
               {paymentMethod === 'card' && <><CardProviderPicker value={cardProvider} onChange={setCardProvider} t={t} /><TapPayDisclosure compact /></>}
               {paymentMethod === 'atm' && <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">TapPay ATM 虛擬帳號 · 建立後待顧客轉帳</div>}
+              {paymentMethod === 'aftee' && <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xs text-fuchsia-800">AFTEE 先享後付 · 將前往 AFTEE 完成驗證</div>}
               <button
                 type="button"
                 onClick={openCheckoutConfirm}
@@ -744,7 +779,7 @@ export default function PosPage() {
               </div>
               <div className={`flex justify-between text-sm rounded-xl px-3 py-2 ${paymentMethod === 'atm' ? 'border-2 border-violet-300 bg-violet-50 text-violet-900 font-bold' : 'text-slate-600'}`}>
                 <span>{t('paymentMethod')}</span>
-                <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : paymentMethod === 'atm' ? 'payAtm' : 'payCash')}</span>
+                <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : paymentMethod === 'atm' ? 'payAtm' : paymentMethod === 'aftee' ? 'payAftee' : 'payCash')}</span>
               </div>
               {paymentMethod === 'card' && (
                 <div className="space-y-2">
@@ -782,6 +817,7 @@ export default function PosPage() {
                 </div>
               )}
               {paymentMethod === 'atm' && <TapPayAtmForm customer={atmCustomer} onChange={setAtmCustomer} total={total} />}
+              {paymentMethod === 'aftee' && <TapPayAfteeForm customer={afteeCustomer} onChange={setAfteeCustomer} />}
             </div>
             <div className="p-4 flex gap-3 border-t border-slate-200 bg-slate-50/50 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
               <button
@@ -808,7 +844,7 @@ export default function PosPage() {
                     <span>{t('checkoutProcessing')}</span>
                   </>
                 ) : (
-                  paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : t('confirmCheckoutBtn')
+                  paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : paymentMethod === 'aftee' ? '前往 AFTEE 付款' : t('confirmCheckoutBtn')
                 )}
               </button>
             </div>

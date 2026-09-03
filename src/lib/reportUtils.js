@@ -136,9 +136,9 @@ export function formatReportDate(iso) {
 
 /** 付款方式統計 */
 export function getPaymentBreakdown(orders) {
-  const breakdown = { line: { count: 0, total: 0 }, cash: { count: 0, total: 0 }, card: { count: 0, total: 0 }, atm: { count: 0, total: 0 } };
+  const breakdown = { line: { count: 0, total: 0 }, cash: { count: 0, total: 0 }, card: { count: 0, total: 0 }, atm: { count: 0, total: 0 }, aftee: { count: 0, total: 0 } };
   for (const o of activeOrdersOnly(orders)) {
-    const key = ['line', 'card', 'atm'].includes(o.paymentMethod) ? o.paymentMethod : 'cash';
+    const key = ['line', 'card', 'atm', 'aftee'].includes(o.paymentMethod) ? o.paymentMethod : 'cash';
     breakdown[key].count += 1;
     breakdown[key].total += o.total;
   }

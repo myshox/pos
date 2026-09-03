@@ -9,7 +9,7 @@ export default function TapPayDisclosure({ compact = false, method = 'card' }) {
         <p className="font-semibold text-slate-700">線上金流由 TapPay 喬睿科技提供</p>
         <p id="tappay-setup-status" className="text-xs text-slate-500 mt-0.5">
           {isTapPayCheckoutReady
-            ? (method === 'atm' ? 'ATM 虛擬帳號由 TapPay 安全建立並處理入帳。' : '選用 TapPay 時，信用卡資料將由 TapPay 安全處理。')
+            ? (method === 'atm' ? 'ATM 虛擬帳號由 TapPay 安全建立並處理入帳。' : method === 'aftee' ? 'AFTEE 先享後付由 TapPay 安全導轉並處理。' : '選用 TapPay 時，信用卡資料將由 TapPay 安全處理。')
             : 'TapPay 尚未啟用；仍可使用現場其他刷卡機收款。'}
         </p>
       </div>

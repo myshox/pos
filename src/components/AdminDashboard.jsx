@@ -4,7 +4,7 @@ import { useLocale } from '../context/LocaleContext';
 import { getAdminDashboardStats } from '../lib/adminStats';
 
 function paymentLabel(t, key) {
-  return key === 'line' ? t('payLine') : key === 'card' ? t('payCard') : key === 'atm' ? t('payAtm') : t('payCash');
+  return key === 'line' ? t('payLine') : key === 'card' ? t('payCard') : key === 'atm' ? t('payAtm') : key === 'aftee' ? t('payAftee') : t('payCash');
 }
 
 export default function AdminDashboard({ onNavigateToTab }) {
@@ -68,7 +68,7 @@ export default function AdminDashboard({ onNavigateToTab }) {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-800 mb-4">{t('paymentSplitToday')}</h3>
           <ul className="space-y-3">
-            {['line', 'cash', 'card', 'atm'].map((key) => {
+            {['line', 'cash', 'card', 'atm', 'aftee'].map((key) => {
               const p = stats.paymentToday[key];
               const sum = stats.today.total || 1;
               const pct = Math.round((p.total / sum) * 100) || 0;

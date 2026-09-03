@@ -95,7 +95,7 @@ export default function ReceiptModal({ order, onClose }) {
           })}
           {order.paymentMethod && (
             <div className="pt-1 text-slate-600 text-xs">
-              {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : order.paymentMethod === 'atm' ? 'payAtm' : 'payCash')}
+              {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : order.paymentMethod === 'atm' ? 'payAtm' : order.paymentMethod === 'aftee' ? 'payAftee' : 'payCash')}
             </div>
           )}
           {order.paymentMethod === 'atm' && order.atmAccount && (
@@ -112,6 +112,12 @@ export default function ReceiptModal({ order, onClose }) {
               <div className="flex justify-between gap-3"><span>轉帳金額</span><strong>NT$ {order.total}</strong></div>
               <div className="flex justify-between gap-3 text-xs"><span>繳費期限</span><strong>{order.atmExpireTime}</strong></div>
               <div className="text-xs text-violet-700">請依上方資料一次轉入正確金額；完成轉帳後才視為付款成功。</div>
+            </div>
+          )}
+          {order.paymentMethod === 'aftee' && (
+            <div className={`my-3 rounded-xl border p-4 ${order.paymentStatus === 'paid' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900'}`}>
+              <div className="font-bold">AFTEE {order.paymentStatus === 'paid' ? '付款完成' : '付款狀態待確認'}</div>
+              {order.recTradeId && <div className="mt-1 break-all text-xs">交易編號：{order.recTradeId}</div>}
             </div>
           )}
           <div className="flex justify-between font-semibold pt-3 border-t border-slate-300 mt-3 tabular-nums">

@@ -123,3 +123,38 @@ export async function createTapPayAtmTransfer({ prime, amount, details, cardhold
   }
   return result;
 }
+
+export async function getTapPayAfteePrime() {
+  const initialized = await initializeTapPay();
+  if (!initialized.ready || !window.TPDirect?.aftee) throw new Error('TapPay AFTEE 服務尚未完成初始化');
+  return new Promise((resolve, reject) => {
+    window.TPDirect.aftee.getPrime((result) => {
+      if (result?.status !== 0 || !result?.prime) {
+        reject(new Error(result?.msg || '無法建立 AFTEE 付款資料'));
+        return;
+      }
+      resolve(result.prime);
+    });
+  });
+}
+
+export async function createTapPayAfteePayment({ prime, amount, details, cardholder }) {
+  const endpoint = window.location.hostname === 'localhost' ? '/api/tappay/aftee' : 'https://pos-6q7.pages.dev/api/tappay/aftee';
+  const response = await fetch(endpoint, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prime, amount, details, cardholder }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.status !== 0 || !result.payment_url) throw new Error(result.error || result.msg || 'AFTEE 付款建立失敗');
+  return result;
+}
+
+export async function queryTapPayTransaction(recTradeId) {
+  const endpoint = window.location.hostname === 'localhost' ? '/api/tappay/query' : 'https://pos-6q7.pages.dev/api/tappay/query';
+  const response = await fetch(endpoint, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recTradeId }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || '交易狀態查詢失敗');
+  return result.trade_records?.[0] || null;
+}
