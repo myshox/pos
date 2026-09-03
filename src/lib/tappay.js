@@ -17,7 +17,7 @@ export function loadTapPaySdk() {
       return;
     }
     const script = document.createElement('script');
-    script.src = 'https://js.tappaysdk.com/sdk/tpdirect/v5.14.0';
+    script.src = 'https://js.tappaysdk.com/sdk/tpdirect/v5.18.0';
     script.async = true;
     script.dataset.tappaySdk = 'true';
     script.onload = () => resolve(window.TPDirect);
@@ -76,6 +76,22 @@ export function getTapPayPrime() {
   });
 }
 
+export async function getTapPayAtmPrime() {
+  const initialized = await initializeTapPay();
+  if (!initialized.ready || !window.TPDirect?.virtualAccount) {
+    throw new Error('TapPay ATM 服務尚未完成初始化');
+  }
+  return new Promise((resolve, reject) => {
+    window.TPDirect.virtualAccount.getPrime((error, result) => {
+      if (error || result?.status !== 0 || !result?.prime) {
+        reject(new Error(result?.msg || error?.message || '無法建立 ATM 付款資料'));
+        return;
+      }
+      resolve(result.prime);
+    });
+  });
+}
+
 export async function payWithTapPay({ prime, amount, details, cardholder }) {
   const endpoint = window.location.hostname === 'localhost'
     ? '/api/tappay/pay'
@@ -88,6 +104,22 @@ export async function payWithTapPay({ prime, amount, details, cardholder }) {
   const result = await response.json().catch(() => ({}));
   if (!response.ok || result.status !== 0) {
     throw new Error(result.error || result.msg || 'TapPay 付款失敗');
+  }
+  return result;
+}
+
+export async function createTapPayAtmTransfer({ prime, amount, details, cardholder }) {
+  const endpoint = window.location.hostname === 'localhost'
+    ? '/api/tappay/atm'
+    : 'https://pos-6q7.pages.dev/api/tappay/atm';
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prime, amount, details, cardholder }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.status !== 0 || !result.payee_info?.vacc_no) {
+    throw new Error(result.error || result.msg || 'ATM 虛擬帳號建立失敗');
   }
   return result;
 }

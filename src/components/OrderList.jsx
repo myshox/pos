@@ -109,7 +109,7 @@ export default function OrderList() {
   const todayTotal = useMemo(() => todayOrders.reduce((s, o) => s + o.total, 0), [todayOrders]);
   const todayCount = todayOrders.length;
 
-  const paymentLabel = (key) => t(key === 'line' ? 'payLine' : key === 'card' ? 'payCard' : 'payCash');
+  const paymentLabel = (key) => t(key === 'line' ? 'payLine' : key === 'card' ? 'payCard' : key === 'atm' ? 'payAtm' : 'payCash');
   const exportOrdersCSV = () => {
     const header = [t('time'), t('orderId'), t('amount'), t('paymentMethod'), t('orderStatus')];
     const rows = filteredOrders.map((o) => [
@@ -250,7 +250,8 @@ export default function OrderList() {
                   </ul>
                   {order.paymentMethod && (
                     <div className="mt-2 text-sm text-slate-600">
-                      {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
+                      {t('paymentMethod')}：{paymentLabel(order.paymentMethod)}
+                      {order.paymentStatus === 'pending' && <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-800">待轉帳</span>}
                     </div>
                   )}
                   {isOrderVoided(order) && order.voidReason && (

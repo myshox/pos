@@ -6,7 +6,8 @@ import ReceiptModal from '../components/ReceiptModal';
 import { getDailyReport } from '../lib/reportUtils';
 import TapPayDisclosure from '../components/TapPayDisclosure';
 import TapPayCardForm from '../components/TapPayCardForm';
-import { getTapPayPrime, isTapPayCheckoutReady, payWithTapPay } from '../lib/tappay';
+import TapPayAtmForm from '../components/TapPayAtmForm';
+import { createTapPayAtmTransfer, getTapPayAtmPrime, getTapPayPrime, isTapPayCheckoutReady, payWithTapPay } from '../lib/tappay';
 
 const PAYMENT_STORAGE_KEY = 'pos_last_payment';
 const CARD_PROVIDER_STORAGE_KEY = 'pos_last_card_provider';
@@ -18,6 +19,7 @@ const PAYMENT_OPTIONS = [
   { id: 'line', labelKey: 'payLine', activeClass: 'bg-emerald-500 hover:bg-emerald-600 text-white', inactiveClass: 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100' },
   { id: 'cash', labelKey: 'payCash', activeClass: 'bg-amber-500 hover:bg-amber-600 text-white', inactiveClass: 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100' },
   { id: 'card', labelKey: 'payCard', activeClass: 'bg-sky-500 hover:bg-sky-600 text-white', inactiveClass: 'bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100' },
+  { id: 'atm', labelKey: 'payAtm', activeClass: 'bg-violet-500 hover:bg-violet-600 text-white', inactiveClass: 'bg-violet-50 text-violet-800 border border-violet-200 hover:bg-violet-100' },
 ];
 
 function CardProviderPicker({ value, onChange, t }) {
@@ -43,7 +45,7 @@ export default function PosPage() {
   const [paymentMethod, setPaymentMethod] = useState(() => {
     try {
       const saved = localStorage.getItem(PAYMENT_STORAGE_KEY);
-      if (['line', 'cash', 'card'].includes(saved)) return saved;
+      if (['line', 'cash', 'card', 'atm'].includes(saved)) return saved;
     } catch { /* empty */ }
     return 'line';
   });
@@ -58,6 +60,7 @@ export default function PosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tapPayFieldsReady, setTapPayFieldsReady] = useState(false);
   const [cardholder, setCardholder] = useState({ name: '', phone_number: '', email: '' });
+  const [atmCustomer, setAtmCustomer] = useState({ name: '', phone_number: '', email: '' });
   const submittingRef = useRef(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState('');
@@ -201,6 +204,10 @@ export default function PosPage() {
       showToast('TapPay 尚未啟用，請先完成商店金流設定', 'error');
       return;
     }
+    if (paymentMethod === 'atm' && (!isTapPayCheckoutReady || total < 16 || total > 49999)) {
+      showToast(total < 16 || total > 49999 ? 'ATM 單筆金額須為 NT$16～49,999' : 'TapPay ATM 尚未啟用', 'error');
+      return;
+    }
     setCashReceived('');
     setShowCheckoutConfirm(true);
   }, [cart, products, total, paymentMethod, cardProvider, showToast, t]);
@@ -237,6 +244,27 @@ export default function PosPage() {
           cardLastFour: paymentResult.card_info?.last_four,
         };
       }
+      if (paymentMethod === 'atm') {
+        if (!atmCustomer.name.trim() || !atmCustomer.phone_number.trim() || !atmCustomer.email.trim()) {
+          throw new Error('請完整填寫 ATM 付款人資料');
+        }
+        if (total < 16 || total > 49999) throw new Error('ATM 單筆金額須為 NT$16～49,999');
+        const prime = await getTapPayAtmPrime();
+        const paymentResult = await createTapPayAtmTransfer({
+          prime,
+          amount: Math.round(total),
+          details: `Studio Mogu POS · ${cartTotalQty} 件商品`,
+          cardholder: atmCustomer,
+        });
+        paymentDetails = {
+          paymentStatus: 'pending',
+          recTradeId: paymentResult.rec_trade_id,
+          bankTransactionId: paymentResult.bank_transaction_id,
+          atmBankCode: paymentResult.payee_info.vacc_bank_code,
+          atmAccount: paymentResult.payee_info.vacc_no,
+          atmExpireTime: paymentResult.payee_info.expire_time,
+        };
+      }
         const cashInfo = paymentMethod === 'cash' && cashReceivedNum > 0 ? { cashReceived: cashReceivedNum, changeAmount } : null;
         const newOrder = submitOrder(cart, total, '', paymentMethod, cashInfo, paymentDetails);
         setReceiptOrder(newOrder);
@@ -251,7 +279,7 @@ export default function PosPage() {
         submittingRef.current = false;
         setIsSubmitting(false);
       }
-  }, [cart, total, cartTotalQty, paymentMethod, cardProvider, tapPayFieldsReady, cardholder, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
+  }, [cart, total, cartTotalQty, paymentMethod, cardProvider, tapPayFieldsReady, cardholder, atmCustomer, cashReceivedNum, changeAmount, submitOrder, showToast, t]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -658,6 +686,7 @@ export default function PosPage() {
                 <span className="text-3xl sm:text-4xl font-bold text-slate-800 tabular-nums text-right break-all sm:break-normal min-w-0">NT$ {total}</span>
               </div>
               {paymentMethod === 'card' && <><CardProviderPicker value={cardProvider} onChange={setCardProvider} t={t} /><TapPayDisclosure compact /></>}
+              {paymentMethod === 'atm' && <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">TapPay ATM 虛擬帳號 · 建立後待顧客轉帳</div>}
               <button
                 type="button"
                 onClick={openCheckoutConfirm}
@@ -716,7 +745,7 @@ export default function PosPage() {
               </div>
               <div className="flex justify-between text-sm text-slate-600">
                 <span>{t('paymentMethod')}</span>
-                <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : 'payCash')}</span>
+                <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : paymentMethod === 'atm' ? 'payAtm' : 'payCash')}</span>
               </div>
               {paymentMethod === 'card' && (
                 <div className="space-y-2">
@@ -753,6 +782,7 @@ export default function PosPage() {
                   )}
                 </div>
               )}
+              {paymentMethod === 'atm' && <TapPayAtmForm customer={atmCustomer} onChange={setAtmCustomer} total={total} />}
             </div>
             <div className="p-4 flex gap-3 border-t border-slate-200 bg-slate-50/50 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
               <button
@@ -767,7 +797,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={handleConfirmCheckout}
-                disabled={isSubmitting || (paymentMethod === 'cash' && cashReceivedNum > 0 && cashReceivedNum < total) || (paymentMethod === 'card' && cardProvider === 'tappay' && !tapPayFieldsReady)}
+                disabled={isSubmitting || (paymentMethod === 'cash' && cashReceivedNum > 0 && cashReceivedNum < total) || (paymentMethod === 'card' && cardProvider === 'tappay' && !tapPayFieldsReady) || (paymentMethod === 'atm' && (total < 16 || total > 49999))}
                 className="flex-1 py-3 rounded-xl font-semibold btn-primary text-white min-h-[48px] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation"
               >
                 {isSubmitting ? (

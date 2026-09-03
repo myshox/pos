@@ -51,10 +51,10 @@ export function isOrderVoided(order) {
   return order && order.voided === true;
 }
 
-/** 僅有效訂單（未作廢） */
+/** 僅已收款且未作廢的訂單；ATM 待轉帳不可先計入營收。 */
 export function activeOrdersOnly(orders) {
   if (!Array.isArray(orders)) return [];
-  return orders.filter((o) => !isOrderVoided(o));
+  return orders.filter((o) => !isOrderVoided(o) && o.paymentStatus !== 'pending');
 }
 
 /** 訂單是否在 [start, end] 區間內（含 start、end） */
@@ -134,11 +134,11 @@ export function formatReportDate(iso) {
   });
 }
 
-/** 付款方式統計：{ line: { count, total }, cash: { count, total }, card: { count, total } } */
+/** 付款方式統計 */
 export function getPaymentBreakdown(orders) {
-  const breakdown = { line: { count: 0, total: 0 }, cash: { count: 0, total: 0 }, card: { count: 0, total: 0 } };
+  const breakdown = { line: { count: 0, total: 0 }, cash: { count: 0, total: 0 }, card: { count: 0, total: 0 }, atm: { count: 0, total: 0 } };
   for (const o of activeOrdersOnly(orders)) {
-    const key = o.paymentMethod === 'line' || o.paymentMethod === 'card' ? o.paymentMethod : 'cash';
+    const key = ['line', 'card', 'atm'].includes(o.paymentMethod) ? o.paymentMethod : 'cash';
     breakdown[key].count += 1;
     breakdown[key].total += o.total;
   }

@@ -27,7 +27,7 @@ function toDateStr(d) {
 }
 
 function paymentLabel(t, key) {
-  return key === 'line' ? t('payLine') : key === 'card' ? t('payCard') : t('payCash');
+  return key === 'line' ? t('payLine') : key === 'card' ? t('payCard') : key === 'atm' ? t('payAtm') : t('payCash');
 }
 
 export default function ReportSettlement() {
@@ -302,8 +302,8 @@ export default function ReportSettlement() {
       {report.orders.length > 0 && (
         <section>
           <h3 className="text-slate-700 font-medium mb-3">{t('reportPaymentBreakdown')}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {['line', 'cash', 'card'].map((key) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {['line', 'cash', 'card', 'atm'].map((key) => (
               <div key={key} className="card-market rounded-2xl p-4 flex flex-col">
                 <div className="text-sm text-slate-500">{paymentLabel(t, key)}</div>
                 <div className="text-lg font-semibold text-slate-800 mt-1">NT$ {paymentBreakdown[key].total.toLocaleString()}</div>

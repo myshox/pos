@@ -88,7 +88,17 @@ export default function ReceiptModal({ order, onClose }) {
           })}
           {order.paymentMethod && (
             <div className="pt-1 text-slate-600 text-xs">
-              {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : 'payCash')}
+              {t('paymentMethod')}：{t(order.paymentMethod === 'line' ? 'payLine' : order.paymentMethod === 'card' ? 'payCard' : order.paymentMethod === 'atm' ? 'payAtm' : 'payCash')}
+            </div>
+          )}
+          {order.paymentMethod === 'atm' && order.atmAccount && (
+            <div className="my-3 rounded-xl border-2 border-violet-200 bg-violet-50 p-4 text-violet-950 space-y-2">
+              <div className="font-bold">ATM 待轉帳</div>
+              <div className="flex justify-between gap-3"><span>銀行代碼</span><strong>{order.atmBankCode}</strong></div>
+              <div><span>虛擬帳號</span><strong className="mt-1 block break-all text-lg tracking-wide">{order.atmAccount}</strong></div>
+              <div className="flex justify-between gap-3"><span>轉帳金額</span><strong>NT$ {order.total}</strong></div>
+              <div className="flex justify-between gap-3 text-xs"><span>繳費期限</span><strong>{order.atmExpireTime}</strong></div>
+              <div className="text-xs text-violet-700">請依上方資料一次轉入正確金額；完成轉帳後才視為付款成功。</div>
             </div>
           )}
           <div className="flex justify-between font-semibold pt-3 border-t border-slate-300 mt-3 tabular-nums">

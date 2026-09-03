@@ -317,6 +317,11 @@ export function StoreProvider({ children }) {
     const payload = { items: [...items], total, note, paymentMethod };
     if (cashInfo) { payload.cashReceived = cashInfo.cashReceived; payload.changeAmount = cashInfo.changeAmount; }
     if (paymentDetails?.cardProvider) payload.cardProvider = paymentDetails.cardProvider;
+    if (paymentDetails) {
+      ['paymentStatus', 'recTradeId', 'bankTransactionId', 'atmBankCode', 'atmAccount', 'atmExpireTime', 'authCode', 'cardLastFour'].forEach((key) => {
+        if (paymentDetails[key] != null) payload[key] = paymentDetails[key];
+      });
+    }
     const newOrder = saveOrder(payload);
     setOrders(getOrders());
     const prods = getProducts();
