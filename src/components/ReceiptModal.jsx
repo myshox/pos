@@ -28,6 +28,13 @@ export default function ReceiptModal({ order, onClose }) {
     navigator.clipboard?.writeText(text).then(() => showToast(t('copied'))).catch(() => { /* clipboard not available */ });
   };
 
+  const copyAtmAccount = () => {
+    if (!order?.atmAccount) return;
+    navigator.clipboard?.writeText(String(order.atmAccount))
+      .then(() => showToast('虛擬帳號已複製'))
+      .catch(() => showToast('複製失敗，請長按帳號複製', 'error'));
+  };
+
   const printReceipt = () => {
     if (!blockRef.current) return;
     const win = window.open('', '_blank');
@@ -95,7 +102,13 @@ export default function ReceiptModal({ order, onClose }) {
             <div className="my-3 rounded-xl border-2 border-violet-200 bg-violet-50 p-4 text-violet-950 space-y-2">
               <div className="font-bold">ATM 待轉帳</div>
               <div className="flex justify-between gap-3"><span>銀行代碼</span><strong>{order.atmBankCode}</strong></div>
-              <div><span>虛擬帳號</span><strong className="mt-1 block break-all text-lg tracking-wide">{order.atmAccount}</strong></div>
+              <div>
+                <span>虛擬帳號</span>
+                <div className="mt-1 flex items-center gap-2">
+                  <strong className="min-w-0 flex-1 break-all text-lg tracking-wide select-all">{order.atmAccount}</strong>
+                  <button type="button" onClick={copyAtmAccount} className="shrink-0 min-h-[44px] rounded-lg bg-violet-600 px-3 py-2 text-sm font-bold text-white hover:bg-violet-700">複製帳號</button>
+                </div>
+              </div>
               <div className="flex justify-between gap-3"><span>轉帳金額</span><strong>NT$ {order.total}</strong></div>
               <div className="flex justify-between gap-3 text-xs"><span>繳費期限</span><strong>{order.atmExpireTime}</strong></div>
               <div className="text-xs text-violet-700">請依上方資料一次轉入正確金額；完成轉帳後才視為付款成功。</div>
