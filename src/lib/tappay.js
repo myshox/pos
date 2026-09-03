@@ -77,7 +77,10 @@ export function getTapPayPrime() {
 }
 
 export async function payWithTapPay({ prime, amount, details, cardholder }) {
-  const response = await fetch('/api/tappay/pay', {
+  const endpoint = window.location.hostname === 'localhost'
+    ? '/api/tappay/pay'
+    : 'https://pos-6q7.pages.dev/api/tappay/pay';
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prime, amount, details, cardholder }),

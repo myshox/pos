@@ -3,26 +3,40 @@ const TAPPAY_ENDPOINTS = {
   production: 'https://prod.tappaysdk.com/tpc/payment/pay-by-prime',
 };
 
-const json = (body, status = 200) => Response.json(body, {
+const isAllowedOrigin = (origin) => origin === 'https://mogupos.org'
+  || /^https:\/\/[a-f0-9]+\.pos-6q7\.pages\.dev$/.test(origin)
+  || origin === 'https://pos-6q7.pages.dev';
+
+const corsHeaders = (origin) => isAllowedOrigin(origin) ? {
+  'Access-Control-Allow-Origin': origin,
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  Vary: 'Origin',
+} : {};
+
+const json = (body, status = 200, origin = '') => Response.json(body, {
   status,
-  headers: { 'Cache-Control': 'no-store' },
+  headers: { 'Cache-Control': 'no-store', ...corsHeaders(origin) },
 });
 
 export async function onRequest(context) {
   const { request, env } = context;
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  const origin = request.headers.get('origin') || '';
+  if (origin && !isAllowedOrigin(origin)) return json({ error: 'Origin not allowed' }, 403);
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, origin);
   const contentLength = Number(request.headers.get('content-length') || 0);
-  if (contentLength > 12_000) return json({ error: '付款資料過大' }, 413);
+  if (contentLength > 12_000) return json({ error: '付款資料過大' }, 413, origin);
 
   const partnerKey = env.TAPPAY_PARTNER_KEY;
   const merchantId = env.TAPPAY_MERCHANT_ID;
-  if (!partnerKey || !merchantId) return json({ error: 'TapPay 尚未完成商店設定' }, 503);
+  if (!partnerKey || !merchantId) return json({ error: 'TapPay 尚未完成商店設定' }, 503, origin);
 
   let payload;
   try {
     payload = await request.json();
   } catch {
-    return json({ error: '付款資料格式錯誤' }, 400);
+    return json({ error: '付款資料格式錯誤' }, 400, origin);
   }
 
   const { prime, amount, details, cardholder } = payload || {};
@@ -31,7 +45,7 @@ export async function onRequest(context) {
     && typeof cardholder.phone_number === 'string' && /^[0-9+() -]{8,20}$/.test(cardholder.phone_number)
     && typeof cardholder.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardholder.email);
   if (typeof prime !== 'string' || prime.length < 20 || !Number.isInteger(amount) || amount <= 0 || amount > 1_000_000 || !validCardholder) {
-    return json({ error: '付款資料不完整' }, 400);
+    return json({ error: '付款資料不完整' }, 400, origin);
   }
 
   const serverType = env.TAPPAY_SERVER_TYPE === 'production' ? 'production' : 'sandbox';
@@ -59,8 +73,8 @@ export async function onRequest(context) {
       }),
     });
     const result = await tappayResponse.json();
-    return json(result, tappayResponse.ok ? 200 : 502);
+    return json(result, tappayResponse.ok ? 200 : 502, origin);
   } catch (error) {
-    return json({ error: error?.name === 'TimeoutError' ? 'TapPay 回應逾時' : 'TapPay 服務暫時無法連線' }, 502);
+    return json({ error: error?.name === 'TimeoutError' ? 'TapPay 回應逾時' : 'TapPay 服務暫時無法連線' }, 502, origin);
   }
 }
