@@ -96,6 +96,11 @@ export default function PosPage() {
   const confirmPanelRef = useRef(null);
   const productSearchInputRef = useRef(null);
 
+  const selectPaymentMethod = useCallback((method) => {
+    setPaymentMethod(method);
+    if (method === 'atm') showToast('已選擇 ATM 轉帳，結帳後將建立虛擬帳號');
+  }, [showToast]);
+
   useEffect(() => {
     try { localStorage.setItem(PAYMENT_STORAGE_KEY, paymentMethod); } catch { /* empty */ }
   }, [paymentMethod]);
@@ -561,10 +566,10 @@ export default function PosPage() {
         <div className="checkout-rail-bottom">
           <div className="checkout-total"><span>{t('total')}</span><strong>NT$ {total}</strong></div>
           <div className="checkout-methods" aria-label={t('paymentMethod')}>
-            {PAYMENT_OPTIONS.map((opt) => <button key={opt.id} type="button" onClick={() => setPaymentMethod(opt.id)} aria-pressed={paymentMethod === opt.id} className={paymentMethod === opt.id ? 'is-active' : ''}>{t(opt.labelKey)}</button>)}
+            {PAYMENT_OPTIONS.map((opt) => <button key={opt.id} type="button" onClick={() => selectPaymentMethod(opt.id)} aria-pressed={paymentMethod === opt.id} className={paymentMethod === opt.id ? 'is-active' : ''}>{t(opt.labelKey)}{paymentMethod === opt.id ? ' ✓' : ''}</button>)}
           </div>
           {paymentMethod === 'card' && <><CardProviderPicker value={cardProvider} onChange={setCardProvider} t={t} /><TapPayDisclosure compact /></>}
-          <button type="button" onClick={openCheckoutConfirm} disabled={cart.length === 0 || total === 0 || isSubmitting || (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady)} className="checkout-rail-submit">{`確認結帳 · NT$ ${total}`}</button>
+          <button type="button" onClick={openCheckoutConfirm} disabled={cart.length === 0 || total === 0 || isSubmitting || (paymentMethod === 'card' && cardProvider === 'tappay' && !isTapPayCheckoutReady)} className="checkout-rail-submit">{`${paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : '確認結帳'} · NT$ ${total}`}</button>
         </div>
       </aside>
 
@@ -672,11 +677,11 @@ export default function PosPage() {
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => setPaymentMethod(opt.id)}
+                      onClick={() => selectPaymentMethod(opt.id)}
                       aria-pressed={paymentMethod === opt.id}
                       className={`flex-1 min-w-[80px] py-3 rounded-xl text-sm font-medium transition min-h-[48px] ${paymentMethod === opt.id ? opt.activeClass : opt.inactiveClass}`}
                     >
-                      {t(opt.labelKey)}
+                      {t(opt.labelKey)}{paymentMethod === opt.id ? ' ✓' : ''}
                     </button>
                   ))}
                 </div>
@@ -743,7 +748,7 @@ export default function PosPage() {
                 <span className="text-slate-700">{t('total')}</span>
                 <span className="text-xl font-bold text-slate-800">NT$ {total}</span>
               </div>
-              <div className="flex justify-between text-sm text-slate-600">
+              <div className={`flex justify-between text-sm rounded-xl px-3 py-2 ${paymentMethod === 'atm' ? 'border-2 border-violet-300 bg-violet-50 text-violet-900 font-bold' : 'text-slate-600'}`}>
                 <span>{t('paymentMethod')}</span>
                 <span>{t(paymentMethod === 'line' ? 'payLine' : paymentMethod === 'card' ? 'payCard' : paymentMethod === 'atm' ? 'payAtm' : 'payCash')}</span>
               </div>
@@ -809,7 +814,7 @@ export default function PosPage() {
                     <span>{t('checkoutProcessing')}</span>
                   </>
                 ) : (
-                  t('confirmCheckoutBtn')
+                  paymentMethod === 'atm' ? '建立 ATM 虛擬帳號' : t('confirmCheckoutBtn')
                 )}
               </button>
             </div>
