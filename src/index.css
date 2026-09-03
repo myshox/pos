@@ -176,22 +176,22 @@ button, a, [role="button"], input, select, textarea {
 .checkout-total-card > small { max-width:100%; color:#617870; font-size:.75rem; line-height:1.5; }
 .checkout-payment-section { display:flex; flex-direction:column; gap:.75rem; padding:1.1rem 1.5rem; background:#f9f8f3; }
 .checkout-section-heading,.checkout-payment-group-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
-.checkout-section-heading h4 { margin:0; color:#1a3830; font-size:1rem; font-weight:800; }
-.checkout-section-heading > span { color:#297566; font-size:.7rem; }
+.checkout-section-heading h4 { margin:0; color:#1a3830; font-size:1.2rem; font-weight:800; }
+.checkout-section-heading > span { color:#297566; font-size:.82rem; font-weight:600; }
 .checkout-payment-group { display:flex; flex-direction:column; gap:.65rem; padding:.75rem .875rem .875rem; border-radius:16px; }
 .checkout-payment-group--onsite { background:#f0f5e8; }
 .checkout-payment-group--online { background:#e5f5f2; }
-.checkout-payment-group-heading strong { padding:.28rem .58rem; border-radius:999px; font-size:.7rem; line-height:1.2; }
+.checkout-payment-group-heading strong { padding:.34rem .65rem; border-radius:999px; font-size:.82rem; line-height:1.2; }
 .checkout-payment-group--onsite .checkout-payment-group-heading strong { color:#2e5724; background:#c7e0b8; }
 .checkout-payment-group--online .checkout-payment-group-heading strong { color:#086352; background:#a8e3d6; }
-.checkout-payment-group-heading span { color:#527168; font-size:.64rem; text-align:right; }
+.checkout-payment-group-heading span { color:#527168; font-size:.76rem; font-weight:600; text-align:right; }
 .checkout-payment-grid { display:grid; gap:.45rem; }
 .checkout-payment-grid[data-count="2"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .checkout-payment-grid[data-count="3"] { grid-template-columns:repeat(3,minmax(0,1fr)); }
-.checkout-payment-option { min-width:0; min-height:64px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:.15rem; padding:.6rem .75rem; border:1px solid #b8d6cf; border-radius:12px; color:#21473d; text-align:left; transition:transform .16s ease-out,box-shadow .16s ease-out,border-color .16s ease-out; }
+.checkout-payment-option { min-width:0; min-height:76px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:.22rem; padding:.7rem .8rem; border:1px solid #b8d6cf; border-radius:12px; color:#21473d; text-align:left; transition:transform .16s ease-out,box-shadow .16s ease-out,border-color .16s ease-out; }
 .checkout-payment-option strong,.checkout-payment-option span { display:block; max-width:100%; overflow-wrap:anywhere; }
-.checkout-payment-option strong { font-size:.82rem; font-weight:800; }
-.checkout-payment-option span { color:#577d70; font-size:.62rem; line-height:1.35; }
+.checkout-payment-option strong { font-size:1rem; font-weight:800; line-height:1.25; }
+.checkout-payment-option span { color:#577d70; font-size:.76rem; font-weight:600; line-height:1.4; }
 .checkout-payment-option--cash { background:#fffade; }
 .checkout-payment-option--line { background:#e3f7de; }
 .checkout-payment-option--card { background:#e8f5ff; }
@@ -203,8 +203,8 @@ button, a, [role="button"], input, select, textarea {
 .checkout-payment-details { padding:1.25rem 1.5rem; background:#fffefc; }
 .checkout-payment-details:empty { display:none; }
 .checkout-cash-panel { display:flex; flex-direction:column; gap:.65rem; }
-.checkout-cash-panel > label { color:#4f635c; font-size:.75rem; font-weight:800; }
-.checkout-cash-panel button { min-height:40px; padding:.45rem .75rem; border:1px solid #ead7a0; border-radius:10px; color:#725514; background:#fff8df; font-size:.8rem; font-weight:700; }
+.checkout-cash-panel > label { color:#4f635c; font-size:.95rem; font-weight:800; }
+.checkout-cash-panel button { min-height:44px; padding:.55rem .8rem; border:1px solid #ead7a0; border-radius:10px; color:#725514; background:#fff8df; font-size:.92rem; font-weight:800; }
 .checkout-cash-panel button.is-selected { color:#fff; border-color:#d89e22; background:#d89e22; }
 .checkout-change { display:flex; align-items:center; justify-content:space-between; padding:.75rem 1rem; border-radius:12px; color:#16634e; background:#e9f8f1; }
 .checkout-change strong { font-size:1.35rem; font-variant-numeric:tabular-nums; }
@@ -217,7 +217,7 @@ button, a, [role="button"], input, select, textarea {
 .checkout-confirm-back { min-height:44px; border-radius:12px; color:#2e6b5c; background:transparent; font-size:.8rem; font-weight:800; }
 .checkout-confirm-back:hover { background:#edf6f3; }
 @media (min-width:640px) { .checkout-confirm-overlay { align-items:center; padding:1rem; } .checkout-confirm-panel { max-height:92dvh; border-radius:28px; } }
-@media (max-width:380px) { .checkout-confirm-header,.checkout-payment-section,.checkout-payment-details,.checkout-confirm-actions { padding-left:1rem; padding-right:1rem; } .checkout-total-card { padding-left:1rem; padding-right:1rem; } .checkout-payment-group { padding-left:.65rem; padding-right:.65rem; } .checkout-payment-option { padding:.5rem; } .checkout-payment-option strong { font-size:.75rem; } .checkout-payment-group-heading span { display:none; } }
+@media (max-width:380px) { .checkout-confirm-header,.checkout-payment-section,.checkout-payment-details,.checkout-confirm-actions { padding-left:1rem; padding-right:1rem; } .checkout-total-card { padding-left:1rem; padding-right:1rem; } .checkout-payment-group { padding-left:.65rem; padding-right:.65rem; } .checkout-payment-option { min-height:72px; padding:.55rem; } .checkout-payment-option strong { font-size:.9rem; } .checkout-payment-option span { font-size:.7rem; } .checkout-payment-group-heading span { display:none; } }
 .admin-shell { border:1px solid rgba(18,60,53,.1); border-radius:24px; background:#fff; box-shadow:0 24px 60px rgba(34,61,53,.12); }
 .admin-sidebar { color:#dbece6; background:linear-gradient(180deg,#173f38,#102f2a); border-right:1px solid rgba(255,255,255,.08); }
 .admin-sidebar-head { display:flex; align-items:center; gap:.7rem; border-bottom:1px solid rgba(255,255,255,.1); }
